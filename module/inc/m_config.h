@@ -1,6 +1,6 @@
 // -----------------------------------
 // Projet	: PBPJ1
-//	Fic		: services.h
+//	Fic		: m_config.h
 //  Cree	: 30 juil. 2012
 //	Par		: Administrateur
 // -----------------------------------
@@ -9,74 +9,105 @@
 
 // Definitions communes a : Coordonateur, routeur, end device
 
-#ifndef _PBPJ1_MO_SERVICES_H_
-#define _PBPJ1_MO_SERVICES_H_
+#ifndef _PBPJ1_MO_M_CONFIG_H_
+#define _PBPJ1_MO_M_CONFIG_H_
 
 #if defined __cplusplus
 extern "C" {
 #endif
-
-
 /****************************************************************************/
 /***        Include Files                                                 ***/
 /****************************************************************************/
+#include <Jenie.h>
+#include "led.h"
 
 /****************************************************************************/
 /***        Macro Definitions                                             ***/
 /****************************************************************************/
-#define SRV_INTER    0x00000001
-#define SRV_LUMIR    0x00000002
-#define SRV_VOLET    0x00000004
-#define SRV_MASK	 0x0000000F
+#define NO_DEBUG_ON	FALSE
 
-#if 0
-#define BOITE_ID_01  0x00000010
-#define BOITE_ID_02  0x00000020
-#define BOITE_ID_03  0x00000040
-#define BOITE_ID_04  0x00000080
-#define BOITE_ID_05  0x00000100
-#define BOITE_ID_06  0x00000200
-#define BOITE_ID_07  0x00000400
-#define BOITE_ID_08  0x00000800
-#define BOITE_ID_09  0x00001000
-#define BOITE_ID_10  0x00002000
-#define BOITE_ID_11  0x00004000
-#define BOITE_ID_12  0x00008000
-#define BOITE_MASK   0x000000F0
+#if NO_DEBUG_ON
+#define vPrintf(...)
 #endif
 
-#define BOITE_ID_01  0x00000010
-#define BOITE_ID_02  0x00000020
-#define BOITE_ID_03  0x00000030
-#define BOITE_ID_04  0x00000040
-#define BOITE_ID_05  0x00000050
-#define BOITE_ID_06  0x00000060
-#define BOITE_ID_07  0x00000070
-#define BOITE_ID_08  0x00000080
-#define BOITE_ID_09  0x00000090
-#define BOITE_ID_10  0x000000A0
-#define BOITE_ID_11  0x000000B0
-#define BOITE_ID_12  0x000000C0
-#define BOITE_MASK   0x000000F0
-#define BOITE_MAXI	 15
+
+// Config du reseau
+#define PBAR_CHANNEL			0
+#if PBAR_CHANNEL
+#define PBAR_SCAN_CHANNELS		(1<<PBAR_CHANNEL)
+#else
+#define PBAR_SCAN_CHANNELS		0x07FFF800
+#endif
+
+#define PBAR_PAN_ID				0x1968
+#define PBAR_NID				0xdeaddead
+
+/* Flash addresses */
+#define FLASH_SECTOR 			3
+#define FLASH_START  			0x70000
+#define FLASH_END    			0x80000
+
+#if 0
+#if (JENNIC_CHIP_FAMILY == JN514x)
+#define FLASH_SECTOR 3
+#define FLASH_START  0x30000
+#define FLASH_END    0x40000
+#else
+#define FLASH_SECTOR 3
+#define FLASH_START  0x18000
+#define FLASH_END    0x20000
+#endif
+#endif
+
+#define C_MAX_BOXES 12
+
+// Buffer reception de trames entre mes elements 2 * Taille msg trame
+#define	PBAR_RBUF_SIZE			6
+
+// Gestion bouton pgm de carte
+#define	PBAR_ATR_BTNPGM						30 // Anti rebond btn pgm
+#define BUTTON_P_MASK (BUTTON_3_MASK << 1)  /* Mask for program button {v3} */
+
 
 /****************************************************************************/
 /***        Type Definitions                                              ***/
 /****************************************************************************/
+typedef enum
+{
+	APP_INITIALISATION,
+	APP_RECHERCHE_RESEAU,
+	APP_RESEAU_ETABLI,
+	APP_CONNECTION_RESEAU,
+	APP_PERTE_RESEAU,
+	APP_ATTENTE_ENREGISTREMENT_AU_PERE,
+	APP_BOUCLE_PRINCIPALE
+} teNetState;
+
+
+ typedef enum{
+  E_MSG_DATA_ALL,
+  E_MSG_DATA_SELECT,
+  E_MSG_ASK_ID_BOX,
+  E_MSG_RSP_ID_BOX,
+  E_MSG_CFG_LIENS,
+  E_MSG_CFG_BOX_END
+ }PBAR_TypeMsg;
+
 
 /****************************************************************************/
 /***        Exported Functions                                            ***/
 /****************************************************************************/
+extern PUBLIC void bp_CommunMsgReseau(teNetState *eState,
+		teEventType eEventType, void *pvEventPrim);
 
 /****************************************************************************/
 /***        Exported Variables                                            ***/
 /****************************************************************************/
-
 #if defined __cplusplus
 }
 #endif
 
-#endif // _PBPJ1_MO_SERVICES_H_
+#endif // _PBPJ1_MO_M_CONFIG_H_
 /****************************************************************************/
 /***        End of File                                                   ***/
 /****************************************************************************/
