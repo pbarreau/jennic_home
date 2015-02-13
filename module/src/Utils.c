@@ -46,7 +46,7 @@
 #include "jendefs.h"
 #include <AppHardwareApi.h>
 #include "Utils.h"
-#include "config.h"
+#include "m_config.h"
 
 /****************************************************************************/
 /***        Macro Definitions                                             ***/

@@ -80,8 +80,8 @@ APPSRC += $(wildcard $(APP_COMMON_SRC_DIR)/*.c)
 # e.g. for AppQueueApi
 
 #ADDITIONAL_SRC_DIR += $(COMPONENTS_BASE_DIR)/AppQueueApi/Source
-ADDITIONAL_SRC_DIR += $(SDK_BASE_DIR)/Chip/Common/Source
-APPSRC +=Printf.c
+#ADDITIONAL_SRC_DIR += $(SDK_BASE_DIR)/Chip/Common/Source
+#APPSRC +=Printf.c
 ##############################################################################
 # Standard Application header search paths
 # JenieAppConfig must go before other INCFLAG definitions on JN5139 

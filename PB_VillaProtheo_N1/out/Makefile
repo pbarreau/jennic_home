@@ -78,8 +78,8 @@ APPSRC += $(wildcard $(APP_COMMON_SRC_DIR)/*.c)
 # e.g. for AppQueueApi
 
 #ADDITIONAL_SRC_DIR += $(COMPONENTS_BASE_DIR)/AppQueueApi/Source
-ADDITIONAL_SRC_DIR += $(COMPONENTS_BASE_DIR)/../cygwin/jennic/SDK/Chip/Common/Source
-APPSRC +=Printf.c
+#ADDITIONAL_SRC_DIR += $(COMPONENTS_BASE_DIR)/../cygwin/jennic/SDK/Chip/Common/Source
+#APPSRC +=Printf.c
 ##############################################################################
 # Standard Application header search paths
 

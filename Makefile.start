@@ -20,7 +20,7 @@ DIRS	= PB_VillaProtheo_N1
 
 TARGETS: clean all T_5139 T_5148
 
-all: T_5139 T_5148
+all: T_5148 T_5139
 
 T_5139: 
 	-for d in $(DIRS); do (cd $$d/out; $(MAKE) -f Makefile_JN5139.mk $(MFLAGS) all ); done

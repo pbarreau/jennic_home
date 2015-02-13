@@ -5,13 +5,13 @@
  *      Author: RapidOs
  */
 
-#include "config.h"
+#include "m_config.h"
 
 #ifndef I2C_9555_H_
 #define I2C_9555_H_
 
-#define	ADDR_IO_1	0x22	/// Addr de 9555 sur le bus i2c
-#define	ADDR_IO_2	0x24	/// Addr de 9555 sur le bus i2c
+#define	ADDR_IO_1	0x20	/// Addr de 9555 sur le bus i2c
+#define	ADDR_IO_2	0x21	/// Addr de 9555 sur le bus i2c
 
 #define	CMD_INP_0	0x00	/// Registre commande lecture port 0
 #define	CMD_INP_1	0x01	/// Registre commande lecture port 1
@@ -31,9 +31,12 @@ typedef enum _bus_speed
 }sBusSpeed;
 
 
-extern PUBLIC bool_t bUneIt;
-extern PUBLIC uint16 prevConfInputs;
-extern PUBLIC uint16 prevConfOutputs;
+extern PUBLIC bool_t bIt_DIO11;
+extern PUBLIC bool_t bIt_DIO12;
+extern PUBLIC bool_t bMessureDureePressionDio12;
+extern PUBLIC uint16 timer_pression_DIO12;
+extern PUBLIC uint16 prvCnf_I_9555;
+extern PUBLIC uint16 prvCnf_O_9555;
 
 extern PUBLIC void vPRT_Init_9555(sBusSpeed speed);
 extern PUBLIC void vPRT_DioSetDirection(uint32 cnf_in, uint32 cnf_out);

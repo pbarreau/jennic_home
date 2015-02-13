@@ -6,17 +6,23 @@
  */
 
 #include <jendefs.h>
+#include <JPI.h>
 #include <AppHardwareApi.h>
 
 #include <Printf.h>
 
-#include "config.h"
+#include "c_config.h"
 #include "i2c_9555.h"
 #include "bit.h"
+#include "led.h"
 
-PUBLIC uint16 prevConfInputs = 0xFFFF;
-PUBLIC uint16 prevConfOutputs = 0xFFFF;
-PUBLIC bool_t bUneIt = FALSE;
+PUBLIC uint16 prvCnf_O_9555 = 0xFFFF; /// Configuration des sorties (ports 0) des 9555
+PUBLIC uint16 prvCnf_I_9555 = 0xFFFF; /// Configuration des entrees (ports 1) des 9555
+PUBLIC bool_t bIt_DIO11 = FALSE;	/// Flag declanchement d'une It sur DIO11
+
+PUBLIC bool_t bIt_DIO12 = FALSE; 	/// Flag declanchement d'une It sur DIO12
+PUBLIC bool_t bMessureDureePressionDio12 = FALSE; /// Mesure temps d'appui sur bouton
+PUBLIC uint16 timer_pression_DIO12 = 0;
 
 PRIVATE uint8 i2cAddr[] = {ADDR_IO_1,ADDR_IO_1,ADDR_IO_2,ADDR_IO_2};
 
@@ -221,6 +227,13 @@ PRIVATE void vPRT_PrepareJennic(sBusSpeed speed)
 	vAHI_SiConfigure(TRUE,FALSE,speed);   /* enabled, no interrupt, 400kHz */
 
 
+	// Pio en sortie
+	vAHI_DioSetDirection(0,E_AHI_DIO13_INT);
+	vAHI_DioSetOutput(E_AHI_DIO13_INT,0); //Eteindre la led config clavier
+	au8Led[CST_LED_INFO_2].actif = TRUE;
+	au8Led[CST_LED_INFO_2].pio = PIO_LED_INFO_2;
+	au8Led[CST_LED_INFO_2].mode = E_LED_OFF;
+
 	// Pio en entree
 	vAHI_DioSetDirection(E_AHI_DIO11_INT|E_AHI_DIO12_INT, 0);
 
@@ -243,30 +256,31 @@ PRIVATE void vPRT_PrepareSlio(void)
 	uint32 conf = 0;
 
 	// Configuration en sortie
-	vPRT_DioSetDirection(0x00000000,bit0|\
-									bit1|\
-									bit2|\
-									bit3|\
-									bit4|\
-									bit5|\
-									bit6|\
-									bit7|\
-									bit16|\
-									bit17|\
-									bit18|\
-									bit19|\
-									bit20|\
-									bit21|\
-									bit22|\
-									bit23);
+	vPRT_DioSetDirection(0x00000000,
+			bit0|\
+			bit1|\
+			bit2|\
+			bit3|\
+			bit4|\
+			bit5|\
+			bit6|\
+			bit7|\
+			bit16|\
+			bit17|\
+			bit18|\
+			bit19|\
+			bit20|\
+			bit21|\
+			bit22|\
+			bit23);
 
 	// Test mise a 0v entraine led on
 	vPRT_DioSetOutput(0x00000000,bit7|bit0);
 
 	// Lecture de la config au demarrage input et ouput des slios
 	conf = vPRT_DioReadInput();
-	prevConfInputs = (conf>>16 & 0xFF00) | (((uint16)conf>>8) & 0x00FF);
-	prevConfOutputs = (conf>>8 & 0xFF00) | (((uint16)conf) & 0x00FF);
+	prvCnf_I_9555 = (conf>>16 & 0xFF00) | (((uint16)conf>>8) & 0x00FF);
+	prvCnf_O_9555 = (conf>>8 & 0xFF00) | (((uint16)conf) & 0x00FF);
 }
 
 /**
@@ -595,7 +609,7 @@ PRIVATE uint16 u16_I2CRead_9555(uint8 u8SlaveAddr)
 
 	// Configuration du bus et activation du SI dans le jennic
 	//vAHI_SiConfigure(TRUE,FALSE,E_BUS_400_KH);   /* enabled, no interrupt, 400kHz */
-vPrintf("\n Lecture i2c(%x)\n",u8SlaveAddr);
+	vPrintf("\n Lecture i2c(%x)\n",u8SlaveAddr);
 	// Recherche composant sur bus i2c
 	vAHI_SiWriteSlaveAddr(u8SlaveAddr,FALSE);
 	vAHI_SiSetCmdReg(E_AHI_SI_START_BIT,
@@ -710,6 +724,8 @@ vPrintf("\n Lecture i2c(%x)\n",u8SlaveAddr);
 
 PRIVATE void vPRT_It_9555 (uint32 u32Device,uint32 u32ItemBitmap)
 {
+	static bool_t passage = FALSE;
+
 	switch (u32Device)
 	{
 		case E_AHI_DEVICE_SYSCTRL:
@@ -717,18 +733,73 @@ PRIVATE void vPRT_It_9555 (uint32 u32Device,uint32 u32ItemBitmap)
 			switch (u32ItemBitmap)
 			{
 				case E_AHI_DIO11_INT:
-				case E_AHI_DIO12_INT:
 				{
-					if(bUneIt==FALSE){
-						bUneIt = TRUE;
+					if(bIt_DIO11==FALSE){
+						bIt_DIO11 = TRUE;
 						// declanchement d'un timer
 					}
-					// 9555 n1 b[0..15]
-					//val = vPRT_DioReadInput();
-					//vPrintf("It read = %x\n",val);
 				}
 				break;
 
+				case E_AHI_DIO12_INT:
+				{
+					if(bIt_DIO12==FALSE){
+						// declanchement d'un timer et Empecher nouvelle it
+						bIt_DIO12 = TRUE;
+						vPrintf("Une it presente\n");
+
+						if (bMessureDureePressionDio12 == FALSE){
+							bMessureDureePressionDio12 = TRUE;
+							timer_pression_DIO12 = 0;
+							// Inversion polarite detection It
+							// pour voir relachement interrupteur
+							// Positionner it sur front montant
+							vAHI_DioInterruptEdge(E_AHI_DIO12_INT,0);
+						}
+						else
+						{
+							bMessureDureePressionDio12 = FALSE;
+							// Analyser duree
+							if(timer_pression_DIO12 <60)
+							{
+								// Pression courte
+								vPrintf("Pression courte");
+								if(!passage)
+								{
+									au8Led[CST_LED_INFO_2].mode++;
+									vPrintf(" Up, Val=%d\n",au8Led[CST_LED_INFO_2].mode);
+								}
+								else
+								{
+									au8Led[CST_LED_INFO_2].mode--;
+									vPrintf(" Do, Val=%d\n",au8Led[CST_LED_INFO_2].mode);
+								}
+							}
+							else
+							{
+								vPrintf("Pression longue\n");
+
+								if(!passage)
+								{
+									vPrintf("Etat 1\n");
+									//vAHI_DioSetOutput(0, E_AHI_DIO13_INT);
+								}
+								else
+								{
+									vPrintf("Etat 2\n");
+									//vAHI_DioSetOutput(E_AHI_DIO13_INT,0);
+								}
+								passage = !passage;
+							}
+
+							// Positionner lecture it sur front descendant
+							vAHI_DioInterruptEdge(0,E_AHI_DIO12_INT);
+
+						}
+					}
+
+				}
+				break;
 
 				default:
 					vPrintf("Gestion It Perso Dio: %x\n", u32ItemBitmap);

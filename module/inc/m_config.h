@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * MODULE:             config.h
+ * MODULE:             m_config.h
  *
  * COMPONENT:          $RCSfile: config.h,v $
  *
@@ -43,8 +43,8 @@
  ****************************************************************************/
 
 
-#ifndef  CONFIG_H_INCLUDED
-#define  CONFIG_H_INCLUDED
+#ifndef  M_CONFIG_H_INCLUDED
+#define  M_CONFIG_H_INCLUDED
 
 #if defined __cplusplus
 extern "C" {
@@ -53,12 +53,24 @@ extern "C" {
 /****************************************************************************/
 /***        Include Files                                                 ***/
 /****************************************************************************/
-#include <jendefs.h>
-#include "services.h"
 
 /****************************************************************************/
 /***        Macro Definitions                                             ***/
 /****************************************************************************/
+typedef enum
+{
+	E_JEN_RECHERCHE_RESEAU,
+	E_JEN_ATTENTE_RESEAU,
+	E_JEN_RESEAU_PRESENT,
+	E_JEN_RUN_APP,
+	E_JEN_FIN
+}etJenNet;
+
+typedef struct
+{
+	etJenNet	etape;
+
+}stMEF_JenNet;
 
 /* Network parameters - these MUST be changed to suit the target application */
 #define PAN_ID                  0x1234U
@@ -72,9 +84,9 @@ extern "C" {
 
 #define	SHOW_TEST_1	FALSE
 #define	SHOW_TEST_2	FALSE
-#define	SHOW_TEST_3	TRUE
+#define	SHOW_TEST_3	FALSE
 
-#define NO_DEBUG_ON	TRUE
+#define NO_DEBUG_ON	FALSE
 
 #if NO_DEBUG_ON
 #define vPrintf(...)
