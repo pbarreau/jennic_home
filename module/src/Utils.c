@@ -44,9 +44,10 @@
 /***        Include files                                                 ***/
 /****************************************************************************/
 #include "jendefs.h"
+//#include <AppHardwareApi_JN514x.h>
 #include <AppHardwareApi.h>
 #include "Utils.h"
-#include "config.h"
+#include "m_config.h"
 
 /****************************************************************************/
 /***        Macro Definitions                                             ***/
