@@ -18,8 +18,13 @@
 
 #include <Jenie.h>
 #include <JPI.h>
+#include <Printf.h>
 #include "Utils.h"
+
 #include "config.h"
+#include "bit.h"
+
+#include "i2c_9555.h"
 
 /****************************************************************************/
 /***        Macro Definitions                                             ***/
@@ -31,21 +36,22 @@
 
 typedef enum
 {
-    APP_STATE_WAITING_FOR_NETWORK,
-    APP_STATE_NETWORK_UP,
-    APP_STATE_REGISTERING_SERVICE,
-    APP_STATE_RUNNING
+	APP_STATE_WAITING_FOR_NETWORK,
+	APP_STATE_NETWORK_UP,
+	APP_STATE_REGISTERING_SERVICE,
+	APP_STATE_RUNNING
 } teAppState;
 
 typedef struct
 {
-    teAppState eAppState;
+	teAppState eAppState;
 } tsAppData;
 
 /****************************************************************************/
 /***        Local Function Prototypes                                     ***/
 /****************************************************************************/
-
+PRIVATE void vPRT_LireBtnPgm(void);
+PRIVATE void vPRT_TraiterChangementEntree(uint32 val);
 /****************************************************************************/
 /***        Exported Variables                                            ***/
 /****************************************************************************/
@@ -53,6 +59,9 @@ typedef struct
 /****************************************************************************/
 /***        Local Variables                                               ***/
 /****************************************************************************/
+PRIVATE bool_t bStartPgmTimer = FALSE;
+PRIVATE uint16 TimePgmPressed = 0;
+
 
 PRIVATE tsAppData sAppData;
 
@@ -75,15 +84,15 @@ PRIVATE tsJenieRoutingTable asRoutingTable[100];
  ****************************************************************************/
 PUBLIC void vJenie_CbConfigureNetwork(void)
 {
-    /* Change default network config */
-    gJenie_Channel              = CHANNEL;
-    gJenie_NetworkApplicationID = SERVICE_PROFILE_ID;
-    gJenie_PanID                = PAN_ID;
+	/* Change default network config */
+	gJenie_Channel              = CHANNEL;
+	gJenie_NetworkApplicationID = SERVICE_PROFILE_ID;
+	gJenie_PanID                = PAN_ID;
 
-    /* Configure stack with routing table data */
-    gJenie_RoutingEnabled    = TRUE;
-    gJenie_RoutingTableSize  = 100;
-    gJenie_RoutingTableSpace = (void *)asRoutingTable;
+	/* Configure stack with routing table data */
+	gJenie_RoutingEnabled    = TRUE;
+	gJenie_RoutingTableSize  = 100;
+	gJenie_RoutingTableSpace = (void *)asRoutingTable;
 
 }
 
@@ -102,17 +111,48 @@ PUBLIC void vJenie_CbConfigureNetwork(void)
 
 PUBLIC void vJenie_CbInit(bool_t bWarmStart)
 {
-    /* Initialise utilities */
-    vUtils_Init();
 
-    memset(&sAppData, 0, sizeof(sAppData));
-    vUtils_Debug("Jenie Init Coordinator");
+	u32AHI_Init();
+	vUtils_Init();
+	vUART_printInit();
+	vPRT_Init_9555(E_BUS_400_KH);
 
-    if(eJenie_Start(E_JENIE_COORDINATOR) != E_JENIE_SUCCESS)
-    {
-        vUtils_Debug("!!Failed to start Jenie!!");
-        while(1);
-    }
+
+#if !NO_DEBUG_ON
+
+#if SHOW_TEST_1
+	PCA_9555_test_01();
+#endif //SHOW_TEST_1
+
+#if SHOW_TEST_2
+	PCA_9555_test_02();
+#endif //SHOW_TEST_2
+
+#if SHOW_TEST_3
+	PCA_9555_test_03();
+#endif //SHOW_TEST_3
+#endif // !NO_DEBUG_ON
+
+#if 0
+	/* Initialise utilities */
+	bool_t status = FALSE;
+	vUtils_Init();
+	vUART_printInit();
+
+	//status = Init_PCA_9555(E_BUS_100_KH);
+	I2CWrite(0x40,0x06,0x00);
+
+	vPrintf("stat:%d\n",status);
+#endif
+
+	memset(&sAppData, 0, sizeof(sAppData));
+	vUtils_Debug("Jenie demarrage Coordinateur");
+
+	if(eJenie_Start(E_JENIE_COORDINATOR) != E_JENIE_SUCCESS)
+	{
+		vUtils_Debug("!!Failed to start Jenie!!");
+		while(1);
+	}
 }
 
 /****************************************************************************
@@ -128,43 +168,44 @@ PUBLIC void vJenie_CbInit(bool_t bWarmStart)
  ****************************************************************************/
 PUBLIC void vJenie_CbMain(void)
 {
-    /* regular watchdog reset */
-    #ifdef WATCHDOG_ENABLED
-       vAHI_WatchdogRestart();
-    #endif
+	/* regular watchdog reset */
+#ifdef WATCHDOG_ENABLED
+	vAHI_WatchdogRestart();
+#endif
 
-    switch(sAppData.eAppState)
-    {
-    case APP_STATE_WAITING_FOR_NETWORK:
-        /* nothing to do till network is up and running */
-        break;
+	switch(sAppData.eAppState)
+	{
+		case APP_STATE_WAITING_FOR_NETWORK:
+			/* nothing to do till network is up and running */
+			break;
 
-    case APP_STATE_NETWORK_UP:
-        /* as we are a coordinator, allow nodes to associate with us */
-        vUtils_Debug("enabling association");
-        eJenie_SetPermitJoin(TRUE);
+		case APP_STATE_NETWORK_UP:
+			/* as we are a coordinator, allow nodes to associate with us */
+			vUtils_Debug("enabling association");
+			eJenie_SetPermitJoin(TRUE);
 
-        /* register services */
-        sAppData.eAppState = APP_STATE_REGISTERING_SERVICE;
-        break;
+			/* register services */
+			sAppData.eAppState = APP_STATE_RUNNING;
+			break;
 
-    case APP_STATE_REGISTERING_SERVICE:
-        /* we provide FIRST_SERVICE */
-        vUtils_Debug("registering service");
-        eJenie_RegisterServices(FIRST_SERVICE_MASK);
+		case APP_STATE_REGISTERING_SERVICE:
+			/* we provide FIRST_SERVICE */
+			vUtils_Debug("registering service");
+			eJenie_RegisterServices(FIRST_SERVICE_MASK);
 
-        /* go to the running state */
-        sAppData.eAppState = APP_STATE_RUNNING;
-        break;
+			/* go to the running state */
+			sAppData.eAppState = APP_STATE_RUNNING;
+			break;
 
-    case APP_STATE_RUNNING:
-        /* do all necessary processing here */
-        break;
+		case APP_STATE_RUNNING:
+			/* do all necessary processing here */
+			vPRT_LireBtnPgm();
+			break;
 
-    default:
-        vUtils_DisplayMsg("!!Unknown state!!", sAppData.eAppState);
-        while(1);
-    }
+		default:
+			vUtils_DisplayMsg("!!Unknown state!!", sAppData.eAppState);
+			while(1);
+	}
 }
 /****************************************************************************
  *
@@ -183,55 +224,55 @@ PUBLIC void vJenie_CbMain(void)
  ****************************************************************************/
 PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
 {
-    switch(eEventType)
-    {
-    case E_JENIE_NETWORK_UP:
-        /* Indicates stack is up and running */
-        vUtils_Debug("network up");
-        if(sAppData.eAppState == APP_STATE_WAITING_FOR_NETWORK)
-        {
-            sAppData.eAppState = APP_STATE_NETWORK_UP;
-        }
-        break;
+	switch(eEventType)
+	{
+		case E_JENIE_NETWORK_UP:
+			/* Indicates stack is up and running */
+			vUtils_Debug("network up");
+			if(sAppData.eAppState == APP_STATE_WAITING_FOR_NETWORK)
+			{
+				sAppData.eAppState = APP_STATE_NETWORK_UP;
+			}
+			break;
 
-    case E_JENIE_REG_SVC_RSP:
-        vUtils_Debug("Reg service response");
-        break;
+		case E_JENIE_REG_SVC_RSP:
+			vUtils_Debug("Reg service response");
+			break;
 
-    case E_JENIE_SVC_REQ_RSP:
-        vUtils_Debug("Service req response");
-        break;
+		case E_JENIE_SVC_REQ_RSP:
+			vUtils_Debug("Service req response");
+			break;
 
-    case E_JENIE_PACKET_SENT:
-        vUtils_Debug("Packet sent");
-        break;
+		case E_JENIE_PACKET_SENT:
+			vUtils_Debug("Packet sent");
+			break;
 
-    case E_JENIE_PACKET_FAILED:
-        vUtils_Debug("Packet failed");
-        break;
+		case E_JENIE_PACKET_FAILED:
+			vUtils_Debug("Packet failed");
+			break;
 
-    case E_JENIE_CHILD_JOINED:
-        vUtils_Debug("Child Joined");
-        break;
+		case E_JENIE_CHILD_JOINED:
+			vUtils_Debug("Child Joined");
+			break;
 
-    case E_JENIE_CHILD_LEAVE:
-        vUtils_Debug("Child Leave");
-        break;
+		case E_JENIE_CHILD_LEAVE:
+			vUtils_Debug("Child Leave");
+			break;
 
-    case E_JENIE_CHILD_REJECTED:
-        vUtils_Debug("Child Rejected");
-        break;
+		case E_JENIE_CHILD_REJECTED:
+			vUtils_Debug("Child Rejected");
+			break;
 
-    case E_JENIE_STACK_RESET:
-        vUtils_Debug("Stack Reset");
-        sAppData.eAppState = APP_STATE_WAITING_FOR_NETWORK;
-        break;
+		case E_JENIE_STACK_RESET:
+			vUtils_Debug("Stack Reset");
+			sAppData.eAppState = APP_STATE_WAITING_FOR_NETWORK;
+			break;
 
-    default:
-        /* Unknown data event type */
-        vUtils_DisplayMsg("!!Unknown Mgmt Event!!", eEventType);
-        break;
-   }
+		default:
+			/* Unknown data event type */
+			vUtils_DisplayMsg("!!Unknown Mgmt Event!!", eEventType);
+			break;
+	}
 }
 
 /****************************************************************************
@@ -249,29 +290,29 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
  ****************************************************************************/
 PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
 {
-    switch(eEventType)
-    {
-    case E_JENIE_DATA:
-        vUtils_Debug("Data event");
-        break;
+	switch(eEventType)
+	{
+		case E_JENIE_DATA:
+			vUtils_Debug("Data event");
+			break;
 
-    case E_JENIE_DATA_TO_SERVICE:
-        vUtils_Debug("Data to service event");
-        break;
+		case E_JENIE_DATA_TO_SERVICE:
+			vUtils_Debug("Data to service event");
+			break;
 
-    case E_JENIE_DATA_ACK:
-        vUtils_Debug("Data ack");
-        break;
+		case E_JENIE_DATA_ACK:
+			vUtils_Debug("Data ack");
+			break;
 
-    case E_JENIE_DATA_TO_SERVICE_ACK:
-        vUtils_Debug("Data to service ack");
-        break;
+		case E_JENIE_DATA_TO_SERVICE_ACK:
+			vUtils_Debug("Data to service ack");
+			break;
 
-    default:
-        // Unknown data event type
-        vUtils_DisplayMsg("!!Unknown Data Event!!", eEventType);
-        break;
-    }
+		default:
+			// Unknown data event type
+			vUtils_DisplayMsg("!!Unknown Data Event!!", eEventType);
+			break;
+	}
 }
 
 /****************************************************************************
@@ -291,18 +332,123 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
  ****************************************************************************/
 PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId,uint32 u32ItemBitmap)
 {
-    switch (u32DeviceId)
-    {
-        case E_JPI_DEVICE_TICK_TIMER:
-            /* regular 10ms tick generated here */
-            break;
+	static uint8 TempoIt = 0;
+	uint32 val = 0;
 
-        default:
-            vUtils_DisplayMsg("HWint: ", u32DeviceId);
-            break;
-    }
+	switch (u32DeviceId)
+	{
+		case E_JPI_DEVICE_TICK_TIMER:
+			/* regular 10ms tick generated here */
+			if (bStartPgmTimer){
+				TimePgmPressed++;
+			}
+
+			if (bUneIt){
+				TempoIt++;
+
+				if(TempoIt == CST_ANTI_REBOND_IT)
+				{
+					TempoIt = 0;
+					bUneIt=FALSE;
+					val = vPRT_DioReadInput();
+					vPrintf("It read = %x\n",val);
+					vPRT_TraiterChangementEntree(val);
+				}
+			}
+			break;
+
+		default:
+			vUtils_DisplayMsg("HWint: ", u32DeviceId);
+			break;
+	}
 }
 
+PRIVATE void vPRT_LireBtnPgm(void)
+{
+	PRIVATE bool_t passage = FALSE;
+
+	// Bouton Pgm appuye ??
+	if ((u8JPI_PowerStatus() & 0x10) == 0)
+	{
+		bStartPgmTimer = TRUE;
+	}
+	else
+	{
+		bStartPgmTimer = FALSE;
+		if(TimePgmPressed)
+		{
+			if (TimePgmPressed<30)
+			{
+				if(!passage){
+					vPRT_DioSetOutput(bit0,bit7);
+				}
+				else
+				{
+					vPRT_DioSetOutput(bit7,bit0);
+				}
+				passage = !passage;
+
+			}
+			TimePgmPressed = 0;
+		}
+	}
+}
+
+PRIVATE void vPRT_TraiterChangementEntree(uint32 val)
+{
+	uint16 lesEntrees = (val>>16 & 0xFF00) | (((uint16)val>>8) & 0x00FF);
+	uint16 tmp = prevConfInputs ^ lesEntrees;
+	uint8 un_port = 0;
+	uint8 val_port = 0;
+	uint8 une_entree = 0;
+	uint32 req_on = ((prevConfOutputs << 8) & 0x00FF0000 )| ((uint8)prevConfOutputs & 0x00FF00FF);
+	uint32 req_off = ((~prevConfOutputs << 8) & 0x00FF0000 )| (~(uint8)prevConfOutputs & 0x00FF00FF);
+
+	vPrintf("\nConfig entrees -> previous:%x, now:%x\n", prevConfInputs, lesEntrees);
+	vPrintf(" Depart Req_on:%x, Req_off:%x\n",req_on,req_off);
+
+	if(tmp)
+	{
+		vPrintf("\nConfig sorties -> previous:%x\n",prevConfOutputs);
+
+		for(un_port=0;un_port<2;un_port++)
+		{
+			val_port = (uint8)tmp>>(8*un_port);
+			//out_cnf = (uint8)prevConfOutputs>>(8*un_port);
+
+			for(une_entree = 0; une_entree< 8; une_entree++)
+			{
+				if(IsBitSet(val_port, une_entree))
+				{
+					vPrintf(" Changement sur l'entree %d du port %d\n", une_entree, un_port);
+
+					// Memorisation du changement
+					prevConfInputs = lesEntrees;
+
+					// prendre la valeur du bit concerne pour faire on ou off
+					if(IsBitSet(lesEntrees,(une_entree + (un_port*8))))
+					{
+						// Si on a un 1 -> pull up active
+						// interrupteur branche a la masse
+						vPrintf("  Passage a OFF\n");
+						BitNset(req_on,(une_entree + ((un_port)*16)));
+						BitNclr(req_off,(une_entree + ((un_port)*16)));
+					}
+					else
+					{
+						vPrintf("  Passage a ON\n");
+						BitNset(req_off,(une_entree + ((un_port)*16)));
+						BitNclr(req_on,(une_entree + ((un_port)*16)));
+					}
+				}
+			}
+
+		}
+		// envoyer la commande de config des sorties
+		vPrintf(" Modif Req_on:%x, Req_off:%x\n",req_on,req_off);
+		vPRT_DioSetOutput(req_on,req_off);
+	}
+}
 /****************************************************************************/
 /***        END OF FILE                                                   ***/
 /****************************************************************************/

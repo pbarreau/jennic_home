@@ -70,6 +70,17 @@ extern "C" {
 #define UTILS_UART              E_AHI_UART_0
 #define UTILS_UART_BAUD_RATE    E_AHI_UART_RATE_19200
 
+#define	SHOW_TEST_1	FALSE
+#define	SHOW_TEST_2	FALSE
+#define	SHOW_TEST_3	TRUE
+
+#define NO_DEBUG_ON	TRUE
+
+#if NO_DEBUG_ON
+#define vPrintf(...)
+#endif
+
+
 /****************************************************************************/
 /***        Type Definitions                                              ***/
 /****************************************************************************/
