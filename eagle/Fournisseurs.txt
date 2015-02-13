@@ -1,0 +1,5 @@
+http://www.elecfreaks.com/store/
+http://www.eurocircuits.com/Cadsoft-Eagle-brd-to-Gerber-conversion-guidelines
+http://www.build-electronic-circuits.com/gerber-file/
+
+http://bildr.org/2011/03/adxl345-arduino/
