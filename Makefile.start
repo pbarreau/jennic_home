@@ -16,14 +16,17 @@
 #
 #############################################################################
 
-DIRS	= PB_VillaProtheo_N1 PB_VillaProtheo_N2 PB_VillaProtheo_N3
+DIRS	= PB_VillaProtheo_N1
 
-TARGETS: clean all
+TARGETS: clean all T_5139 T_5148
 
-all: 
-	-for d in $(DIRS); do (cd $$d/out; $(MAKE) $(MFLAGS) all ); done
+all: T_5139 T_5148
+
+T_5139: 
 	-for d in $(DIRS); do (cd $$d/out; $(MAKE) -f Makefile_JN5139.mk $(MFLAGS) all ); done
 
+T_5148:
+	-for d in $(DIRS); do (cd $$d/out; $(MAKE) $(MFLAGS) all ); done
 
 clean:
 	find . -type f \( -name "*.[do]" -o -name "*.bak" -o -name "*.bin" -o -name "*.elf" -o -name "*.map" -o -name "*~" -o -name "*.?#?" \) -exec rm -f {} \;

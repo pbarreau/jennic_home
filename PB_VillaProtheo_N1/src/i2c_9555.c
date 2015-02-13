@@ -524,7 +524,11 @@ PRIVATE void u8_I2CWrite_9555(uint8 u8SlaveAddr,uint8 u8RegAddr, uint8 u8Value)
 
 	while(bAHI_SiPollTransferInProgress()); // wait while busy
 	//check to see if we get an ACK back
+#if (JENNIC_CHIP_FAMILY == JN513x)
+	if(bAHI_SiPollRxNack())
+#elif (JENNIC_CHIP_FAMILY == JN514x)
 	if(bAHI_SiMasterCheckRxNack())
+#endif
 	{
 		vPrintf("    ERR:Cible i2c pas de reponse\n");
 		return;
@@ -546,7 +550,12 @@ PRIVATE void u8_I2CWrite_9555(uint8 u8SlaveAddr,uint8 u8RegAddr, uint8 u8Value)
 			E_AHI_SI_SEND_ACK,
 			E_AHI_SI_NO_IRQ_ACK);
 	while(bAHI_SiPollTransferInProgress()); // wait while busy
+
+#if (JENNIC_CHIP_FAMILY == JN513x)
+	if(bAHI_SiPollRxNack())
+#elif (JENNIC_CHIP_FAMILY == JN514x)
 	if(bAHI_SiMasterCheckRxNack())
+#endif
 	{
 		vPrintf("    ERR:Reponse cmp i2c\n");
 		return;
@@ -563,7 +572,12 @@ PRIVATE void u8_I2CWrite_9555(uint8 u8SlaveAddr,uint8 u8RegAddr, uint8 u8Value)
 			E_AHI_SI_SEND_ACK,
 			E_AHI_SI_NO_IRQ_ACK);
 	while(bAHI_SiPollTransferInProgress()); // wait while busy
+
+#if (JENNIC_CHIP_FAMILY == JN513x)
+	if(bAHI_SiPollRxNack())
+#elif (JENNIC_CHIP_FAMILY == JN514x)
 	if(bAHI_SiMasterCheckRxNack())
+#endif
 	{
 		vPrintf("    ERR:Ecriture valeur sur i2c\n");
 		return;
@@ -594,7 +608,11 @@ vPrintf("\n Lecture i2c(%x)\n",u8SlaveAddr);
 
 	while(bAHI_SiPollTransferInProgress()); // wait while busy
 	//check to see if we get an ACK back
+#if (JENNIC_CHIP_FAMILY == JN513x)
+	if(bAHI_SiPollRxNack())
+#elif (JENNIC_CHIP_FAMILY == JN514x)
 	if(bAHI_SiMasterCheckRxNack())
+#endif
 	{
 		vPrintf("  ERR:Cible i2c(%x) pas de reponse\n",u8SlaveAddr);
 		return u16Res;
@@ -616,7 +634,12 @@ vPrintf("\n Lecture i2c(%x)\n",u8SlaveAddr);
 			E_AHI_SI_SEND_ACK,
 			E_AHI_SI_NO_IRQ_ACK);
 	while(bAHI_SiPollTransferInProgress()); // wait while busy
+
+#if (JENNIC_CHIP_FAMILY == JN513x)
+	if(bAHI_SiPollRxNack())
+#elif (JENNIC_CHIP_FAMILY == JN514x)
 	if(bAHI_SiMasterCheckRxNack())
+#endif
 	{
 		vPrintf("  ERR:Ecriture dans registre cible i2c\n");
 		return u16Res;
@@ -633,7 +656,12 @@ vPrintf("\n Lecture i2c(%x)\n",u8SlaveAddr);
 			E_AHI_SI_SEND_ACK,
 			E_AHI_SI_NO_IRQ_ACK);
 	while(bAHI_SiPollTransferInProgress()); // wait while busy
+
+#if (JENNIC_CHIP_FAMILY == JN513x)
+	if(bAHI_SiPollRxNack())
+#elif (JENNIC_CHIP_FAMILY == JN514x)
 	if(bAHI_SiMasterCheckRxNack())
+#endif
 	{
 		vPrintf("  ERR:Pas de msg du composant i2c\n");
 		return u16Res;
@@ -649,7 +677,12 @@ vPrintf("\n Lecture i2c(%x)\n",u8SlaveAddr);
 			E_AHI_SI_SEND_ACK,
 			E_AHI_SI_NO_IRQ_ACK);
 	while(bAHI_SiPollTransferInProgress()); // wait while busy
-	u8Res = u8AHI_SiMasterReadData8();
+
+#if (JENNIC_CHIP_FAMILY == JN513x)
+	u8Res = u8AHI_SiReadData8();
+#elif (JENNIC_CHIP_FAMILY == JN514x)
+		u8Res = u8AHI_SiMasterReadData8();
+#endif
 	vPrintf("  Valeur recu port 0:%x\n", u8Res);
 	u16Res = u8Res;
 
@@ -661,7 +694,12 @@ vPrintf("\n Lecture i2c(%x)\n",u8SlaveAddr);
 			E_AHI_SI_SEND_NACK,
 			E_AHI_SI_NO_IRQ_ACK);
 	while(bAHI_SiPollTransferInProgress()); // wait while busy
-	u8Res = u8AHI_SiMasterReadData8();
+
+#if (JENNIC_CHIP_FAMILY == JN513x)
+	u8Res = u8AHI_SiReadData8();
+#elif (JENNIC_CHIP_FAMILY == JN514x)
+		u8Res = u8AHI_SiMasterReadData8();
+#endif
 	vPrintf("  Valeur recu port 1:%x\n", u8Res);
 	u16Res = u16Res | (u8Res<<8);
 
