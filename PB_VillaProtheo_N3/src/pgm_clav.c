@@ -98,6 +98,7 @@ PUBLIC teClavState CLAV_PgmNetMsgInput(tsData *psData)
 		{
 			vPrintf("  une boite se fait connaitre\n");
 			mef_clav = pgm_GererBoiteEntrante(psData);
+			vPrintf("  une boite a ete geree\n");
 		}
 		else
 		{
@@ -210,6 +211,8 @@ PRIVATE teClavState pgm_GererBoiteEntrante(tsData *psData)
 	teClavState mef_clav = E_CLAV_ETAT_UNDEF;
 	uint8 box_number = psData->pau8Data[psData->u16Length-1];
 
+	vPrintf("   Boite id [%d] \n",box_number);
+
 	if(box_number < C_MAX_BOXES){
 		// verifier que l'on ne connait pas deja cette @
 		//if(eeprom.BoxAddr[IncomingBoxId]==0xffffffffffffffffULL){
@@ -242,6 +245,16 @@ PRIVATE teClavState pgm_GererBoiteEntrante(tsData *psData)
 		AppData.u8BoxId = box_number;
 
 		AppData.eAppState = APP_BOUCLE_PRINCIPALE;
+	}
+	else
+	{
+		vPrintf("   ERROR !! Box id %d superieur a %d\n", box_number, C_MAX_BOXES);
+
+		// Retour au mode normal
+		vPrintf("   Retour en usage : utilisation courante\n");
+		mef_clav = CLAV_GererTouche(AppData.eKeyPressed);
+
+		// TODO : Envoyer msg a la box id (en erreur) pour qu'elle ne reste pas en attente de touche clavier
 	}
 	return mef_clav;
 }
