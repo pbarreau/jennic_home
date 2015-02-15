@@ -33,26 +33,13 @@
 /****************************************************************************/
 /***        Type Definitions                                              ***/
 /****************************************************************************/
-#if 0
-typedef enum
-{
-	APP_STATE_WAITING_FOR_NETWORK,
-	APP_STATE_NETWORK_UP,
-	APP_STATE_REGISTERING_SERVICE,
-	APP_STATE_RUNNING
-} teAppState;
-
-typedef struct
-{
-	teAppState eAppState;
-} tsAppData;
-#endif
 
 /****************************************************************************/
 /***        Local Function Prototypes                                     ***/
 /****************************************************************************/
 PRIVATE void vPRT_LireBtnPgm(void);
 PRIVATE void vPRT_TraiterChangementEntree(uint32 val);
+PRIVATE uint8 showDipSwitch(void);
 /****************************************************************************/
 /***        Exported Variables                                            ***/
 /****************************************************************************/
@@ -62,43 +49,63 @@ PRIVATE void vPRT_TraiterChangementEntree(uint32 val);
 /****************************************************************************/
 PRIVATE bool_t bStartPgmTimer = FALSE;
 PRIVATE uint16 TimePgmPressed = 0;
+PRIVATE PBAR_E_KeyMode ePgmMode = E_CLAV_MODE_NOT_SET;
 
 PRIVATE tsAppData sAppData;
 
 /* Routing table storage */
 PRIVATE tsJenieRoutingTable asRoutingTable[100];
 
+PRIVATE uint8 	pBuff[2]; // pointeur In & Read du buffer
+PRIVATE uint8 	bufReception[PBAR_RBUF_SIZE]; // Buffer circulaire reception
+PRIVATE uint64	bufAddr[PBAR_RBUF_SIZE];
+PRIVATE uint8 	bufEmission[3] ={0,0,0};
+PRIVATE uint8 	buf2[3] ={0,0,0};
+
+// Pour config Clavier distant
+PRIVATE uint64					LaBasId	 = 0;
+PRIVATE PBAR_E_KeyMode	LabasMod = E_CLAV_MODE_NOT_SET;
+PRIVATE PBAR_KIT_8046		LabasKbd = E_KPD_NONE;
+PRIVATE uint8 ledId = 0;
+PRIVATE uint8 config = 0;
+PRIVATE uint8 prevConf = 0;
+
+PRIVATE bool_t cbStartTempoRechercheClavier = FALSE;
+PRIVATE uint16 TimeRechercheClavier = 0;
+PRIVATE bool_t cbUnClavierActif = FALSE;
+
+PRIVATE uint8 	etatSorties; // reflet des ios actuel
+
 // Reference de la boite
 PRIVATE uint8 uThisBox_Id = 0;
 
-PRIVATE uint8 showDipSwitch(void);
 
+/****************************************************************************/
 PRIVATE uint8 showDipSwitch(void)
 {
 	uint32 val = 0L;
 	uint8 uboxid = 0;
 
-	/* Open UART for printf use {v2} */
-	vUART_printInit();
-
-
-	// Set Io Out
-	vAHI_DioSetDirection(0,PBAR_CFG_OUTPUT);
-
 	// Set IO In
-	vAHI_DioSetDirection(PBAR_CFG_INPUT,0);
+	vAHI_DioSetDirection(E_JPI_DIO17_INT |\
+			E_JPI_DIO18_INT |\
+			E_JPI_DIO19_INT |\
+			E_JPI_DIO20_INT,0);
 
 	val = u32AHI_DioReadInput();
 	// Recuperer la valeur de conf de la boite
-	//uboxid = ((uint8)((val>>6)&0x0C) |((uint8)val&0x03));;
 	uboxid = (uint8)((val>>17)&0x0F);
+
+#if !NO_DEBUG_ON
+	/* Open UART for printf use {v2} */
+	vUART_printInit();
 
 	/* Initialise utilities */
 	vUtils_Init();
 
 	// Detection type de boite
 	vPrintf("!!Box Id set by dip switch : %d\n", uboxid);
-
+#endif
 	return(uboxid);
 }
 
@@ -154,48 +161,69 @@ PUBLIC void vJenie_CbConfigureNetwork(void)
 
 PUBLIC void vJenie_CbInit(bool_t bWarmStart)
 {
+	teJenieStatusCode eStatus; /* Jenie status code */
+	teJenieDeviceType eDevType = E_JENIE_ROUTER;
+
+	// Reset Buffer Application
+	memset(&bufReception, 0, sizeof(bufReception));
+	memset(&pBuff, 0, sizeof(pBuff));
+
+	// Reset APP_STATES
+	memset(&sAppData, 0, sizeof(sAppData));
 
 	u32AHI_Init();
-	vUtils_Init();
-	vUART_printInit();
-	vPRT_Init_9555(E_BUS_400_KH);
-
 
 #if !NO_DEBUG_ON
-
-#if SHOW_TEST_1
-	PCA_9555_test_01();
-#endif //SHOW_TEST_1
-
-#if SHOW_TEST_2
-	PCA_9555_test_02();
-#endif //SHOW_TEST_2
-
-#if SHOW_TEST_3
-	PCA_9555_test_03();
-#endif //SHOW_TEST_3
-#endif // !NO_DEBUG_ON
-
-#if 0
-	/* Initialise utilities */
-	bool_t status = FALSE;
 	vUtils_Init();
 	vUART_printInit();
-
-	//status = Init_PCA_9555(E_BUS_100_KH);
-	I2CWrite(0x40,0x06,0x00);
-
-	vPrintf("stat:%d\n",status);
 #endif
 
-	memset(&sAppData, 0, sizeof(sAppData));
-	vUtils_Debug("Jenie demarrage Coordinateur");
+	vPRT_Init_9555(E_BUS_400_KH);
 
-	if(eJenie_Start(E_JENIE_COORDINATOR) != E_JENIE_SUCCESS)
+	switch(uThisBox_Id)
 	{
-		vUtils_Debug("!!Failed to start Jenie!!");
-		while(1);
+		case 0:
+		{
+			vPrintf("Mode test des sorties\n");
+			eDevType = E_JENIE_COORDINATOR;
+		}
+		break;
+		case 1:
+		{
+			vPrintf("Mode Installation Coordonateur\n");
+			eDevType = E_JENIE_COORDINATOR;
+		}
+		break;
+
+		case 2:
+		{
+			vPrintf("Mode Installation Passerelle\n");
+		}
+		break;
+
+		default :
+		{
+			vPrintf("Mode Installation Routeur\n");
+		}
+		break;
 	}
+
+	// Activation de la led status
+	au8Led[C_LID_1].actif = TRUE;
+	au8Led[C_LID_1].pio = C_LPID_1;
+
+
+	if(sAppData.eAppState != APP_STATE_TST_START_LUMIERES)
+	{
+		if((eStatus=eJenie_Start(eDevType)) != E_JENIE_SUCCESS)
+		{
+			au8Led[C_LID_1].mode = E_FLASH_ERREUR_DECTECTEE;
+
+			vPrintf("!!Jenie err: %d\n", eStatus);
+			while(1);
+		}
+	}
+
 }
 
 /****************************************************************************
@@ -330,27 +358,64 @@ PUBLIC void vJenie_CbMain(void)
  ****************************************************************************/
 PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
 {
+	tsChildJoined *psStackMgmtData = (tsChildJoined *) pvEventPrim;
+	//tsNwkStartUp *pNet = (tsNwkStartUp*)pvEventPrim;
+	//uint8 keep;
 	switch(eEventType)
 	{
 		case E_JENIE_NETWORK_UP:
-			/* Indicates stack is up and running */
-			vUtils_Debug("network up");
-			if(sAppData.eAppState == APP_STATE_WAITING_FOR_NETWORK)
+		{
+			bp_CommunStackMgmtEvent(&sAppData.eAppState,
+					eEventType,
+					pvEventPrim);
+		}
+		break;
+
+		case E_JENIE_REG_SVC_RSP:
+		{
+			vPrintf("Enregistrement differre ??\n");
+		}
+		break;
+
+		case E_JENIE_SVC_REQ_RSP:
+			vPrintf(" > Trouve : ");
 			{
-				sAppData.eAppState = APP_STATE_NETWORK_UP;
+				if(sAppData.eAppState == APP_STATE_ATTENTE_CLAV_RSP)
+				{
+					// Stop Timer
+					cbStartTempoRechercheClavier = FALSE;
+					TimeRechercheClavier = 0;
+
+					vPrintf
+					("Boitier [%x:%x]\n",
+							(uint32) (psStackMgmtData->u64SrcAddress >> 32),
+							(uint32) (psStackMgmtData->u64SrcAddress & 0xFFFFFFFF)
+					);
+
+					// Memorisation du @ clavier
+					LaBasId = psStackMgmtData->u64SrcAddress;
+
+					// Indiquer mon numero de boite au clavier
+					vPrintf("    Envoie de mon box id:%d\n\n",uThisBox_Id);
+					vPrintf("En attente d'une touche du Boitier de commande\n");
+					bufEmission[0]=uThisBox_Id;
+					eJenie_SendData(LaBasId,
+							bufEmission, 1,TXOPTION_SILENT);
+/// ZZZZZZZZZZZZZZZZZZZ
+/// Avec ack ou sans ack ? TXOPTION_ACKREQ);
+					// On montre Led
+					au8Led[0].mode= E_FLASH_RECHERCHE_BC;
+
+					sAppData.eAppState = APP_STATE_CLAV_READY;
+
+				}
+
 			}
 			break;
 
-		case E_JENIE_REG_SVC_RSP:
-			vUtils_Debug("Reg service response");
-			break;
-
-		case E_JENIE_SVC_REQ_RSP:
-			vUtils_Debug("Service req response");
-			break;
 
 		case E_JENIE_PACKET_SENT:
-			vUtils_Debug("Packet sent");
+			vUtils_Debug("> Packet sent");
 			break;
 
 		case E_JENIE_PACKET_FAILED:
@@ -358,8 +423,13 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
 			break;
 
 		case E_JENIE_CHILD_JOINED:
-			vUtils_Debug("Child Joined");
-			break;
+		{
+			vPrintf
+			("> Arrivage d'un fils ->[%x:%x]\n",
+					(uint32) (psStackMgmtData->u64SrcAddress >> 32),
+					(uint32) (psStackMgmtData->u64SrcAddress & 0xFFFFFFFF));
+		}
+		break;
 
 		case E_JENIE_CHILD_LEAVE:
 			vUtils_Debug("Child Leave");
@@ -396,19 +466,143 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
  ****************************************************************************/
 PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
 {
+	tsDataToService *psStackEventData = (tsDataToService *) pvEventPrim;
+	tsData *psData = (tsData *) pvEventPrim;
+
 	switch(eEventType)
 	{
-		case E_JENIE_DATA:
-			vUtils_Debug("Data event");
+		case E_JENIE_PACKET_SENT:
+			vPrintf("Mesg envoyee\n");
 			break;
+
+		case E_JENIE_PACKET_FAILED:
+			vPrintf("Mesg echoue\n");
+			break;
+
+		case E_JENIE_DATA:
+		{
+			/* Get pointer to correct primitive structure */
+			/* Output to UART */
+			vPrintf("\nMsg du noeud[%x:%x] sur %d octets\n",
+					(uint32)(psData->u64SrcAddress >> 32),
+					(uint32)(psData->u64SrcAddress &  0xFFFFFFFF),
+					psData->u16Length
+			);
+
+			switch(sAppData.eAppState)
+			{
+				case APP_STATE_CLAV_READY:
+				{
+					if(psData->u16Length == 3){
+						buf2[0]= psData->pau8Data[psData->u16Length-3];
+						buf2[1]= psData->pau8Data[psData->u16Length-2];
+						buf2[2]= psData->pau8Data[psData->u16Length-1];
+
+						vPrintf(" Msg: %x,%x,%x\n",buf2[0],buf2[1],buf2[2]);
+
+						switch(buf2[0]){
+							case E_MSG_CFG_LIENS:
+							{
+								config=buf2[2];
+								prevConf = config;
+								LabasKbd = buf2[1] & 0x0F;
+								LabasMod = buf2[1]>>4 & 0xF;
+								vPrintf("  ie: touche '%d', mode '%d'\n",LabasKbd,LabasMod);
+
+								sAppData.eAppState = APP_STATE_SET_MY_OUTPUT;
+							}
+							break;
+
+							default:
+							{
+								vPrintf("Message clavier non compris\n");
+							}
+							break;
+
+						}
+					}
+				}
+				break;
+
+				case APP_STATE_RUNNING:
+				{
+					// Mettre info dans buffer circulaire pour traitement
+					if(pBuff[0] == PBAR_RBUF_SIZE)
+						pBuff[0]=0;
+
+					// Addresse emetteur
+					bufAddr[pBuff[0]]=psData->u64SrcAddress;
+
+					// Debut format message (sur 3 octets)
+					// octet 0
+					bufReception[pBuff[0]]=psData->pau8Data[psData->u16Length-3];
+					pBuff[0]++;
+
+					// octel 1
+					bufReception[pBuff[0]]=psData->pau8Data[psData->u16Length-2];
+					pBuff[0]++;
+
+					// octel 2
+					bufReception[pBuff[0]]=psData->pau8Data[psData->u16Length-1];
+					pBuff[0]++;
+					// Fin format message
+
+					// Traitement
+					sAppData.eAppState = APP_STATE_TRAITER_INPUT_MESSAGE;
+
+				}
+				break;
+				default:
+				{
+					vPrintf("Reception donnee non prevu !!\n");
+				}
+				break;
+			}
+
+		}
+		break;
 
 		case E_JENIE_DATA_TO_SERVICE:
 			vUtils_Debug("Data to service event");
+
+			vPrintf("S:%d -> d:%d\n",psStackEventData->u8SrcService,psStackEventData->u8DestService);
 			break;
 
 		case E_JENIE_DATA_ACK:
-			vUtils_Debug("Data ack");
-			break;
+		{
+			//vPrintf("\n> Data ack");
+			switch(sAppData.eAppState)
+			{
+				case APP_STATE_ATTENDRE_FIN_CFG_LOCAL:
+				{
+					vPrintf("Configuration touche terminee\n");
+					vPrintf("En attente autre touche du boitier de commande\n");
+
+					// On efface la config visible
+					// Mettre les sorties a 0
+					vPRT_DioSetOutput(0,0xFF);
+
+					// on reinitialise les registre interne
+					etatSorties = 0;
+					config = 0;
+
+					// On remet la led en normal
+					au8Led[0].mode= E_FLASH_EN_ATTENTE_TOUCHE_BC;
+
+					ledId = 0;
+					ePgmMode = E_CLAV_MODE_NOT_SET;
+					sAppData.eAppState = APP_STATE_CLAV_READY;
+				}
+				break;
+
+				default:
+				{
+					vPrintf("Ack non prevu\n");
+				}
+				break;
+			}
+		}
+		break;
 
 		case E_JENIE_DATA_TO_SERVICE_ACK:
 			vUtils_Debug("Data to service ack");

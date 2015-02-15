@@ -9,10 +9,6 @@
 #define LED_H_
 
 #define	CST_NB_IHM_LED	2
-#define	CST_LED_INFO_1	0
-#define	CST_LED_INFO_2	1
-#define	PIO_LED_INFO_1	19
-#define	PIO_LED_INFO_2	13
 
 #define	CST_LED_PERIOD	8
 

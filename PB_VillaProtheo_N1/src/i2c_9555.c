@@ -228,26 +228,26 @@ PRIVATE void vPRT_PrepareJennic(sBusSpeed speed)
 
 
 	// Pio en sortie
-	vAHI_DioSetDirection(0,E_AHI_DIO13_INT);
-	vAHI_DioSetOutput(E_AHI_DIO13_INT,0); //Eteindre la led config clavier
-	au8Led[CST_LED_INFO_2].actif = TRUE;
-	au8Led[CST_LED_INFO_2].pio = PIO_LED_INFO_2;
-	au8Led[CST_LED_INFO_2].mode = E_LED_OFF;
+	vAHI_DioSetDirection(0,PBAR_CFG_OUTPUT);
+	vAHI_DioSetOutput(C_LPIO_2,0); //Eteindre la led mode pgm
+	au8Led[C_LID_2].actif = TRUE;
+	au8Led[C_LID_2].pio = C_LPID_2;
+	au8Led[C_LID_2].mode = E_LED_OFF;
 
 	// Pio en entree
-	vAHI_DioSetDirection(E_AHI_DIO11_INT|E_AHI_DIO12_INT, 0);
+	vAHI_DioSetDirection(PBAR_CFG_INPUT, 0);
 
 	// pull up activee sur les entrees
-	vAHI_DioSetPullup(E_AHI_DIO11_INT|E_AHI_DIO12_INT, 0);
+	vAHI_DioSetPullup(PBAR_CFG_INPUT, 0);
 
 	// sens de la transition pour it (falling ie doc 9555)
-	vAHI_DioInterruptEdge(0, E_AHI_DIO11_INT|E_AHI_DIO12_INT);
+	vAHI_DioInterruptEdge(0, E_AHI_DIO11_INT);
 
 	// Enregistrer la call back de gestions des its
 	vAHI_SysCtrlRegisterCallback(vPRT_It_9555);
 
 	// Autoriser les Its
-	vAHI_DioInterruptEnable(E_AHI_DIO11_INT|E_AHI_DIO12_INT, 0);
+	vAHI_DioInterruptEnable(E_AHI_DIO11_INT, 0);
 
 }
 
@@ -724,7 +724,6 @@ PRIVATE uint16 u16_I2CRead_9555(uint8 u8SlaveAddr)
 
 PRIVATE void vPRT_It_9555 (uint32 u32Device,uint32 u32ItemBitmap)
 {
-	static bool_t passage = FALSE;
 
 	switch (u32Device)
 	{
@@ -743,60 +742,6 @@ PRIVATE void vPRT_It_9555 (uint32 u32Device,uint32 u32ItemBitmap)
 
 				case E_AHI_DIO12_INT:
 				{
-					if(bIt_DIO12==FALSE){
-						// declanchement d'un timer et Empecher nouvelle it
-						bIt_DIO12 = TRUE;
-						vPrintf("Une it presente\n");
-
-						if (bMessureDureePressionDio12 == FALSE){
-							bMessureDureePressionDio12 = TRUE;
-							timer_pression_DIO12 = 0;
-							// Inversion polarite detection It
-							// pour voir relachement interrupteur
-							// Positionner it sur front montant
-							vAHI_DioInterruptEdge(E_AHI_DIO12_INT,0);
-						}
-						else
-						{
-							bMessureDureePressionDio12 = FALSE;
-							// Analyser duree
-							if(timer_pression_DIO12 <60)
-							{
-								// Pression courte
-								vPrintf("Pression courte");
-								if(!passage)
-								{
-									au8Led[CST_LED_INFO_2].mode++;
-									vPrintf(" Up, Val=%d\n",au8Led[CST_LED_INFO_2].mode);
-								}
-								else
-								{
-									au8Led[CST_LED_INFO_2].mode--;
-									vPrintf(" Do, Val=%d\n",au8Led[CST_LED_INFO_2].mode);
-								}
-							}
-							else
-							{
-								vPrintf("Pression longue\n");
-
-								if(!passage)
-								{
-									vPrintf("Etat 1\n");
-									//vAHI_DioSetOutput(0, E_AHI_DIO13_INT);
-								}
-								else
-								{
-									vPrintf("Etat 2\n");
-									//vAHI_DioSetOutput(E_AHI_DIO13_INT,0);
-								}
-								passage = !passage;
-							}
-
-							// Positionner lecture it sur front descendant
-							vAHI_DioInterruptEdge(0,E_AHI_DIO12_INT);
-
-						}
-					}
 
 				}
 				break;
