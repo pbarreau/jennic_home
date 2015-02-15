@@ -15,6 +15,7 @@
 
 PUBLIC void MEF1_Turing(stMEF2 action)
 {
+#if 0
  switch(action.etape)
  {
 	 case E_MEF1_START:
@@ -32,4 +33,5 @@ PUBLIC void MEF1_Turing(stMEF2 action)
 	 }
 	 break;
  }
+#endif
 }

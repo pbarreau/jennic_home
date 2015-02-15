@@ -1,53 +1,21 @@
-/****************************************************************************
- *
- * MODULE:             config.h
- *
- * COMPONENT:          $RCSfile: services.h,v $
- *
- * VERSION:            $Name: $
- *
- * REVISION:           $Revision: 1.5 $
- *
- * DATED:              $Date: 2008-10-15 09:30:44 $
- *
- * STATUS:             $State: Exp $
- *
- * AUTHOR:             IM
- *
- * DESCRIPTION
- *
- * CHANGE HISTORY:
- *
- * LAST MODIFIED BY:   $Author: ja $
- *                     $Modtime: $
- *
- *
- ****************************************************************************
- *
- * This software is owned by Jennic and/or its supplier and is protected
- * under applicable copyright laws. All rights are reserved. We grant You,
- * and any third parties, a license to use this software solely and
- * exclusively on Jennic products. You, and any third parties must reproduce
- * the copyright and warranty notice and any other legend of ownership on each
- * copy or partial copy of the software.
- *
- * THIS SOFTWARE IS PROVIDED "AS IS". JENNIC MAKES NO WARRANTIES, WHETHER
- * EXPRESS, IMPLIED OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE,
- * ACCURACY OR LACK OF NEGLIGENCE. JENNIC SHALL NOT, IN ANY CIRCUMSTANCES,
- * BE LIABLE FOR ANY DAMAGES, INCLUDING, BUT NOT LIMITED TO, SPECIAL,
- * INCIDENTAL OR CONSEQUENTIAL DAMAGES FOR ANY REASON WHATSOEVER.
- *
- * Copyright Jennic Ltd 2008. All rights reserved
- *
- ****************************************************************************/
+// -----------------------------------
+// Projet	: PBPJ1
+//	Fic		: services.h
+//  Cree	: 30 juil. 2012
+//	Par		: Administrateur
+// -----------------------------------
 
-#ifndef  SERVICES_H_INCLUDED
-#define  SERVICES_H_INCLUDED
+
+
+// Definitions communes a : Coordonateur, routeur, end device
+
+#ifndef _PBPJ1_MO_SERVICES_H_
+#define _PBPJ1_MO_SERVICES_H_
 
 #if defined __cplusplus
 extern "C" {
 #endif
+
 
 /****************************************************************************/
 /***        Include Files                                                 ***/
@@ -56,17 +24,41 @@ extern "C" {
 /****************************************************************************/
 /***        Macro Definitions                                             ***/
 /****************************************************************************/
+#define SRV_INTER    0x00000001
+#define SRV_LUMIR    0x00000002
+#define SRV_VOLET    0x00000004
+#define SRV_MASK	 	 0x0000000F
 
-/* Services */
-#define FIRST_SERVICE     10
-#define SECOND_SERVICE    11
-#define THIRD_SERVICE     12
+#if 0
+#define BOITE_ID_01  0x00000010
+#define BOITE_ID_02  0x00000020
+#define BOITE_ID_03  0x00000040
+#define BOITE_ID_04  0x00000080
+#define BOITE_ID_05  0x00000100
+#define BOITE_ID_06  0x00000200
+#define BOITE_ID_07  0x00000400
+#define BOITE_ID_08  0x00000800
+#define BOITE_ID_09  0x00001000
+#define BOITE_ID_10  0x00002000
+#define BOITE_ID_11  0x00004000
+#define BOITE_ID_12  0x00008000
+#define BOITE_MASK   0x000000F0
+#endif
 
-/* Service masks */
-#define FIRST_SERVICE_MASK  (1 << (FIRST_SERVICE-1))
-#define SECOND_SERVICE_MASK (1 << (SECOND_SERVICE-1))
-#define THIRD_SERVICE_MASK  (1 << (THIRD_SERVICE-1))
-
+#define BOITE_ID_01  0x00000010
+#define BOITE_ID_02  0x00000020
+#define BOITE_ID_03  0x00000030
+#define BOITE_ID_04  0x00000040
+#define BOITE_ID_05  0x00000050
+#define BOITE_ID_06  0x00000060
+#define BOITE_ID_07  0x00000070
+#define BOITE_ID_08  0x00000080
+#define BOITE_ID_09  0x00000090
+#define BOITE_ID_10  0x000000A0
+#define BOITE_ID_11  0x000000B0
+#define BOITE_ID_12  0x000000C0
+#define BOITE_MASK   0x000000F0
+#define BOITE_MAXI	 15
 
 /****************************************************************************/
 /***        Type Definitions                                              ***/
@@ -84,8 +76,7 @@ extern "C" {
 }
 #endif
 
-#endif  /* SERVICES_H_INCLUDED */
-
+#endif // _PBPJ1_MO_SERVICES_H_
 /****************************************************************************/
-/***        END OF FILE                                                   ***/
+/***        End of File                                                   ***/
 /****************************************************************************/

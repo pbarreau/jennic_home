@@ -33,7 +33,7 @@
 /****************************************************************************/
 /***        Type Definitions                                              ***/
 /****************************************************************************/
-
+#if 0
 typedef enum
 {
 	APP_STATE_WAITING_FOR_NETWORK,
@@ -46,6 +46,7 @@ typedef struct
 {
 	teAppState eAppState;
 } tsAppData;
+#endif
 
 /****************************************************************************/
 /***        Local Function Prototypes                                     ***/
@@ -67,6 +68,40 @@ PRIVATE tsAppData sAppData;
 /* Routing table storage */
 PRIVATE tsJenieRoutingTable asRoutingTable[100];
 
+// Reference de la boite
+PRIVATE uint8 uThisBox_Id = 0;
+
+PRIVATE uint8 showDipSwitch(void);
+
+PRIVATE uint8 showDipSwitch(void)
+{
+	uint32 val = 0L;
+	uint8 uboxid = 0;
+
+	/* Open UART for printf use {v2} */
+	vUART_printInit();
+
+
+	// Set Io Out
+	vAHI_DioSetDirection(0,PBAR_CFG_OUTPUT);
+
+	// Set IO In
+	vAHI_DioSetDirection(PBAR_CFG_INPUT,0);
+
+	val = u32AHI_DioReadInput();
+	// Recuperer la valeur de conf de la boite
+	//uboxid = ((uint8)((val>>6)&0x0C) |((uint8)val&0x03));;
+	uboxid = (uint8)((val>>17)&0x0F);
+
+	/* Initialise utilities */
+	vUtils_Init();
+
+	// Detection type de boite
+	vPrintf("!!Box Id set by dip switch : %d\n", uboxid);
+
+	return(uboxid);
+}
+
 
 /****************************************************************************
  *
@@ -83,18 +118,27 @@ PRIVATE tsJenieRoutingTable asRoutingTable[100];
  ****************************************************************************/
 PUBLIC void vJenie_CbConfigureNetwork(void)
 {
+	uThisBox_Id = showDipSwitch();
+
 	/* Change default network config */
-	gJenie_Channel              = CHANNEL;
-	gJenie_NetworkApplicationID = SERVICE_PROFILE_ID;
-	gJenie_PanID                = PAN_ID;
+	if(!uThisBox_Id)
+	{
+		gJenie_Channel              = 0;
+		gJenie_NetworkApplicationID = 0xbadebade;
+		gJenie_PanID                = 0x1111;
+	}
+	else
+	{
+		gJenie_Channel              = PBAR_CHANNEL;
+		gJenie_NetworkApplicationID = PBAR_NID; //SERVICE_PROFILE_ID;
+		gJenie_PanID                = PBAR_PAN_ID;
+	}
 
 	/* Configure stack with routing table data */
 	gJenie_RoutingEnabled    = TRUE;
-	gJenie_RoutingTableSize  = 100;
+	gJenie_RoutingTableSize  = PBAR_RTBL_SIZE;
 	gJenie_RoutingTableSpace = (void *)asRoutingTable;
-
 }
-
 /****************************************************************************
  *
  * NAME: vJenie_CbInit
