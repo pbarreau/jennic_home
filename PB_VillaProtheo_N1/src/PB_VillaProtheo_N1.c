@@ -37,7 +37,6 @@
 /****************************************************************************/
 /***        Local Function Prototypes                                     ***/
 /****************************************************************************/
-PRIVATE void vPRT_LireBtnPgm(void);
 PRIVATE void vPRT_TraiterChangementEntree(uint32 val);
 PRIVATE uint8 showDipSwitch(void);
 /****************************************************************************/
@@ -47,11 +46,6 @@ PRIVATE uint8 showDipSwitch(void);
 /****************************************************************************/
 /***        Local Variables                                               ***/
 /****************************************************************************/
-PRIVATE bool_t bStartPgmTimer = FALSE;
-PRIVATE uint16 TimePgmPressed = 0;
-PRIVATE PBAR_E_KeyMode ePgmMode = E_CLAV_MODE_NOT_SET;
-
-PRIVATE tsAppData sAppData;
 
 /* Routing table storage */
 PRIVATE tsJenieRoutingTable asRoutingTable[100];
@@ -59,25 +53,15 @@ PRIVATE tsJenieRoutingTable asRoutingTable[100];
 PRIVATE uint8 	pBuff[2]; // pointeur In & Read du buffer
 PRIVATE uint8 	bufReception[PBAR_RBUF_SIZE]; // Buffer circulaire reception
 PRIVATE uint64	bufAddr[PBAR_RBUF_SIZE];
-PRIVATE uint8 	bufEmission[3] ={0,0,0};
 PRIVATE uint8 	buf2[3] ={0,0,0};
 
 // Pour config Clavier distant
-PRIVATE uint64					LaBasId	 = 0;
-PRIVATE PBAR_E_KeyMode	LabasMod = E_CLAV_MODE_NOT_SET;
-PRIVATE PBAR_KIT_8046		LabasKbd = E_KPD_NONE;
-PRIVATE uint8 ledId = 0;
-PRIVATE uint8 config = 0;
 PRIVATE uint8 prevConf = 0;
 
-PRIVATE bool_t cbStartTempoRechercheClavier = FALSE;
 PRIVATE uint16 TimeRechercheClavier = 0;
-PRIVATE bool_t cbUnClavierActif = FALSE;
 
 PRIVATE uint8 	etatSorties; // reflet des ios actuel
 
-// Reference de la boite
-PRIVATE uint8 uThisBox_Id = 0;
 
 
 /****************************************************************************/
@@ -237,69 +221,16 @@ PUBLIC void vJenie_CbInit(bool_t bWarmStart)
  * void
  *
  ****************************************************************************/
-#if 0
-PUBLIC void vJenie_CbMain(void)
-{
-	/* regular watchdog reset */
-#ifdef WATCHDOG_ENABLED
-	vAHI_WatchdogRestart();
-#endif
 
-	switch(sAppData.net)
-	{
-		case E_JEN_RECHERCHE_RESEAU:
-		{
-			au8Led[CST_LED_INFO_1].actif = TRUE;
-			au8Led[CST_LED_INFO_1].pio = PIO_LED_INFO_1;
-			au8Led[CST_LED_INFO_1].mode = E_LED_MSG_1;
-
-			au8Led[CST_LED_INFO_2].actif = TRUE;
-			au8Led[CST_LED_INFO_2].pio = PIO_LED_INFO_2;
-			au8Led[CST_LED_INFO_2].mode = E_LED_OFF;
-
-			sAppData.net = E_JEN_ATTENTE_RESEAU;
-		}
-		break;
-
-		case E_JEN_ATTENTE_RESEAU:
-		{
-			; //rien
-		}
-		break;
-
-		case E_JEN_RESEAU_PRESENT:
-		{
-			au8Led[CST_LED_INFO_1].mode = E_LED_MSG_2;
-			sAppData.net = E_JEN_RUN_APP;
-		}
-		break;
-
-		case E_JEN_RUN_APP:
-		{
-			if(sAppData.use_pwr)
-			{
-				GererMEF1(sAppData.pwr);
-			}
-
-			if(sAppData.clv)
-			{
-				GererMEF2(sAppData.clv);
-			}
-		}
-		break;
-
-		default:
-		{
-			vPrintf("Erreur MEF0\n");
-
-		}
-		break;
-	}
-}
-#endif
 
 PUBLIC void vJenie_CbMain(void)
 {
+	teJenieStatusCode eStatus;
+	uint8 keep;
+	uint8 mask;
+	uint8 valu;
+	//uint32 val = 0;
+
 	/* regular watchdog reset */
 #ifdef WATCHDOG_ENABLED
 	vAHI_WatchdogRestart();
@@ -309,34 +240,284 @@ PUBLIC void vJenie_CbMain(void)
 	{
 		case APP_STATE_WAITING_FOR_NETWORK:
 			/* nothing to do till network is up and running */
+			au8Led[0].mode = E_FLASH_RECHERCHE_RESEAU;
 			break;
 
 		case APP_STATE_NETWORK_UP:
-			/* as we are a coordinator, allow nodes to associate with us */
-			vUtils_Debug("enabling association");
-			eJenie_SetPermitJoin(TRUE);
+			//au8Led[0].actif = TRUE;
+			//au8Led[0].pio = C_PIO_LED_1;
+			if(uThisBox_Id == 0)
+			{
+				au8Led[0].mode = E_FLASH_BP_TEST_SORTIES;
+				sAppData.eAppState = APP_STATE_TST_START_LUMIERES;
+			}
+			else
+			{
+				vPrintf(" Possibilite d'association activee\n\n");
+				eJenie_SetPermitJoin(TRUE);
 
-			/* register services */
-			sAppData.eAppState = APP_STATE_RUNNING;
+				// Reseau actif on peut recevoir des donnees !!
+				au8Led[0].mode = E_FLASH_RESEAU_ACTIF;
+
+				// Pas de clavier distant
+				LaBasId = 0;
+
+				/* register services */
+				sAppData.eAppState = APP_STATE_REGISTERING_SERVICE;
+
+			}
+#if 0
+			if(uThisBox_Id == 0){
+				au8Led[0].actif = TRUE;
+				au8Led[0].pio = C_PIO_LED_1;
+				au8Led[0].mode = E_FLASH_BP_TEST_SORTIES;
+
+				sAppData.eAppState = APP_STATE_TST_START_LUMIERES;
+			}
+			else{
+				sAppData.eAppState = APP_STATE_TST_STOP_LUMIERES;
+
+			}
+#endif
 			break;
 
 		case APP_STATE_REGISTERING_SERVICE:
-			/* we provide FIRST_SERVICE */
-			vUtils_Debug("registering service");
-			//eJenie_RegisterServices(FIRST_SERVICE_MASK);
+		{
+			/* services disponible aux autres */
+			//u32ServiceRq= SRV_LUMIR|SRV_VOLET;
+
+			vPrintf(" Enregistrement du service:%x, ",SRV_LUMIR|SRV_VOLET);
+			eStatus = eJenie_RegisterServices(SRV_LUMIR|SRV_VOLET);
+			switch (eStatus)
+			{
+				case E_JENIE_SUCCESS:
+					vPrintf("ok\n");
+					break;
+				case E_JENIE_ERR_STACK_BUSY:
+					vPrintf(" Erreur de Pile\n");
+					break;
+				case E_JENIE_ERR_UNKNOWN:
+					vPrintf(" Erreur critique\n");
+					break;
+				default:
+					vPrintf(" Erreur inconue:%d\n",eStatus);
+					break;
+			}
 
 			/* go to the running state */
 			sAppData.eAppState = APP_STATE_RUNNING;
-			break;
+		}
+		break;
+
+		case APP_STATE_TRAITER_INPUT_MESSAGE:
+		{
+			if(pBuff[1] == PBAR_RBUF_SIZE)
+				pBuff[1]=0;
+			// 1er octet 0 -> impose
+			// 2em octet id bit sur lesquel agir
+			// 3em octet config des bits
+			mask = bufReception[pBuff[1]+1];
+			valu = bufReception[pBuff[1]+2];
+
+			vPrintf(" Ptr Lecture:%d\n",pBuff[1]);
+
+			vPrintf(" Buffer:%x,%x,%x\n",
+					bufReception[pBuff[1]],
+					bufReception[pBuff[1]+1],
+					bufReception[pBuff[1]+2]);
+
+			switch(bufReception[pBuff[1]]){
+				case E_MSG_DATA_ALL:
+				case E_MSG_DATA_SELECT:
+				{
+					vPrintf(" ios actuel:%x\n",etatSorties);
+
+					if(bufReception[pBuff[1]] == E_MSG_DATA_ALL){
+						vPrintf(" Impose bit\n");
+						// impose bit
+						keep = (etatSorties & (~mask))|(mask & valu);
+					}
+					else
+					{
+						// bascule bit
+						vPrintf(" Bascule bit\n");
+						keep = etatSorties ^ mask;
+					}
+					vPrintf(" Mask:%x,Value:%x\n",mask,valu);
+					vPrintf(" Nouvelle config ios:%x\n",keep);
+					etatSorties = keep;
+
+					// Configuer les sorties
+					vPRT_DioSetOutput(etatSorties<<11,(~etatSorties)<<11);
+
+				}
+				break;
+
+				case E_MSG_ASK_ID_BOX:
+				{
+					bufEmission[0] = E_MSG_RSP_ID_BOX;
+					bufEmission[1] = bufReception[pBuff[1]+1];
+					bufEmission[2] = uThisBox_Id;
+
+					// etablissement de lien
+					cbUnClavierActif = TRUE;
+
+					vPrintf("Rsp a demande Box Id:\n D:[%x:%x], Msg:%x, %x, %x\n",
+							(uint32) (bufAddr[pBuff[1]] >> 32),
+							(uint32) (bufAddr[pBuff[1]] & 0xFFFFFFFF),
+							bufEmission[0],
+							bufEmission[1],
+							bufEmission[2]
+					);
+					// renvoyer la reponse
+					eJenie_SendData(bufAddr[pBuff[1]],
+							bufEmission, 3,
+							TXOPTION_SILENT);
+				}
+				break;
+
+				default:
+				{
+					vPrintf("Erreur sur type message recu\n");
+				}
+				break;
+			}
+			pBuff[1]+=3;
+
+			sAppData.eAppState = APP_STATE_RUNNING;
+		}
+		break;
+
+		case APP_STATE_RECHERCHE_CLAVIER:
+		{
+			vPrintf("\nRecherche d'un boitier de commande disponible\n");
+
+			// Recherche de la boite ayant le service:
+			// clavier_conf positionne
+			eJenie_RequestServices(SRV_INTER, TRUE);
+			au8Led[0].mode= E_FLASH_RECHERCHE_BC;
+
+			sAppData.eAppState = APP_STATE_ATTENTE_CLAV_RSP;
+		}
+		break;
+
+		case APP_STATE_ATTENTE_CLAV_RSP:
+		{
+			;//Rien
+		}
+		break;
+
+		case APP_STATE_REPONSE_CLAVIER_TROP_LONG:
+		{
+			vPrintf("Attente boitier commande trop longue!!\n");
+			vPrintf("Verifier si en mode programmation\n");
+			vPrintf("Reour BP en mode normal\n");
+			au8Led[0].mode=E_FLASH_RESEAU_ACTIF;
+			sAppData.eAppState = APP_STATE_RUNNING;
+		}
+		break;
+
+
+		case APP_STATE_CLAV_READY:
+		{
+			au8Led[0].mode=E_FLASH_LIAISON_BP_BC_ON;
+			PBAR_LireBtnPgm();
+		}
+		break;
+
+		case APP_STATE_SET_MY_OUTPUT:
+		{
+
+
+			vPrintf(" Config actuelle:%x\n",config);
+			// Mettre les sorties au niveau de config
+			vPRT_DioSetOutput(config<<11,~config<<11);
+
+			vPrintf(" En attente de changement programmation\n");
+			//vPRT_DioSetOutput(E_JPI_DIO19_INT,0);
+			au8Led[0].mode= E_FLASH_BP_EN_CONFIGURATION_SORTIES;
+			ePgmMode = E_CLAV_MODE_1;
+			sAppData.eAppState = APP_STATE_ATTENDRE_FIN_CFG_LOCAL;
+		}
+		break;
+
+		case APP_STATE_ATTENDRE_FIN_CFG_LOCAL:
+		{
+			PBAR_LireBtnPgm();
+		}
+		break;
+
+		case APP_STATE_FIN_CFG_BOX:
+		{
+			vPrintf("Deconnection du boitier de commande\n");
+			vPrintf("Retour de BP en mode usage courant\n");
+
+			// On Montre mode user
+			au8Led[0].mode= E_FLASH_RESEAU_ACTIF;
+
+			ePgmMode = E_CLAV_MODE_NOT_SET;
+
+			bufEmission[0] = E_MSG_CFG_BOX_END;
+			bufEmission[1]= 0;
+			bufEmission[2]= 0;
+
+			eJenie_SendData(LaBasId,
+					bufEmission, 3,
+					TXOPTION_SILENT);
+
+			LaBasId = 0;
+			sAppData.eAppState = APP_STATE_RUNNING;
+
+		}
+		break;
 
 		case APP_STATE_RUNNING:
-			/* do all necessary processing here */
-			vPRT_LireBtnPgm();
-			break;
+		{
+			; // Rien attendre evenement reseau ou clavier
+			PBAR_LireBtnPgm();
+		}
+		break;
+
+		case APP_STATE_TST_START_LUMIERES:
+		{
+			PBAR_DecodeBtnPgm(&valu);
+		}
+		break;
+
+		case APP_STATE_TST_STOP_LUMIERES:
+		{
+#if 0
+			// Relecture de la config dip
+			val = u32AHI_DioReadInput();
+
+			// Recuperer la nouvelle valeur de conf de la boite
+			uThisBox_Id = ((uint8)((val>>6)&0x0C) | ((uint8)val&0x03));;
+
+			/* as we are a coordinator, allow nodes to associate with us */
+			vPrintf("!!Box Id utilisation: %d\n", uThisBox_Id);
+
+			vPrintf("Possibilite d'association activee\n\n");
+			eJenie_SetPermitJoin(TRUE);
+
+			// Reseau actif on peut recevoir des donnees !!
+			au8Led[0].actif = TRUE;
+			au8Led[0].pio = C_PIO_LED_1;
+			au8Led[0].mode = E_FLASH_RESEAU_ACTIF;
+
+			// Pas de clavier distant
+			LaBasId = 0;
+
+			/* register services */
+			sAppData.eAppState = APP_STATE_REGISTERING_SERVICE;
+#endif
+		}
+		break;
 
 		default:
 			vUtils_DisplayMsg("!!Unknown state!!", sAppData.eAppState);
+			//au8Led[0]=E_FLASH_STA_ER;
 			while(1);
+			break;
 	}
 }
 
@@ -359,8 +540,7 @@ PUBLIC void vJenie_CbMain(void)
 PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
 {
 	tsChildJoined *psStackMgmtData = (tsChildJoined *) pvEventPrim;
-	//tsNwkStartUp *pNet = (tsNwkStartUp*)pvEventPrim;
-	//uint8 keep;
+
 	switch(eEventType)
 	{
 		case E_JENIE_NETWORK_UP:
@@ -633,7 +813,6 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
 PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId,uint32 u32ItemBitmap)
 {
 	static uint8 timer_it_dio11 = 0;
-	static uint8 timer_it_dio12 = 0;
 	uint32 val = 0;
 
 	switch (u32DeviceId)
@@ -641,6 +820,7 @@ PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId,uint32 u32ItemBitmap)
 		case E_JPI_DEVICE_TICK_TIMER:
 		{
 			IHM_ClignoteLed();
+			PBAR_LireBtnPgm();
 
 			/* regular 10ms tick generated here */
 			if (bStartPgmTimer){
@@ -663,23 +843,20 @@ PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId,uint32 u32ItemBitmap)
 			if (bIt_DIO12)
 			{
 
-				// Supression anti rebond
-				timer_it_dio12++;
-
-				if(timer_it_dio12 == CST_ANTI_REBOND_IT)
-				{
-					// A priori on a plus d'it de rebond interrupteur
-					timer_it_dio12 = 0;
-
-					// Autoriser une nouvelle It
-					bIt_DIO12=FALSE;
-				}
 			}
 
-			if(bMessureDureePressionDio12)
-			{
-				// Mesure du temps d'appui sur bouton
-				timer_pression_DIO12++;
+			/* regular 10ms tick generated here */
+
+
+			if(cbStartTempoRechercheClavier){
+				TimeRechercheClavier++;
+
+				if(TimeRechercheClavier == 400){
+					// On arrete de chercher
+					cbStartTempoRechercheClavier = FALSE;
+					TimeRechercheClavier = 0;
+					sAppData.eAppState = APP_STATE_REPONSE_CLAVIER_TROP_LONG;
+				}
 			}
 		}
 		break;
@@ -687,37 +864,6 @@ PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId,uint32 u32ItemBitmap)
 		default:
 			vUtils_DisplayMsg("HWint: ", u32DeviceId);
 			break;
-	}
-}
-
-PRIVATE void vPRT_LireBtnPgm(void)
-{
-	PRIVATE bool_t passage = FALSE;
-
-	// Bouton Pgm appuye ??
-	if ((u8JPI_PowerStatus() & 0x10) == 0)
-	{
-		bStartPgmTimer = TRUE;
-	}
-	else
-	{
-		bStartPgmTimer = FALSE;
-		if(TimePgmPressed)
-		{
-			if (TimePgmPressed<30)
-			{
-				if(!passage){
-					vPRT_DioSetOutput(bit0,bit7);
-				}
-				else
-				{
-					vPRT_DioSetOutput(bit7,bit0);
-				}
-				passage = !passage;
-
-			}
-			TimePgmPressed = 0;
-		}
 	}
 }
 

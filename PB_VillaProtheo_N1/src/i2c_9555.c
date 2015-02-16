@@ -275,7 +275,7 @@ PRIVATE void vPRT_PrepareSlio(void)
 			bit23);
 
 	// Test mise a 0v entraine led on
-	vPRT_DioSetOutput(0x00000000,bit7|bit0);
+	//vPRT_DioSetOutput(0x00000000,bit7|bit0);
 
 	// Lecture de la config au demarrage input et ouput des slios
 	conf = vPRT_DioReadInput();

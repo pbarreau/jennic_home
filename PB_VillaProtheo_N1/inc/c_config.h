@@ -11,6 +11,8 @@
 #include "m_config.h"
 #include "interrupteurs.h"
 
+#define CARD_NB_LIGHT  8
+
 #define PBAR_CFG_INPUT	(E_JPI_DIO11_INT|\
 		E_JPI_DIO12_INT |\
 		E_JPI_DIO13_INT |\
@@ -29,5 +31,24 @@
 #define	C_LPID_2	10
 
 #define	PBAR_CFG_OUTPUT	(C_LPIO_1|C_LPIO_2)
+
+// Public variable
+extern PUBLIC tsAppData sAppData;
+extern PUBLIC uint8 uThisBox_Id;
+extern PUBLIC bool_t bStartPgmTimer;
+extern PUBLIC PBAR_E_KeyMode ePgmMode;
+extern PUBLIC uint16 TimePgmPressed;
+extern PUBLIC bool_t cbStartTempoRechercheClavier;
+extern PUBLIC bool_t cbUnClavierActif;
+extern PUBLIC uint64 LaBasId;
+extern PUBLIC uint8 	bufEmission[3];
+extern PUBLIC PBAR_KIT_8046		LabasKbd;
+extern PUBLIC PBAR_E_KeyMode	LabasMod;
+extern PUBLIC uint8 ledId;
+extern PUBLIC uint8 config;
+
+// Public fonctions
+extern PUBLIC void PBAR_LireBtnPgm(void);
+extern PUBLIC bool_t PBAR_DecodeBtnPgm(uint8 *box_cnf);
 
 #endif /* C_CONFIG_H_ */
