@@ -95,7 +95,7 @@ extern "C" {
 #endif
 
 
-#define PBAR_DEBUT_IO						11
+#define PBAR_DEBUT_IO					0
 
 #if 0
 #define PBAR_DEBUT_LED_CO				19
