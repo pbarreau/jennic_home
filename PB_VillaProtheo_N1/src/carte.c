@@ -177,9 +177,9 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_TstOutput(uint8 *box_cnf)
 			if (TimePgmPressed<30)
 			{
 				// Premier passage lire la config des sorties
-				if(bDoReadOutput)
+				//if(bDoReadOutput)
 				{
-					bDoReadOutput = FALSE;
+					//bDoReadOutput = FALSE;
 					conf= vPRT_DioReadInput();
 				}
 				vPrintf("\nTst(%d):conf=%x;\n",io,(uint32)conf);
@@ -266,35 +266,35 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
 					//eteindre la precedente si elle n'est pas a memoriser
 					if(!(IsBitSet(config,(ledId-1))))
 					{
-						vPRT_DioSetOutput(0,(1 << (PBAR_DEBUT_IO + (ledId-1))));
+						vPRT_DioSetOutput((1 << (PBAR_DEBUT_IO + (ledId-1))),0);
 					}
 					else
 					{
 						// sinon la ralummer
-						vPRT_DioSetOutput((1 << (PBAR_DEBUT_IO + (ledId-1))),0);
+						vPRT_DioSetOutput(0,(1 << (PBAR_DEBUT_IO + (ledId-1))));
 					}
 				}
 				else{
 					if(!(IsBitSet(config,(ledId+(CARD_NB_LIGHT-1)))))
 					{
-						vPRT_DioSetOutput(0,(1 << (PBAR_DEBUT_IO + (ledId+(CARD_NB_LIGHT-1)))));
+						vPRT_DioSetOutput((1 << (PBAR_DEBUT_IO + (ledId+(CARD_NB_LIGHT-1)))),0);
 					}
 					else
 					{
 						// sinon la ralumer
-						vPRT_DioSetOutput((1 << (PBAR_DEBUT_IO + (ledId+(CARD_NB_LIGHT-1)))),0);
+						vPRT_DioSetOutput(0,(1 << (PBAR_DEBUT_IO + (ledId+(CARD_NB_LIGHT-1)))));
 					}
 				}
 				// si La led n'est pas deja alummee on l'allume
 				//sinon on l'eteint
 				if((IsBitSet(config,ledId)))
 				{
-					vPRT_DioSetOutput(0,(1 << (PBAR_DEBUT_IO + (ledId))));
+					vPRT_DioSetOutput((1 << (PBAR_DEBUT_IO + (ledId))),0);
 
 				}
 				else
 				{
-					vPRT_DioSetOutput((1 << (PBAR_DEBUT_IO + (ledId))),0);
+					vPRT_DioSetOutput(0,(1 << (PBAR_DEBUT_IO + (ledId))));
 				}
 				ledId++;
 				ledId%=CARD_NB_LIGHT;
@@ -331,7 +331,7 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
 					// Sauvegarde pour envoi a la boite
 					// On montre la config a envoyer
 					// Configuer les sorties
-					vPRT_DioSetOutput(config<<11,(~config)<<PBAR_DEBUT_IO);
+					vPRT_DioSetOutput((~config)<<PBAR_DEBUT_IO,config<<PBAR_DEBUT_IO);
 					bReturnConfig=TRUE;
 				}
 			}
@@ -346,7 +346,7 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
 	if(sAppData.eAppState == APP_STATE_TST_STOP_LUMIERES){
 		config = 0;
 		// On quitte le mode test: eteidre les lumieres
-		vPRT_DioSetOutput(config<<PBAR_DEBUT_IO,(~config)<<PBAR_DEBUT_IO);
+		vPRT_DioSetOutput((~config)<<PBAR_DEBUT_IO,config<<PBAR_DEBUT_IO);
 	}
 
 	return(bReturnConfig);

@@ -302,6 +302,9 @@ PUBLIC void vPRT_DioSetOutput(uint32 cnf_on, uint32 cnf_off)
 	vPrintf("Affecter valeur output\n");
 	cnf_ref=vPRT_GererDios(cnf_on, cnf_off, cnf_ref, i2cReg);
 
+	// La config des output devrait etre ok
+	// On prend le risque de ne pas relire l'etat des ios.
+	prvCnf_O_9555 = (cnf_ref>>8 & 0xFF00) | (((uint16)cnf_ref) & 0x00FF);
 }
 
 PRIVATE uint32 vPRT_GererDios(uint32 cnf_a, uint32 cnf_b, uint32 cnf_ref, uint8 *ptr_reg)
@@ -332,8 +335,18 @@ PRIVATE uint32 vPRT_GererDios(uint32 cnf_a, uint32 cnf_b, uint32 cnf_ref, uint8 
 	cnf_tmp = cnf_a | cnf_ref;
 	vPrintf(" cnf_tmp:%x\n",(uint32)cnf_tmp);
 
-	// Je memorise mes sorties
+
+	// Je memorise mes sorties*
 	cnf_new = ~cnf_b & cnf_tmp;
+#if 0
+	if(~cnf_b){
+	cnf_new = ~cnf_b & cnf_tmp;
+	}
+	else
+	{
+		cnf_new = cnf_tmp;
+	}
+#endif
 	vPrintf(" Msg:%x",(uint32)cnf_new);
 
 	// Envoyer aux composant i2c 9555

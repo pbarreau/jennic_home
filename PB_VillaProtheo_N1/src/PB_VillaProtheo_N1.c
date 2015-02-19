@@ -246,8 +246,6 @@ PUBLIC void vJenie_CbMain(void)
 		break;
 
 	case APP_STATE_NETWORK_UP:
-		//au8Led[0].actif = TRUE;
-		//au8Led[0].pio = C_PIO_LED_1;
 		if(uThisBox_Id == 0)
 		{
 			au8Led[0].mode = E_FLASH_BP_TEST_SORTIES;
@@ -268,26 +266,11 @@ PUBLIC void vJenie_CbMain(void)
 			sAppData.eAppState = APP_STATE_REGISTERING_SERVICE;
 
 		}
-#if 0
-		if(uThisBox_Id == 0){
-			au8Led[0].actif = TRUE;
-			au8Led[0].pio = C_PIO_LED_1;
-			au8Led[0].mode = E_FLASH_BP_TEST_SORTIES;
-
-			sAppData.eAppState = APP_STATE_TST_START_LUMIERES;
-		}
-		else{
-			sAppData.eAppState = APP_STATE_TST_STOP_LUMIERES;
-
-		}
-#endif
 		break;
 
 	case APP_STATE_REGISTERING_SERVICE:
 	{
 		/* services disponible aux autres */
-		//u32ServiceRq= SRV_LUMIR|SRV_VOLET;
-
 		vPrintf(" Enregistrement du service:%x, ",SRV_LUMIR|SRV_VOLET);
 		eStatus = eJenie_RegisterServices(SRV_LUMIR|SRV_VOLET);
 		switch (eStatus)
@@ -350,8 +333,7 @@ PUBLIC void vJenie_CbMain(void)
 			etatSorties = keep;
 
 			// Configuer les sorties
-			vPRT_DioSetOutput(etatSorties<<11,(~etatSorties)<<11);
-
+			vPRT_DioSetOutput((~etatSorties)<<PBAR_DEBUT_IO,etatSorties<<PBAR_DEBUT_IO);
 		}
 		break;
 
@@ -433,10 +415,9 @@ PUBLIC void vJenie_CbMain(void)
 
 		vPrintf(" Config actuelle:%x\n",config);
 		// Mettre les sorties au niveau de config
-		vPRT_DioSetOutput(config<<11,~config<<11);
+		vPRT_DioSetOutput(~config<<PBAR_DEBUT_IO,config<<PBAR_DEBUT_IO);
 
 		vPrintf(" En attente de changement programmation\n");
-		//vPRT_DioSetOutput(E_JPI_DIO19_INT,0);
 		au8Led[0].mode= E_FLASH_BP_EN_CONFIGURATION_SORTIES;
 		ePgmMode = E_CLAV_MODE_1;
 		sAppData.eAppState = APP_STATE_ATTENDRE_FIN_CFG_LOCAL;
@@ -488,30 +469,6 @@ PUBLIC void vJenie_CbMain(void)
 
 	case APP_STATE_TST_STOP_LUMIERES:
 	{
-#if 0
-		// Relecture de la config dip
-		val = u32AHI_DioReadInput();
-
-		// Recuperer la nouvelle valeur de conf de la boite
-		uThisBox_Id = ((uint8)((val>>6)&0x0C) | ((uint8)val&0x03));;
-
-		/* as we are a coordinator, allow nodes to associate with us */
-		vPrintf("!!Box Id utilisation: %d\n", uThisBox_Id);
-
-		vPrintf("Possibilite d'association activee\n\n");
-		eJenie_SetPermitJoin(TRUE);
-
-		// Reseau actif on peut recevoir des donnees !!
-		au8Led[0].actif = TRUE;
-		au8Led[0].pio = C_PIO_LED_1;
-		au8Led[0].mode = E_FLASH_RESEAU_ACTIF;
-
-		// Pas de clavier distant
-		LaBasId = 0;
-
-		/* register services */
-		sAppData.eAppState = APP_STATE_REGISTERING_SERVICE;
-#endif
 	}
 	break;
 
@@ -762,7 +719,7 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
 
 			// On efface la config visible
 			// Mettre les sorties a 0
-			vPRT_DioSetOutput(0,0xFF);
+			vPRT_DioSetOutput(0xFFFFFFFF,0);
 
 			// on reinitialise les registre interne
 			etatSorties = 0;
@@ -876,6 +833,9 @@ PRIVATE void vPRT_TraiterChangementEntree(uint32 val)
 	uint8 un_port = 0;
 	uint8 val_port = 0;
 	uint8 une_entree = 0;
+	//uint32 req_on = ((prvCnf_O_9555 << 8) & 0x00FF0000 )| ((uint8)prvCnf_O_9555 & 0x00FF00FF);
+	//uint32 req_off = ((~prvCnf_O_9555 << 8) & 0x00FF0000 )| (~(uint8)prvCnf_O_9555 & 0x00FF00FF);
+
 	uint32 req_on = ((prvCnf_O_9555 << 8) & 0x00FF0000 )| ((uint8)prvCnf_O_9555 & 0x00FF00FF);
 	uint32 req_off = ((~prvCnf_O_9555 << 8) & 0x00FF0000 )| (~(uint8)prvCnf_O_9555 & 0x00FF00FF);
 
