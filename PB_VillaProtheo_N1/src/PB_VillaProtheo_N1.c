@@ -83,13 +83,13 @@ PRIVATE uint8 showDipSwitch(void)
 #if !NO_DEBUG_ON
 	/* Open UART for printf use {v2} */
 	vUART_printInit();
-
 	/* Initialise utilities */
 	vUtils_Init();
+#endif
 
 	// Detection type de boite
 	vPrintf("!!Box Id set by dip switch : %d\n\n", uboxid);
-#endif
+
 	return(uboxid);
 }
 
@@ -554,7 +554,7 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
 
 
 	case E_JENIE_PACKET_SENT:
-		vUtils_Debug("> Packet sent");
+		vPrintf("> Packet sent\n");
 		break;
 
 	case E_JENIE_PACKET_FAILED:
@@ -805,7 +805,6 @@ PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId,uint32 u32ItemBitmap)
 		}
 
 		/* regular 10ms tick generated here */
-
 
 		if(cbStartTempoRechercheClavier){
 			TimeRechercheClavier++;

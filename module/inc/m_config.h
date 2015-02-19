@@ -25,7 +25,7 @@ extern "C" {
  /****************************************************************************/
  /***        Macro Definitions                                             ***/
  /****************************************************************************/
-#define NO_DEBUG_ON	FALSE
+#define NO_DEBUG_ON	TRUE
 
 #if NO_DEBUG_ON
 #define vPrintf(...)

@@ -160,7 +160,7 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_TstOutput(uint8 *box_cnf)
 	static uint8 io = 0;
 	//static uint32 rf = 0xFF00FFFF;
 	static bool_t pass = FALSE;
-	static bool_t bDoReadOutput = TRUE;
+	//static bool_t bDoReadOutput = TRUE;
 	static uint32 conf = 0;
 
 	if ((u8JPI_PowerStatus() & 0x10) == 0)
