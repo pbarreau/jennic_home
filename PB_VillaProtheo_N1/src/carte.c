@@ -158,7 +158,7 @@ PUBLIC bool_t PBAR_DecodeBtnPgm(uint8 *box_cnf)
 PRIVATE bool_t PBAR_DecodeBtnPgm_TstOutput(uint8 *box_cnf)
 {
 	static uint8 io = 0;
-	static uint8 rf = 0;
+	//static uint32 rf = 0xFF00FFFF;
 	static bool_t pass = FALSE;
 	static bool_t bDoReadOutput = TRUE;
 	static uint32 conf = 0;
@@ -181,9 +181,9 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_TstOutput(uint8 *box_cnf)
 				{
 					bDoReadOutput = FALSE;
 					conf= vPRT_DioReadInput();
-					//rf = (uint8)vPRT_DioReadInput();
 				}
-				vPrintf("\n Tst(%d):conf=%x;rf=%x;\n",io,(uint32)conf,rf);
+				vPrintf("\nTst(%d):conf=%x;\n",io,(uint32)conf);
+
 				if(io <CARD_NB_LIGHT)
 				{
 					// cas du premier bit
@@ -216,59 +216,20 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_TstOutput(uint8 *box_cnf)
 				{
 					vPrintf("io >= CARD_NB_LIGHT\n");
 				}
-
-#if 0
-				if(rf != 0xFF)
-				{
-					vPrintf("rf=%x;io=%x\n",rf,io);
-					if(io >=1 && io <CARD_NB_LIGHT)
-					{
-						vPrintf("BIT 1_0\n");
-						if((IsBitSet(rf,(io-1))))
-						{
-							vPrintf("BIT 1_1\n");
-							vPRT_DioSetOutput(0,(1 << (PBAR_DEBUT_IO + (io-1)))); //off
-							rf = rf ^ (1<<(io-1));
-						}
-						vPRT_DioSetOutput((1 << (PBAR_DEBUT_IO + (io))),0); //on
-
-					}
-					else
-					{
-						vPrintf("BIT 2_0\n");
-						if((IsBitSet(rf,(CARD_NB_LIGHT-1))))
-						{
-							vPrintf("BIT 2_1\n");
-							vPRT_DioSetOutput(0,(1 << (PBAR_DEBUT_IO + (CARD_NB_LIGHT-1)))); //off
-							rf = rf ^ (1<<(CARD_NB_LIGHT-1));
-						}
-						vPRT_DioSetOutput((1 << (PBAR_DEBUT_IO + (0))),0); //on
-
-					}
-
-					rf = rf ^ (1<<io);
-					io++;
-					io%=CARD_NB_LIGHT;
-				}
-				else
-				{
-					vPrintf("rf==FF\n");
-				}
-#endif
 			}
 			else {
-				rf=0xFF;
 				if(!pass){
-					vPrintf("Mode ON\n");
-					vPRT_DioSetOutput(~rf<<PBAR_DEBUT_IO,rf<<PBAR_DEBUT_IO);
+					vPrintf("\nMode ON\n");
+					vPRT_DioSetOutput((conf & (0x0<<PBAR_DEBUT_IO)),(conf | (0xFF<<PBAR_DEBUT_IO)));
 				}
 				else
 				{
-					vPrintf("Mode OFF\n");
-					vPRT_DioSetOutput(rf<<PBAR_DEBUT_IO,(~rf)<<PBAR_DEBUT_IO); // On
-					rf = 0;
+					vPrintf("\nMode OFF\n");
+					vPRT_DioSetOutput((conf | (0xFF<<PBAR_DEBUT_IO)),(conf & (0x0<<PBAR_DEBUT_IO)));
 				}
+				//vPRT_DioSetOutput(~conf,conf);
 				pass = !pass;
+
 			}
 			TimePgmPressed = 0;
 		}

@@ -88,7 +88,7 @@ PRIVATE uint8 showDipSwitch(void)
 	vUtils_Init();
 
 	// Detection type de boite
-	vPrintf("!!Box Id set by dip switch : %d\n", uboxid);
+	vPrintf("!!Box Id set by dip switch : %d\n\n", uboxid);
 #endif
 	return(uboxid);
 }
@@ -164,8 +164,6 @@ PUBLIC void vJenie_CbInit(bool_t bWarmStart)
 
 	vPRT_Init_9555(E_BUS_400_KH);
 
-	vPrintf("eDevType IN: %d\n", eDevType);
-
 	switch(uThisBox_Id)
 	{
 	case 0:
@@ -198,7 +196,6 @@ PUBLIC void vJenie_CbInit(bool_t bWarmStart)
 	au8Led[C_LID_1].actif = TRUE;
 	au8Led[C_LID_1].pio = C_LPID_1;
 
-	vPrintf("eDevType OUT: %d\n", eDevType);
 
 	if((eStatus=eJenie_Start(eDevType)) != E_JENIE_SUCCESS)
 	{
@@ -209,7 +206,7 @@ PUBLIC void vJenie_CbInit(bool_t bWarmStart)
 	}
 	else
 	{
-		vPrintf("SUITE\n\n");
+		vPrintf("Mise en place du reseau !!\n\n");
 	}
 
 
