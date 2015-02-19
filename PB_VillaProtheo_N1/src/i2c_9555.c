@@ -33,6 +33,8 @@ PRIVATE void vPRT_It_9555 (uint32 u32Device,uint32 u32ItemBitmap);
 PRIVATE void vPRT_PrepareJennic(sBusSpeed speed);
 PRIVATE void vPRT_PrepareSlio(void);
 
+PRIVATE void vPRT_GererDios(uint32 cnf_a, uint32 cnf_b, uint8 *ptr_reg);
+
 #if !NO_DEBUG_ON
 
 #if SHOW_TEST_1
@@ -290,6 +292,119 @@ PUBLIC void vPRT_DioSetDirection(uint32 cnf_in, uint32 cnf_out)
 {
 	uint8 i2cReg[] = {CMD_CFG_0,CMD_CFG_1};
 
+	static uint32 cnf_ref = 0xFFFFFFFF; /// Par defaut io definies en entrees
+	uint32 cnf_new = 0; /// Valeur a envoyer sur la carte
+	uint32 cnf_tmp = 0;
+	uint8 resu = 0;
+	int i=0;
+
+	// Verifier si un bit dans in et dans out
+	for(i=0;i<=31;i++)
+	{
+		if(IsBitSet(cnf_out,i))
+		{
+			// Verifier si bit A 1 dans In
+			if(IsBitSet(cnf_in,i))
+			{
+				// le bit est defini dans in et out => je force a in
+				BitNclr(cnf_out,i);
+			}
+		}
+	}
+
+	// Je memorise mes sorties
+	cnf_new = ~cnf_out & cnf_ref;
+
+	// Je memorise mes entrees
+	cnf_tmp = cnf_in | cnf_ref;
+
+	// Nouvelle config ?
+	cnf_ref=cnf_tmp&cnf_new;
+
+	// Envoyer aux comosant i2c 9555
+	for(i=0;i<4;i++)
+	{
+		resu = (uint8)(cnf_ref >> (i*8));
+		vPrintf("   Config a i2c:%x, reg:%d, val:%x\n", i2cAddr[i],i2cReg[i%2],resu);
+		// Port 0 b[0..7], Port 1 b[8..15]
+		// Ecriture dans le composant de la config
+		u8_I2CWrite_9555(i2cAddr[i],i2cReg[i%2],resu);
+	}
+
+
+}
+
+PUBLIC void vPRT_DioSetOutput(uint32 cnf_on, uint32 cnf_off)
+{
+	PRIVATE uint8 i2cReg[] = {CMD_OUT_0, CMD_OUT_1};
+
+	static uint32 cnf_ref = 0xFFFFFFFF;
+	uint32 cnf_new = 0; /// Valeur a envoyer sur la carte
+	uint32 cnf_tmp = 0;
+	uint8 resu = 0;
+	int i=0;
+
+	vPrintf(" Request -> On:%x, Off:%x\n",(uint32)cnf_on,(uint32)cnf_off);
+
+	// Verifier si un bit dans on et dans off
+	for(i=0;i<=31;i++)
+	{
+		if(IsBitSet(cnf_on,i))
+		{
+			// Verifier si bit A 1 dans In
+			if(IsBitSet(cnf_off,i))
+			{
+				vPrintf("  !!! bit:%d identique !!!\n",i);
+				// le bit est defini dans in et out => je force a off
+				BitNclr(cnf_on,i);
+			}
+		}
+	}
+
+	// Je memorise mes entrees
+	cnf_tmp = cnf_on | cnf_ref;
+	vPrintf(" cnf_tmp:%x\n",(uint32)cnf_tmp);
+
+	// Je memorise mes sorties
+	cnf_new = ~cnf_off & cnf_tmp;
+	vPrintf(" Msg:%x, ",(uint32)cnf_new);
+
+	// Config a envoyer
+	//cnf_new=cnf_new &(~cnf_tmp);
+	//vPrintf(" Msg:%x\n",(uint32)cnf_new);
+
+	// Envoyer aux comosant i2c 9555
+	for(i=0;i<4;i++)
+	{
+		resu = (uint8)(cnf_new >> (i*8));
+
+		if(resu == (uint8)(cnf_ref >> (i*8)))
+		{
+			vPrintf("   Config actuelle idem precedent => Noi2cWrite !!\n");
+		}
+		else
+		{
+			vPrintf("   Config set ON/OFF a i2c:%x, reg:%d, val:%x\n", i2cAddr[i],i2cReg[i%2],resu);
+			// Port 0 b[0..7], Port 1 b[8..15]
+			// Ecriture dans le composant de la config
+			u8_I2CWrite_9555(i2cAddr[i],i2cReg[i%2],resu);
+		}
+	}
+
+	// Memoriser les valeurs
+	cnf_ref = cnf_new;
+}
+
+PRIVATE void vPRT_GererDios(uint32 cnf_a, uint32 cnf_b, uint8 *ptr_reg)
+{
+
+}
+
+#if 0
+PUBLIC void vPRT_DioSetDirection(uint32 cnf_in, uint32 cnf_out)
+{
+	uint8 i2cReg[] = {CMD_CFG_0,CMD_CFG_1};
+
 	static uint32 cnf_ref = 0xFFFFFFFF;
 	uint8 bit = 0;
 	uint8 octet = 0;
@@ -299,7 +414,7 @@ PUBLIC void vPRT_DioSetDirection(uint32 cnf_in, uint32 cnf_out)
 
 	vPrintf("\nProcedure config direction SLIO\n");
 	vPrintf(" Ref CFG in = %x\n",cnf_ref);
-	vPrintf(" Request -> In:%x, Out:%x\n",cnf_in,cnf_out);
+	vPrintf(" Request -> In:%x, Out:%x\n",(uint32)cnf_in,(uint32)cnf_out);
 
 	for(octet = 0; octet <4; octet++)
 	{
@@ -311,6 +426,7 @@ PUBLIC void vPRT_DioSetDirection(uint32 cnf_in, uint32 cnf_out)
 		do_out = (cnf_out>>(octet*8)) & 0xFF;
 
 		vPrintf(" Demande octet[%d] -> Cfg_in:%x, Cfg_out:%x\n",octet, do_in,do_out);
+
 		// analyse de la demande
 		if(do_in && !do_out)
 		{
@@ -373,7 +489,7 @@ PUBLIC void vPRT_DioSetDirection(uint32 cnf_in, uint32 cnf_out)
 			vPrintf("  Resu_calc:%x\n", resu);
 			// recup config actuelle
 			cnf_ref = ( cnf_ref & (0xFFFFFFFF & ~(0xFF<<octet*8)))|(resu << octet*8);
-			vPrintf("  New CFG = %x\n",cnf_ref);
+			vPrintf("  New CFG = %x\n",(uint32)cnf_ref);
 
 			resu = cnf_ref >> (octet*8);
 			vPrintf("   Config a i2c:%x, reg:%d, val:%x\n", i2cAddr[octet],i2cReg[octet%2],resu);
@@ -390,8 +506,9 @@ PUBLIC void vPRT_DioSetDirection(uint32 cnf_in, uint32 cnf_out)
 
 	} // Octet suivant
 
-	vPrintf("Ref CFG out = %x\n\n",cnf_ref);
+	vPrintf("Ref CFG out = %x\n\n",(uint32)cnf_ref);
 }
+
 
 
 PUBLIC void vPRT_DioSetOutput(uint32 cnf_on, uint32 cnf_off)
@@ -407,7 +524,7 @@ PUBLIC void vPRT_DioSetOutput(uint32 cnf_on, uint32 cnf_off)
 
 	vPrintf("\nProcedure eciture output val SLIO\n");
 	vPrintf("Ref OUT in =%x\n",cnf_ref);
-	vPrintf(" Request -> In:%x, Out:%x\n",cnf_on,cnf_off);
+	vPrintf(" Request -> In:%x, Out:%x\n",(uint32)cnf_on,(uint32)cnf_off);
 
 	for(octet = 0; octet <4; octet++)
 	{
@@ -497,8 +614,9 @@ PUBLIC void vPRT_DioSetOutput(uint32 cnf_on, uint32 cnf_off)
 
 	} // Octet suivant
 
-	vPrintf("Ref OUT out =%x\n\n",cnf_ref);
+	vPrintf("Ref OUT out =%x\n\n",(uint32)cnf_ref);
 }
+#endif
 
 PUBLIC uint32 vPRT_DioReadInput (void)
 {
@@ -513,7 +631,7 @@ PUBLIC uint32 vPRT_DioReadInput (void)
 		val = val | (tmp<<i2c_device*8);
 	}
 
-	vPrintf("Fin lecture des SLIOS val=%x\n",val);
+	vPrintf("Fin lecture des SLIOS val=%x\n\n",val);
 	return val;
 }
 
@@ -609,7 +727,7 @@ PRIVATE uint16 u16_I2CRead_9555(uint8 u8SlaveAddr)
 
 	// Configuration du bus et activation du SI dans le jennic
 	//vAHI_SiConfigure(TRUE,FALSE,E_BUS_400_KH);   /* enabled, no interrupt, 400kHz */
-	vPrintf("\n Lecture i2c(%x)\n",u8SlaveAddr);
+	vPrintf(" Lecture i2c(%x)\n",u8SlaveAddr);
 	// Recherche composant sur bus i2c
 	vAHI_SiWriteSlaveAddr(u8SlaveAddr,FALSE);
 	vAHI_SiSetCmdReg(E_AHI_SI_START_BIT,
@@ -717,7 +835,7 @@ PRIVATE uint16 u16_I2CRead_9555(uint8 u8SlaveAddr)
 	vPrintf("  Valeur recu port 1:%x\n", u8Res);
 	u16Res = u16Res | (u8Res<<8);
 
-	vPrintf(" Valeur retounee:%x\n",u16Res);
+	vPrintf(" Valeur retounee:%x\n\n",u16Res);
 
 	return u16Res;
 }

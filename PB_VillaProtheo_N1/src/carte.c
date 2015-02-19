@@ -160,6 +160,8 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_TstOutput(uint8 *box_cnf)
 	static uint8 io = 0;
 	static uint8 rf = 0;
 	static bool_t pass = FALSE;
+	static bool_t bDoReadOutput = TRUE;
+	static uint32 conf = 0;
 
 	if ((u8JPI_PowerStatus() & 0x10) == 0)
 	{
@@ -174,13 +176,57 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_TstOutput(uint8 *box_cnf)
 			// Analyse duree appui
 			if (TimePgmPressed<30)
 			{
+				// Premier passage lire la config des sorties
+				if(bDoReadOutput)
+				{
+					bDoReadOutput = FALSE;
+					conf= vPRT_DioReadInput();
+					//rf = (uint8)vPRT_DioReadInput();
+				}
+				vPrintf("\n Tst(%d):conf=%x;rf=%x;\n",io,(uint32)conf,rf);
+				if(io <CARD_NB_LIGHT)
+				{
+					// cas du premier bit
+					if(io==0)
+					{
+						// Le dernier est a 0?
+						if(IsBitSet(conf,((CARD_NB_LIGHT-1) + PBAR_DEBUT_IO))==0)
+						{
+							//Oui alors le mettre a 1
+							BitNset(conf,(CARD_NB_LIGHT-1) + PBAR_DEBUT_IO);
+						}
+					}
+					else
+					{
+						// Mettre a 1 le bit precedent
+						BitNset(conf,(io-1)+ PBAR_DEBUT_IO);
+					}
+
+
+					// mettre a 0 le bit actuel
+					BitNclr(conf,io);
+
+					// Mettre la config
+					vPRT_DioSetOutput(conf,~conf);
+
+					// Passer au bit suivant
+					io = (io + 1 )%CARD_NB_LIGHT;
+				}
+				else
+				{
+					vPrintf("io >= CARD_NB_LIGHT\n");
+				}
+
+#if 0
 				if(rf != 0xFF)
 				{
-					//vPrintf("rf=%x;io=%x\n",rf,io);
+					vPrintf("rf=%x;io=%x\n",rf,io);
 					if(io >=1 && io <CARD_NB_LIGHT)
 					{
+						vPrintf("BIT 1_0\n");
 						if((IsBitSet(rf,(io-1))))
 						{
+							vPrintf("BIT 1_1\n");
 							vPRT_DioSetOutput(0,(1 << (PBAR_DEBUT_IO + (io-1)))); //off
 							rf = rf ^ (1<<(io-1));
 						}
@@ -189,8 +235,10 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_TstOutput(uint8 *box_cnf)
 					}
 					else
 					{
+						vPrintf("BIT 2_0\n");
 						if((IsBitSet(rf,(CARD_NB_LIGHT-1))))
 						{
+							vPrintf("BIT 2_1\n");
 							vPRT_DioSetOutput(0,(1 << (PBAR_DEBUT_IO + (CARD_NB_LIGHT-1)))); //off
 							rf = rf ^ (1<<(CARD_NB_LIGHT-1));
 						}
@@ -202,15 +250,22 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_TstOutput(uint8 *box_cnf)
 					io++;
 					io%=CARD_NB_LIGHT;
 				}
+				else
+				{
+					vPrintf("rf==FF\n");
+				}
+#endif
 			}
 			else {
 				rf=0xFF;
 				if(!pass){
-					vPRT_DioSetOutput(rf<<PBAR_DEBUT_IO,(~rf)<<PBAR_DEBUT_IO); // On
+					vPrintf("Mode ON\n");
+					vPRT_DioSetOutput(~rf<<PBAR_DEBUT_IO,rf<<PBAR_DEBUT_IO);
 				}
 				else
 				{
-					vPRT_DioSetOutput(~rf<<PBAR_DEBUT_IO,rf<<PBAR_DEBUT_IO);
+					vPrintf("Mode OFF\n");
+					vPRT_DioSetOutput(rf<<PBAR_DEBUT_IO,(~rf)<<PBAR_DEBUT_IO); // On
 					rf = 0;
 				}
 				pass = !pass;
@@ -319,8 +374,6 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
 					bReturnConfig=TRUE;
 				}
 			}
-			// Mettre a 1 SIG_LE 573 pour BLOQUER bus
-			//vPrintf("Time pressed : %d\n", TimePgmPressed);
 			TimePgmPressed=0;
 		}
 	}
