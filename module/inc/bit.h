@@ -51,6 +51,7 @@
 // Manipulation de Bit
 #define Bit(bit) 						(1UL << (bit))
 #define BitNset(arg,bit) 				((arg) |= BIT(bit))
+#define BitNinv(arg,bit) 				((arg) ^= BIT(bit))
 #define BitNclr(arg,bit) 				((arg) &= ~BIT(bit))
 #define IsBitSet(arg,bit)				(((arg>>bit)&1)?1:0)
 

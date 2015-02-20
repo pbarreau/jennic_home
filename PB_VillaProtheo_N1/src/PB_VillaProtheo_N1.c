@@ -827,13 +827,49 @@ PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId,uint32 u32ItemBitmap)
 
 PRIVATE void vPRT_TraiterChangementEntree(uint32 val)
 {
+	static uint16 val_input = 0xFFFF;
+	uint16 lesEntrees = (val>>16 & 0xFF00) | (((uint16)val>>8) & 0x00FF);
+	int i=0;
+
+	// Recuperer la config actuelle
+	uint32 req_on = ((prvCnf_O_9555 << 8) & 0x00FF0000 )| ((uint8)prvCnf_O_9555 & 0x00FF00FF);
+	uint32 req_off = ((~prvCnf_O_9555 << 8) & 0x00FF0000 )| (~(uint8)prvCnf_O_9555 & 0x00FF00FF);
+
+	vPrintf("\nConfig entrees -> previous:%x, now:%x\n", prvCnf_I_9555, lesEntrees);
+
+	// Recherche des bits modifies
+	for(i=0;i<16;i++)
+	{
+		// Pas de changement
+		if(IsBitSet(prvCnf_I_9555,i) == IsBitSet(lesEntrees,i))
+			continue;
+
+		// modifier le bit out de cette entree
+		if(i<8)
+		{
+			vPrintf("bit %i different\n",i);
+			// Premier composant i2c
+			BitNinv(req_on,i);
+			BitNinv(req_off,i);
+			vPRT_DioSetOutput(req_on,req_off);
+		}
+		else
+		{
+			;
+		}
+		// Memorisation du changement
+		prvCnf_I_9555 = lesEntrees;
+	}
+}
+
+#if 0
+PRIVATE void vPRT_TraiterChangementEntree(uint32 val)
+{
 	uint16 lesEntrees = (val>>16 & 0xFF00) | (((uint16)val>>8) & 0x00FF);
 	uint16 tmp = prvCnf_I_9555 ^ lesEntrees;
 	uint8 un_port = 0;
 	uint8 val_port = 0;
 	uint8 une_entree = 0;
-	//uint32 req_on = ((prvCnf_O_9555 << 8) & 0x00FF0000 )| ((uint8)prvCnf_O_9555 & 0x00FF00FF);
-	//uint32 req_off = ((~prvCnf_O_9555 << 8) & 0x00FF0000 )| (~(uint8)prvCnf_O_9555 & 0x00FF00FF);
 
 	uint32 req_on = ((prvCnf_O_9555 << 8) & 0x00FF0000 )| ((uint8)prvCnf_O_9555 & 0x00FF00FF);
 	uint32 req_off = ((~prvCnf_O_9555 << 8) & 0x00FF0000 )| (~(uint8)prvCnf_O_9555 & 0x00FF00FF);
@@ -883,6 +919,7 @@ PRIVATE void vPRT_TraiterChangementEntree(uint32 val)
 		vPRT_DioSetOutput(req_on,req_off);
 	}
 }
+#endif
 /****************************************************************************/
 /***        END OF FILE                                                   ***/
 /****************************************************************************/
