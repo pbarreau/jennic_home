@@ -164,31 +164,26 @@
 		<project id="JN-AN-1061-JenNet-Application-Template\n.null.433696002" name="JN-AN-1061-JenNet-Application-Template\n"/>
 	</storageModule>
 	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="All"/>
+		<configuration configurationName="AN1061_JN_EndD-HWDebug">
+			<resource resourceType="PROJECT" workspacePath="/JN-AN-1061-JenNet-Application-Template"/>
+		</configuration>
+		<configuration configurationName="48_N1_Coordateur">
+			<resource resourceType="PROJECT" workspacePath="/PB_VillaProtheo"/>
+		</configuration>
+		<configuration configurationName="_39_N3_EndDevice_1">
+			<resource resourceType="PROJECT" workspacePath="/PB_VillaProtheo"/>
+		</configuration>
+		<configuration configurationName="_39_N3_EndDevice_2">
+			<resource resourceType="PROJECT" workspacePath="/PB_VillaProtheo"/>
+		</configuration>
 		<configuration configurationName="AN1061_JN_Coord">
 			<resource resourceType="PROJECT" workspacePath="/JN-AN-1061-JenNet-Application-Template"/>
 		</configuration>
 		<configuration configurationName="AN1061_JN_EndD">
 			<resource resourceType="PROJECT" workspacePath="/JN-AN-1061-JenNet-Application-Template"/>
 		</configuration>
-		<configuration configurationName="48_N2_Routeur"/>
-		<configuration configurationName="AN1061_JN_Coord-HWDebug">
-			<resource resourceType="PROJECT" workspacePath="/JN-AN-1061-JenNet-Application-Template"/>
-		</configuration>
 		<configuration configurationName="_39_N1_Coordonateur">
-			<resource resourceType="PROJECT" workspacePath="/PB_VillaProtheo"/>
-		</configuration>
-		<configuration configurationName="_39_N2_Routeur"/>
-		<configuration configurationName="_39_N3_EndDevice_1">
-			<resource resourceType="PROJECT" workspacePath="/PB_VillaProtheo"/>
-		</configuration>
-		<configuration configurationName="PB_VillaProtheo_N3"/>
-		<configuration configurationName="48_N3_EndDevice_1">
-			<resource resourceType="PROJECT" workspacePath="/PB_VillaProtheo"/>
-		</configuration>
-		<configuration configurationName="_39_N3_EndDevice_2">
-			<resource resourceType="PROJECT" workspacePath="/PB_VillaProtheo"/>
-		</configuration>
-		<configuration configurationName="PB_VillaProtheo_N1">
 			<resource resourceType="PROJECT" workspacePath="/PB_VillaProtheo"/>
 		</configuration>
 		<configuration configurationName="48_N3_EndDevice_2">
@@ -200,21 +195,27 @@
 		<configuration configurationName="AN1061_JN_Router">
 			<resource resourceType="PROJECT" workspacePath="/JN-AN-1061-JenNet-Application-Template"/>
 		</configuration>
+		<configuration configurationName="Master">
+			<resource resourceType="PROJECT" workspacePath="/PB_VillaProtheo"/>
+		</configuration>
+		<configuration configurationName="48_N3_EndDevice_1">
+			<resource resourceType="PROJECT" workspacePath="/PB_VillaProtheo"/>
+		</configuration>
 		<configuration configurationName="39_router">
 			<resource resourceType="PROJECT" workspacePath="/PB_VillaProtheo"/>
 		</configuration>
-		<configuration configurationName="PB_VillaProtheo_N2"/>
-		<configuration configurationName="48_N1_Coordateur">
+		<configuration configurationName="48_N2_Routeur"/>
+		<configuration configurationName="_39_N2_Routeur"/>
+		<configuration configurationName="PB_VillaProtheo_N3"/>
+		<configuration configurationName="PB_VillaProtheo_N1">
 			<resource resourceType="PROJECT" workspacePath="/PB_VillaProtheo"/>
 		</configuration>
-		<configuration configurationName="AN1061_JN_EndD-HWDebug">
-			<resource resourceType="PROJECT" workspacePath="/JN-AN-1061-JenNet-Application-Template"/>
-		</configuration>
+		<configuration configurationName="PB_VillaProtheo_N2"/>
 		<configuration configurationName="AN1061_JN_Router-HWDebug">
 			<resource resourceType="PROJECT" workspacePath="/JN-AN-1061-JenNet-Application-Template"/>
 		</configuration>
-		<configuration configurationName="Master">
-			<resource resourceType="PROJECT" workspacePath="/PB_VillaProtheo"/>
+		<configuration configurationName="AN1061_JN_Coord-HWDebug">
+			<resource resourceType="PROJECT" workspacePath="/JN-AN-1061-JenNet-Application-Template"/>
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
