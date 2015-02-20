@@ -15,143 +15,142 @@
 #if defined __cplusplus
 extern "C" {
 #endif
- /****************************************************************************/
- /***        Include Files                                                 ***/
- /****************************************************************************/
+/****************************************************************************/
+/***        Include Files                                                 ***/
+/****************************************************************************/
 #include <Button.h>
 #include <Jenie.h>
 #include "services.h"
 
- /****************************************************************************/
- /***        Macro Definitions                                             ***/
- /****************************************************************************/
-#define NO_DEBUG_ON	FALSE
+/****************************************************************************/
+/***        Macro Definitions                                             ***/
+/****************************************************************************/
+#define NO_DEBUG_ON	        FALSE
 
 #if NO_DEBUG_ON
 #define vPrintf(...)
 #endif
 
-#define	C_IMPULSION_COURTE		60
-#define	C_IMPULSION_LONGUE		200
+#define	C_IMPULSION_COURTE	60
+#define	C_IMPULSION_LONGUE	200
 #define	C_IMPULSION_RESET_IN	500
 #define	C_IMPULSION_RESET_OUT	1000
 #define	C_IMPULSION_ERASE_RST	1000
 
- // Config du reseau
-#define	PBAR_E_POLL_PER						10
-#define PBAR_E_PING_PER						10
+// Config du reseau
+#define	PBAR_E_POLL_PER		10
+#define PBAR_E_PING_PER		10
+#define PBAR_RTBL_SIZE		100
 
-#define PBAR_RTBL_SIZE						100
-
-#define PBAR_CHANNEL							0
+#define PBAR_CHANNEL		0
 #if PBAR_CHANNEL
-#define PBAR_SCAN_CHANNELS				(1<<PBAR_CHANNEL)
+#define PBAR_SCAN_CHANNELS	(1<<PBAR_CHANNEL)
 #else
-#define PBAR_SCAN_CHANNELS				0x07FFF800
+#define PBAR_SCAN_CHANNELS	0x07FFF800
 #endif
 
-#define PBAR_PAN_ID               0x1968
-#define PBAR_NID									0xdeaddead
+#define PBAR_PAN_ID             0x1968
+#define PBAR_NID		0xdeaddead
 
- /* Flash addresses */
-#define FLASH_SECTOR 7
-#define FLASH_START  0x70000
-#define FLASH_END    0x80000
+/* Flash addresses */
+#define FLASH_SECTOR            7
+#define FLASH_START             0x70000
+#define FLASH_END               0x80000
 
 #if 0
 #if (JENNIC_CHIP_FAMILY == JN514x)
-#define FLASH_SECTOR 3
-#define FLASH_START  0x30000
-#define FLASH_END    0x40000
+#define FLASH_SECTOR            3
+#define FLASH_START             0x30000
+#define FLASH_END               0x40000
 #else
-#define FLASH_SECTOR 3
-#define FLASH_START  0x18000
-#define FLASH_END    0x20000
+#define FLASH_SECTOR            3
+#define FLASH_START             0x18000
+#define FLASH_END               0x20000
 #endif
 #endif
 
-#define C_CLEF_VIDE 0x00
-#define C_MAX_BOXES 20
+#define C_CLEF_VIDE             0x00
+#define C_MAX_BOXES             20
 
- // Buffer reception de trames entre mes elements 2 * Taille msg trame
-#define	PBAR_RBUF_SIZE			6
+// Buffer reception de trames entre mes elements 2 * Taille msg trame
+#define	PBAR_RBUF_SIZE		6
 
- // Gestion bouton pgm de carte
-#define	PBAR_ATR_BTNPGM						30 // Anti rebond btn pgm
-#define BUTTON_P_MASK (BUTTON_3_MASK << 1)  /* Mask for program button {v3} */
+// Gestion bouton pgm de carte
+#define	PBAR_ATR_BTNPGM		30 // Anti rebond btn pgm
+#define BUTTON_P_MASK           (BUTTON_3_MASK << 1)  /* Mask for program button {v3} */
 
- // Gestion des Leds
+#define PBAR_DEBUT_IO           11
+
+// Gestion des Leds
 #define vLedCtrlKpd(ON,LED) \
-  vAHI_DioSetOutput( \
-    (ON) ? 0             : (1<<LED), \
-      (ON) ? (1<<LED) : 0\
-  )
+    vAHI_DioSetOutput( \
+        (ON) ? 0             : (1<<LED), \
+            (ON) ? (1<<LED) : 0\
+    )
 
 #if 0
- vAHI_DioSetOutput( \
-   (ON) ? (C_BAR_LED_1) : 0, \
-     (ON) ? 0             : (C_BAR_LED_1)\
- )
+vAHI_DioSetOutput( \
+    (ON) ? (C_BAR_LED_1) : 0, \
+        (ON) ? 0             : (C_BAR_LED_1)\
+)
 #endif
 
-     // MAnipulation de Bit
-#define BitMsk(bit) 						(1 << (bit))
-#define BitNset(arg,bit) 				((arg) |= BitMsk(bit))
-#define BitNclr(arg,bit) 				((arg) &= ~BitMsk(bit))
-#define IsBitSet(arg,bit)				(((arg>>bit)&1)?1:0)
+// Manipulation de Bit
+#define BitMsk(bit) 		(1 << (bit))
+#define BitNset(arg,bit) 	((arg) |= BitMsk(bit))
+#define BitNclr(arg,bit) 	((arg) &= ~BitMsk(bit))
+#define IsBitSet(arg,bit)	(((arg>>bit)&1)?1:0)
 
 #ifdef HOWTO
-    int setBit(int x, unsigned char position)
- {
+int setBit(int x, unsigned char position)
+{
   int mask = 1 << position;
   return x | mask;
- }
+}
 
- int clearBit(int x, unsigned char position)
- {
+int clearBit(int x, unsigned char position)
+{
   int mask = 1 << position;
   return x & ~mask;
- }
+}
 
- int modifyBit(int x, unsigned char position, bool newState)
- {
+int modifyBit(int x, unsigned char position, bool newState)
+{
   nt mask = 1 << position;
   int state = int(newState); // relies on true = 1 and false = 0
   return (x & ~mask) | (-state & mask);
- }
+}
 
- int flipBit(int x, unsigned char position)
- {
+int flipBit(int x, unsigned char position)
+{
   int mask = 1 << position;
   return x ^ mask;
- }
+}
 
- bool isBitSet(int x, unsigned char position)
- {
+bool isBitSet(int x, unsigned char position)
+{
   x >>= position;
   return (x & 1) != 0;
- }
+}
 #endif
 
-#define PBAR_DEBUT_IO						11
-
 #if 0
-#define PBAR_DEBUT_LED_CO				19
-#define	PBAR_DEBUT_LED_ED				10
+#define PBAR_DEBUT_LED_CO	19
+#define	PBAR_DEBUT_LED_ED	10
 
 
 #define vLedControl(LED,ON) \
-  vAHI_DioSetOutput((ON) ? 0 : (1 << (PBAR_DEBUT_LED_CO + LED)), \
-    (ON) ? (1 << (PBAR_DEBUT_LED_CO + LED)) : 0)
+    vAHI_DioSetOutput((ON) ? 0 : (1 << (PBAR_DEBUT_LED_CO + LED)), \
+        (ON) ? (1 << (PBAR_DEBUT_LED_CO + LED)) : 0)
 #endif
 
 
- /****************************************************************************/
- /***        Type Definitions                                              ***/
- /****************************************************************************/
- typedef enum
- {
-	 E_FLASH_BP_TEST_SORTIES = 0x00,
+/****************************************************************************/
+/***        Type Definitions                                              ***/
+/****************************************************************************/
+typedef enum
+{
+  E_FLASH_BP_TEST_SORTIES = 0x00,
   E_FLASH_RECHERCHE_RESEAU = 0x01,
   E_FLASH_RECHERCHE_BC = 0x01,
   E_FLASH_ERREUR_DECTECTEE = 0x03,
@@ -162,17 +161,17 @@ extern "C" {
   E_FLASH_RESEAU_ACTIF = 0x10,
   E_FLASH_BP_EN_CONFIGURATION_SORTIES=0x20,
   E_FLASH_FIN = 0xFF
- } ebpLedInfo;
+} ebpLedInfo;
 
- typedef struct
- {
-  uint8      pio;
-  ebpLedInfo mode;
-  bool_t     actif;
- }sbpLed;
+typedef struct
+{
+    uint8      pio;
+    ebpLedInfo mode;
+    bool_t     actif;
+}sbpLed;
 
- typedef enum
- {
+typedef enum
+{
   APP_STATE_WAITING_FOR_NETWORK,
   APP_STATE_NETWORK_UP,
   APP_STATE_REGISTERING_SERVICE,
@@ -212,42 +211,42 @@ extern "C" {
   APP_STATE_CHANGE_MOD,
   APP_STATE_TRAITER_INPUT_MESSAGE,
   APP_STATE_RUNNING
- } teAppState;
+} teAppState;
 
- typedef struct
- {
-  teAppState eAppState;
-  uint8		 u8BoxId;
-  uint64     u64ServiceAddress;
- } tsAppData;
+typedef struct
+{
+    teAppState eAppState;
+    uint8		 u8BoxId;
+    uint64     u64ServiceAddress;
+} tsAppData;
 
 
- typedef enum{
+typedef enum{
   E_CLAV_EN_NON_DEFINI,
   E_CLAV_EN_USAGE,
   E_CLAV_EN_CONFIG
- }bpeClav;
+}bpeClav;
 
- typedef enum
- {
+typedef enum
+{
   E_CLAV_MODE_NOT_SET,
   E_CLAV_MODE_DEFAULT,
   E_CLAV_MODE_1,
   E_CLAV_MODE_2,
   E_CLAV_MODE_3,
   E_CLAV_MODE_END
- }PBAR_E_KeyMode;
+}PBAR_E_KeyMode;
 
- typedef enum{
+typedef enum{
   E_MSG_DATA_ALL,
   E_MSG_DATA_SELECT,
   E_MSG_ASK_ID_BOX,
   E_MSG_RSP_ID_BOX,
   E_MSG_CFG_LIENS,
   E_MSG_CFG_BOX_END
- }PBAR_TypeMsg;
+}PBAR_TypeMsg;
 
- typedef enum{
+typedef enum{
   E_KPD_A,
   E_KPD_B,
   E_KPD_C,
@@ -260,22 +259,22 @@ extern "C" {
   E_KPD_NONE,
   E_KPD_MODE,
   E_KPD_END_DEF
- }PBAR_KIT_8046;
+}PBAR_KIT_8046;
 
- /****************************************************************************/
- /***        Exported Functions                                            ***/
- /****************************************************************************/
- extern PUBLIC void PBAR_ClignoterLedNFois(uint32 gpio,uint8 n);
- extern PUBLIC void bp_CommunStackMgmtEvent(teAppState *eState,
-   teEventType eEventType, void *pvEventPrim);
- extern PUBLIC  void PBAR_ClignoteLed_1(void);
+/****************************************************************************/
+/***        Exported Functions                                            ***/
+/****************************************************************************/
+extern PUBLIC void PBAR_ClignoterLedNFois(uint32 gpio,uint8 n);
+extern PUBLIC void bp_CommunStackMgmtEvent(teAppState *eState,
+    teEventType eEventType, void *pvEventPrim);
+extern PUBLIC  void PBAR_ClignoteLed_1(void);
 
- /****************************************************************************/
- /***        Exported Variables                                            ***/
- /****************************************************************************/
- extern PUBLIC bool_t bStartFlashing;
- extern PUBLIC uint32 mLedId;
- extern PUBLIC sbpLed au8Led[2];
+/****************************************************************************/
+/***        Exported Variables                                            ***/
+/****************************************************************************/
+extern PUBLIC bool_t bStartFlashing;
+extern PUBLIC uint32 mLedId;
+extern PUBLIC sbpLed au8Led[2];
 
 #if defined __cplusplus
 }
