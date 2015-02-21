@@ -26,6 +26,7 @@ extern "C" {
 #include "m_config.h"
 #include "clav2pc.h"
 #include "e_led.h"
+
 /****************************************************************************/
 /***        Macro Definitions                                             ***/
 /****************************************************************************/
@@ -38,7 +39,7 @@ extern "C" {
 
 #define C_PRESSION_T1		30	/// valeur de temps limite pour une pression courte
 #define C_PRESSION_T2		50	/// valeur de temps limite pour une pression courte
-#define C_PRESSION_T3		150	/// valeur de temps limite pour une pression courte
+#define C_PRESSION_T3		100	/// valeur de temps limite pour une pression courte
 #define C_PRESSION_T4		200	/// valeur de temps limite pour une pression courte
 
 #define	PBAR_CFG_NUMPAD_IN	(\
@@ -135,13 +136,14 @@ typedef struct
 	teClavState	eClavState;
 	tePcState	ePcState;
 	teClavState	ePrevClav;
-	etCLAV_keys eKeyPressed;
+	etCLAV_keys     eKeyPressed;
 	etCLAV_role	usage;
 	etCLAV_mod 	eClavmod;
 	uint8		ukey;
 	uint8		u8BoxId;
 	uint64     	u64ServiceAddress;
 } tsClavData;
+extern PUBLIC void PBAR_DbgInside(int level, teDbgTrace eSens, tsClavData val);
 
 typedef struct _touche
 {

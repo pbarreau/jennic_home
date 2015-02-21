@@ -72,33 +72,55 @@ extern "C" {
 /****************************************************************************/
 /***        Type Definitions                                              ***/
 /****************************************************************************/
+
+#if !NO_DEBUG_ON
 typedef enum
 {
-	APP_INITIALISATION,
-	APP_RECHERCHE_RESEAU,
-	APP_RESEAU_ETABLI,
-	APP_CONNECTION_RESEAU,
-	APP_PERTE_RESEAU,
-	APP_ATTENTE_ENREGISTREMENT_AU_PERE,
-	APP_BOUCLE_PRINCIPALE
+  E_FN_IN,
+  E_FN_OUT,
+  E_FN_END
+}teDbgTrace;
+
+typedef enum
+{
+  E_DBG_TYPE_NET_STATE,
+  E_DBG_TYPE_TYPE_MSG,
+  E_DBG_TYPE_END
+}teDbgModulEnum;
+
+extern PUBLIC int PBAR_DbgTrace(teDbgTrace eSens, char *fn, void * val_enum, teDbgModulEnum enumType);
+#endif
+
+typedef enum
+{
+  APP_INITIALISATION,
+  APP_RECHERCHE_RESEAU,
+  APP_RESEAU_ETABLI,
+  APP_CONNECTION_RESEAU,
+  APP_PERTE_RESEAU,
+  APP_ATTENTE_ENREGISTREMENT_AU_PERE,
+  APP_BOUCLE_PRINCIPALE,
+  APP_DEFINITION_END
 } teNetState;
+extern PUBLIC char const *dbg_teNetState[];
+extern PUBLIC char const *dbg_teEventType[];
 
-
- typedef enum{
+typedef enum{
   E_MSG_DATA_ALL,
   E_MSG_DATA_SELECT,
   E_MSG_ASK_ID_BOX,
   E_MSG_RSP_ID_BOX,
   E_MSG_CFG_LIENS,
-  E_MSG_CFG_BOX_END
- }PBAR_TypeMsg;
-
+  E_MSG_CFG_BOX_END,
+  E_MSG_DEFINITION_END
+}PBAR_TypeMsg;
+extern PUBLIC char const *dbg_PBAR_TypeMsg[];
 
 /****************************************************************************/
 /***        Exported Functions                                            ***/
 /****************************************************************************/
 extern PUBLIC void bp_CommunMsgReseau(teNetState *eState,
-		teEventType eEventType, void *pvEventPrim);
+    teEventType eEventType, void *pvEventPrim);
 
 /****************************************************************************/
 /***        Exported Variables                                            ***/

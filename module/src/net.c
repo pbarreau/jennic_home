@@ -64,7 +64,7 @@ PUBLIC void bp_CommunMsgReseau(teNetState *eState,
 
 		default:
 		{
-			vPrintf("ERR:bp_CommunMsgReseau ->%d\n",eEventType);
+			vPrintf("ERR:bp_CommunMsgReseau ->%s\n",dbg_teEventType[eEventType]);
 		}
 		break;
 	}

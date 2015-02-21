@@ -30,7 +30,7 @@ PUBLIC teClavState CLAV_UsrActionTouche(etCLAV_keys keys)
 	uint8 			key_mode	= eKeyMode - E_CLAV_MODE_DEFAULT;
 	uint8 			key_code 	= (keys==E_KEY_ETOILE?C_KEY_MEM_ALL:keys - E_KEY_NUM_1);
 
-	uint8 			box			= 0;
+	uint8 			box		= 0;
 	uint8			useBox 		= 0;
 
 	vPrintf("\nIN:CLAV_UsrActionTouche MEF:%s\n",dbg_teClavState[mef_clav]);
@@ -49,7 +49,7 @@ PUBLIC teClavState CLAV_UsrActionTouche(etCLAV_keys keys)
 		for(box=0;box<C_MAX_BOXES+1;box++)
 		{
 			useBox = eeprom.netConf.boxList[key_mode][key_code][box];
-			vPrintf("km=%d,kc=%d,po=%d,v=%d\n",key_mode,key_code,box,useBox);
+			vPrintf(" keymode=%d,keycode=%d,boxuse=%d,v=%d\n",key_mode,key_code,box,useBox);
 			if(eeprom.netConf.boxList[key_mode][key_code][box] == 0x00){
 				//suivant de box = box
 				// sortir de la boucle
