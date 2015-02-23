@@ -18,32 +18,40 @@ PUBLIC teClavState CLAV_PgmNetMontrerClavier(void)
   teJenieStatusCode eStatus = E_JENIE_ERR_UNKNOWN;
   teClavState mef_clav = AppData.eClavState;
 
-  vPrintf("  IN:CLAV_PgmNetMontrerClavier MEF:%s\n", dbg_teClavState[mef_clav]);
+#if !NO_DEBUG_ON
+  int stepper = 0;
+
+  stepper = PBAR_DbgTrace(E_FN_IN,"CLAV_PgmNetMontrerClavier",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
+#endif
   // Enregistrer le service clavier pour etre vu des boitiers puissances
-  vPrintf("   Transmettre passage en mode conf service:%x\n",SRV_INTER);
+  vPrintf("%sTransmettre passage en mode conf service:%x\n",gch_spaces,SRV_INTER);
 
   eStatus = eJenie_RegisterServices((uint32)SRV_INTER);
 
   switch(eStatus)
   {
     case E_JENIE_SUCCESS:
-      vPrintf("    Ce module est routeur : OK\n");
+      vPrintf("%s Ce module est routeur : OK\n",gch_spaces);
       mef_clav = E_CLAV_ATTENDRE_BOITE;
       break;
 
     case E_JENIE_DEFERRED:
-      vPrintf("    Ce module est end device transfert au pere\n");
+      vPrintf("%sCe module est end device transfert au pere\n",gch_spaces);
       mef_clav = E_CLAV_SERVICE_ON;
       break;
 
     default:
-      vPrintf("    !!Activation service clavier a revoir\n");
+      vPrintf("%s!!Activation service clavier a revoir\n",gch_spaces);
       mef_clav = E_CLAV_ETAT_UNDEF;
       AppData.eAppState = APP_BOUCLE_PRINCIPALE;
       break;
   }
 
-  vPrintf("  OUT:CLAV_PgmNetMontrerClavier MEF:%s\n", dbg_teClavState[mef_clav]);
+#if !NO_DEBUG_ON
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
+  PBAR_DbgTrace(E_FN_OUT,"CLAV_PgmNetMontrerClavier",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
+#endif
 
   return mef_clav;
 }
@@ -53,32 +61,40 @@ PUBLIC teClavState CLAV_PgmNetRetirerClavier(void)
   teJenieStatusCode eStatus = E_JENIE_ERR_UNKNOWN;
   teClavState mef_clav = AppData.eClavState;
 
-  vPrintf("  IN:CLAV_PgmNetRetirerClavier MEF:%s\n", dbg_teClavState[mef_clav]);
+#if !NO_DEBUG_ON
+  int stepper = 0;
+
+  stepper = PBAR_DbgTrace(E_FN_IN,"CLAV_PgmNetRetirerClavier",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
+#endif
   // Enregistrer le service clavier pour etre vu des boitiers puissances
-  vPrintf("   Effacer mode conf service\n");
+  vPrintf("%sEffacer mode conf service\n",gch_spaces);
 
   eStatus = eJenie_RegisterServices((uint32)0);
 
   switch(eStatus)
   {
     case E_JENIE_SUCCESS:
-      vPrintf("    Ce module est routeur : OK\n");
+      vPrintf("%sCe module est routeur : OK\n",gch_spaces);
       mef_clav = E_CLAV_ETAT_EN_ATTENTE;
       break;
 
     case E_JENIE_DEFERRED:
-      vPrintf("    Ce module est end device transfert au pere\n");
+      vPrintf("%sCe module est end device transfert au pere\n",gch_spaces);
       mef_clav = E_CLAV_SERVICE_OFF;
       break;
 
     default:
-      vPrintf("    !!Activation service clavier a revoir\n");
+      vPrintf("%s!!Activation service clavier a revoir\n",gch_spaces);
       mef_clav = E_CLAV_ETAT_UNDEF;
       AppData.eAppState = APP_BOUCLE_PRINCIPALE;
       break;
   }
 
-  vPrintf("  OUT:CLAV_PgmNetRetirerClavier MEF:%s\n", dbg_teClavState[mef_clav]);
+#if !NO_DEBUG_ON
+  PBAR_DbgTrace(E_FN_OUT,"CLAV_PgmNetRetirerClavier",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
+#endif
 
   return mef_clav;
 }
@@ -90,19 +106,23 @@ PUBLIC teClavState CLAV_PgmNetMsgInput(tsData *psData)
   uint8 clav = 0;
   uint8 conf= 0;
 
-  vPrintf("\n IN:CLAV_PgmNetMsgInput MEF:%s\n", dbg_teClavState[mef_clav]);
+#if !NO_DEBUG_ON
+  int stepper = 0;
+
+  stepper = PBAR_DbgTrace(E_FN_IN,"CLAV_PgmNetMsgInput",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
+#endif
 
   if((psData->u16Length) == 1)
   {
     if(AppData.eClavState == E_CLAV_ATTENDRE_BOITE)
     {
-      vPrintf("  une boite se fait connaitre\n");
+      vPrintf("%sune boite se fait connaitre\n",gch_spaces);
       mef_clav = pgm_GererBoiteEntrante(psData);
-      vPrintf("  une boite a ete geree\n");
     }
     else
     {
-      vPrintf("  Message recut hors contexte prevu!\n");
+      vPrintf("%sMessage recut hors contexte prevu!\n",gch_spaces);
     }
   }
   else
@@ -112,7 +132,7 @@ PUBLIC teClavState CLAV_PgmNetMsgInput(tsData *psData)
       {
         case E_MSG_CFG_BOX_END:
         {
-          vPrintf("  Msg Fin config boite %d\n\n",AppData.u8BoxId);
+          vPrintf("%sMsg Fin config boite %d\n\n",gch_spaces,AppData.u8BoxId);
           pgm_CreerConfigAll(AppData.u8BoxId);
           mef_clav = E_CLAV_ATTENDRE_BOITE;
           AppData.eAppState = APP_BOUCLE_PRINCIPALE;
@@ -125,8 +145,8 @@ PUBLIC teClavState CLAV_PgmNetMsgInput(tsData *psData)
           clav = psData->pau8Data[psData->u16Length-2] & 0x0F;
           conf = psData->pau8Data[psData->u16Length-1];
 
-          vPrintf("  Reception config liens\n");
-          vPrintf("   Box:%d, Mode:%d, clav:%d, conf:%x\n\n",
+          vPrintf("%sReception config liens\n",gch_spaces);
+          vPrintf("%s Box:%d, Mode:%d, clav:%d, conf:%x\n\n",gch_spaces,
               AppData.u8BoxId,mode,clav,conf);
 
           eeprom.netConf.boxData[mode][clav][AppData.u8BoxId] = conf;
@@ -137,7 +157,7 @@ PUBLIC teClavState CLAV_PgmNetMsgInput(tsData *psData)
 
         default:
         {
-          vPrintf("  FIN CFG Msg de la boite non compris\n");
+          vPrintf("%sFIN CFG Msg de la boite non compris\n",gch_spaces);
         }
         break;
 
@@ -145,13 +165,16 @@ PUBLIC teClavState CLAV_PgmNetMsgInput(tsData *psData)
     }
     else
     {
-      vPrintf("  ERR:La taille n'est pas celle prevue\n");
-      vPrintf("  Reception d'un message non normalise !!\n");
+      vPrintf("%sERR:La taille n'est pas celle prevue\n",gch_spaces);
+      vPrintf("%sReception d'un message non normalise !!\n",gch_spaces);
 
       AppData.eAppState = APP_BOUCLE_PRINCIPALE;
     }
 
-  vPrintf(" OUT:CLAV_PgmNetMsgInput MEF:%s\n", dbg_teClavState[mef_clav]);
+#if !NO_DEBUG_ON
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
+  PBAR_DbgTrace(E_FN_OUT,"CLAV_PgmNetMsgInput",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
+#endif
   return mef_clav;
 }
 
@@ -164,12 +187,18 @@ PUBLIC teClavState CLAV_PgmActionTouche(etCLAV_keys keys)
   uint8 box_id = AppData.u8BoxId;
   uint8 position = 0;
 
-  vPrintf("\n IN:CLAV_PgmActionTouche MEF:%s\n", dbg_teClavState[mef_clav]);
+#if !NO_DEBUG_ON
+  int stepper = 0;
+
+  stepper = PBAR_DbgTrace(E_FN_IN,"CLAV_PgmActionTouche",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
+#endif
 
   if(keys >= E_KEY_NUM_1 && keys <= E_KEY_NUM_0)
   {
     // On envoie la touche et le mode a la carte puissance
-    vPrintf("\n  Programmation touche clavier:%s, mode:%s\n",dbg_etCLAV_keys[keys],dbg_etCLAV_mod[key_mode+E_CLAV_MODE_DEFAULT]);
+    vPrintf("\n%sProgrammation touche clavier:%s, mode:%s\n",
+        gch_spaces,dbg_etCLAV_keys[keys],dbg_etCLAV_mod[key_mode+E_CLAV_MODE_DEFAULT]);
 
     // verifier si cette touche connait la boite a configurer
     // si non rajouter cette boite a la touche
@@ -182,14 +211,14 @@ PUBLIC teClavState CLAV_PgmActionTouche(etCLAV_keys keys)
     {
       eeprom.netConf.boxList[key_mode][key_code][position]=box_id;
       eeprom.netConf.ptr_boxList[key_mode][key_code]++;
-      vPrintf("   La touche a la connaisance de la boite %d!\n",box_id);
+      vPrintf("%s La touche a la connaisance de la boite %d!\n",gch_spaces, box_id);
     }
 #endif
     bufEmission[0]= E_MSG_CFG_LIENS;
     bufEmission[1]= key_mode<<4| key_code;
     bufEmission[2]= eeprom.netConf.boxData[key_mode][key_code][box_id];
 
-    vPrintf("   Msg %x,%x,%x vers [%x;%x]\n",bufEmission[0],
+    vPrintf("%s Msg %x,%x,%x vers [%x;%x]\n",gch_spaces, bufEmission[0],
         bufEmission[1],
         bufEmission[2],
         (uint32)(eeprom.BoxAddr[box_id] >> 32),
@@ -201,7 +230,10 @@ PUBLIC teClavState CLAV_PgmActionTouche(etCLAV_keys keys)
     mef_clav = E_CLAV_ATTENDRE_FIN_CONFIG_BOITE;
   }
 
-  vPrintf(" OUT:CLAV_PgmActionTouche MEF:%s\n", dbg_teClavState[mef_clav]);
+#if !NO_DEBUG_ON
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
+  PBAR_DbgTrace(E_FN_OUT,"CLAV_PgmActionTouche",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
+#endif
 
   return mef_clav;
 }
@@ -211,14 +243,21 @@ PRIVATE teClavState pgm_GererBoiteEntrante(tsData *psData)
   teClavState mef_clav = E_CLAV_ETAT_UNDEF;
   uint8 box_number = psData->pau8Data[psData->u16Length-1];
 
-  vPrintf("   Boite id [%d] \n",box_number);
+#if !NO_DEBUG_ON
+  int stepper = 0;
+
+  stepper = PBAR_DbgTrace(E_FN_IN,"pgm_GererBoiteEntrante",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
+#endif
+
+  vPrintf("%sBoite id [%d] \n",gch_spaces, box_number);
 
   if(box_number < C_MAX_BOXES){
     // verifier que l'on ne connait pas deja cette @
     //if(eeprom.BoxAddr[IncomingBoxId]==0xffffffffffffffffULL){
     if(eeprom.BoxAddr[box_number]==0ULL){
-      vPrintf("   Cette boite [%d] est nouvelle\n",box_number);
-      vPrintf("  Je la memorise\n");
+      vPrintf("%s Cette boite [%d] est nouvelle\n",gch_spaces, box_number);
+      vPrintf("%s  Je la memorise\n",gch_spaces);
 
       eeprom.BoxAddr[box_number]=psData->u64SrcAddress;
       // Une boite de plus dans le clavier
@@ -226,18 +265,18 @@ PRIVATE teClavState pgm_GererBoiteEntrante(tsData *psData)
     }
     else
     {
-      vPrintf("  Je connais a priori cette boite (id:%d)\n",box_number);
+      vPrintf("%s Je connais a priori cette boite (id:%d)\n",gch_spaces, box_number);
       if(eeprom.BoxAddr[box_number]!=psData->u64SrcAddress)
       {
-        vPrintf("   La config a changee\n");
+        vPrintf("%s  La config a changee\n",gch_spaces);
         eeprom.BoxAddr[box_number]=psData->u64SrcAddress;
       }
       else
       {
-        vPrintf("   C'est bien celle que je connais\n");
+        vPrintf("%s  C'est bien celle que je connais\n",gch_spaces);
       }
     }
-    vPrintf("  Selectionner un mode et une touche\n\n");
+    vPrintf("%s   Selectionner un mode et une touche\n\n",gch_spaces);
 
     au8Led_clav[C_CLAV_LED_INFO_1].mode=E_FLASH_BP_EN_CONFIGURATION_SORTIES;
 
@@ -248,14 +287,19 @@ PRIVATE teClavState pgm_GererBoiteEntrante(tsData *psData)
   }
   else
   {
-    vPrintf("   ERROR !! Box id %d superieur a %d\n", box_number, C_MAX_BOXES);
+    vPrintf("%sERROR !! Box id %d superieur a %d\n", gch_spaces, box_number, C_MAX_BOXES);
 
     // Retour au mode normal
-    vPrintf("   Retour en usage : utilisation courante\n");
+    vPrintf("%sRetour en usage : utilisation courante\n",gch_spaces);
     mef_clav = CLAV_GererTouche(AppData.eKeyPressed);
 
     // TODO : Envoyer msg a la box id (en erreur) pour qu'elle ne reste pas en attente de touche clavier
   }
+#if !NO_DEBUG_ON
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
+  PBAR_DbgTrace(E_FN_OUT,"pgm_GererBoiteEntrante",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
+#endif
+
   return mef_clav;
 }
 

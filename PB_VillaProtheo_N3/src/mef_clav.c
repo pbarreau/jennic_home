@@ -114,7 +114,7 @@ PUBLIC void CLAV_GererMode(etCLAV_keys mode)
   int stepper = 0;
 
   stepper = PBAR_DbgTrace(E_FN_IN,"CLAV_GererMode",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
-  PBAR_DbgInside(stepper,E_FN_IN,AppData);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
 #endif
 
   switch(mode)
@@ -158,7 +158,7 @@ PUBLIC void CLAV_GererMode(etCLAV_keys mode)
 
   AppData.eClavmod = modif_mode;
 #if !NO_DEBUG_ON
-  PBAR_DbgInside(stepper,E_FN_OUT,AppData);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_OUT,AppData);
   PBAR_DbgTrace(E_FN_OUT,"CLAV_GererMode",(void *)AppData.eAppState,E_DBG_TYPE_NET_STATE);
 #endif
 }
@@ -173,39 +173,47 @@ PUBLIC bool_t CLAV_TrouverAssociationToucheBoite(stToucheDef *touche, uint8 BoxI
   uint8 i =0;
   uint8 useBox = 0;
 
-  vPrintf("   IN:CLAV_TrouverAssociationToucheBoite\n");
-  vPrintf("    Nb boite associee à la touche %s -> %d\n",dbg_etCLAV_keys[touche->la_touche],nbBox);
+#if !NO_DEBUG_ON
+  int stepper = 0;
 
-  vPrintf("    Recherche dans la liste chainee des boites associee à la touche\n");
+  stepper = PBAR_DbgTrace(E_FN_IN,"CLAV_TrouverAssociationToucheBoite",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
+#endif
+  vPrintf("%sNb boite associee à la touche %s -> %d\n",gch_spaces,dbg_etCLAV_keys[touche->la_touche],nbBox);
+
+  vPrintf("%sRecherche dans la liste chainee des boites associee à la touche\n",gch_spaces);
   for(i=0;(i<=nbBox)&& (i<C_MAX_BOXES);i++)
   {
     useBox = eeprom.netConf.boxList[key_mode][key_code][i];
-    vPrintf("     Ptr_box:%d, boxid : %d\n",i,useBox);
+    vPrintf("%sPtr_box:%d, boxid : %d\n",gch_spaces,i,useBox);
 
     if(useBox == 0x00){
       // On a parcouru toute la liste
       // sans trouver de correspondance
-      vPrintf("     Sauvegarde necessaire a position %d !\n",i);
+      vPrintf("%s Sauvegarde necessaire a position %d !\n",gch_spaces,i);
       eReturn = FALSE;
       break;
     }
     else
     {
       if(useBox == BoxId){
-        vPrintf("     Trouve a position:%d !\n",i);
+        vPrintf("%sTrouve a position:%d !\n",gch_spaces, i);
         eReturn = TRUE;
         break;
       }
       else{
-        vPrintf("     On regarde avec la suivante\n");
+        vPrintf("%s On regarde avec la suivante\n",gch_spaces);
         continue;
       }
     }
 
   }
 
-  // On memorise la position rouvee
+  // On memorise la position trouvee
   *position = i;
-  vPrintf("   OUT:CLAV_TrouverAssociationToucheBoite\n");
+#if !NO_DEBUG_ON
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
+  PBAR_DbgTrace(E_FN_OUT,"CLAV_TrouverAssociationToucheBoite",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
+#endif
   return eReturn;
 }

@@ -14,6 +14,8 @@
 #include "Utils.h"
 #include "e_config.h"
 
+PUBLIC   char gch_spaces[20]={0}; /// Global buffer definition for debug alignement
+
 PUBLIC char const *dbg_teClavState[]={
     "E_CLAV_ETAT_EN_INITIALISATION",
     "E_CLAV_ETAT_EN_ATTENTE",
@@ -67,10 +69,9 @@ PUBLIC char const * dbg_etCLAV_keys[]={
     "E_KEYS_END"
 };
 
-PUBLIC void  PBAR_DbgInside(int level, teDbgTrace eSens, tsClavData val)
+PUBLIC void  PBAR_DbgInside(int level, char * pSpaces, teDbgTrace eSens, tsClavData val)
 {
   char const *sens[]={"IN:","OUT:"};
-  char spaces[20]={0};
   int i=0;
 
   static etCLAV_keys my_key = E_KEYS_END;
@@ -78,15 +79,17 @@ PUBLIC void  PBAR_DbgInside(int level, teDbgTrace eSens, tsClavData val)
   static etCLAV_role my_role = E_CLAV_USAGE_END;
   static teNetState my_state = E_CLAV_ETAT_END;
 
+  memset(&gch_spaces,0x00,sizeof(gch_spaces));
   for(i=0;(i<=level) && (i<20);i++)
   {
-    strcat(spaces," ");
+    strcat(gch_spaces," ");
   }
+  strcpy(pSpaces,gch_spaces);
 
   if(level >0){
     if(my_role != val.usage){
       vPrintf("%s%s%s\n",
-          spaces,
+          gch_spaces,
           sens[eSens],
           dbg_etCLAV_role[val.usage]);
       my_role = val.usage;
@@ -95,7 +98,7 @@ PUBLIC void  PBAR_DbgInside(int level, teDbgTrace eSens, tsClavData val)
     if(my_state != val.eClavState)
     {
       vPrintf("%s%s%s\n",
-          spaces,
+          gch_spaces,
           sens[eSens],
           dbg_teClavState[val.eClavState]);
       my_state = val.eClavState;
@@ -104,7 +107,7 @@ PUBLIC void  PBAR_DbgInside(int level, teDbgTrace eSens, tsClavData val)
     if(my_mod != val.eClavmod)
     {
       vPrintf("%s%s%s\n",
-          spaces,
+          gch_spaces,
           sens[eSens],
           dbg_etCLAV_mod[val.eClavmod]);
       my_mod = val.eClavmod;
@@ -113,19 +116,19 @@ PUBLIC void  PBAR_DbgInside(int level, teDbgTrace eSens, tsClavData val)
     if(my_key != val.eKeyPressed)
     {
       vPrintf("%s%s%s\n",
-          spaces,
+          gch_spaces,
           sens[eSens],
           dbg_etCLAV_keys[val.eKeyPressed]);
       my_key = val.eKeyPressed;
     }
   }
-  else
+
+  if((level == 1) && (eSens == E_FN_OUT))
   {
     my_key = E_KEYS_END;
     my_mod = E_CLAV_MODE_END;
     my_role = E_CLAV_USAGE_END;
     my_state = E_CLAV_ETAT_END;
-
   }
 
   if(eSens == E_FN_IN)

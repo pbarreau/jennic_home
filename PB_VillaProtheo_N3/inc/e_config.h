@@ -143,7 +143,7 @@ typedef struct
 	uint8		u8BoxId;
 	uint64     	u64ServiceAddress;
 } tsClavData;
-extern PUBLIC void PBAR_DbgInside(int level, teDbgTrace eSens, tsClavData val);
+extern PUBLIC void PBAR_DbgInside(int level, char * pSpaces, teDbgTrace eSens, tsClavData val);
 
 typedef struct _touche
 {
@@ -242,6 +242,7 @@ extern PUBLIC bool_t b_activer_bip;
 extern PUBLIC uint16 timer_touche[16];
 extern PUBLIC uint8 bufEmission[3];
 
+extern PUBLIC   char gch_spaces[20];
 
 #if defined __cplusplus
 }

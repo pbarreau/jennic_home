@@ -28,22 +28,21 @@ PUBLIC teClavState CLAV_GererTouche(etCLAV_keys keys)
 
 #if !NO_DEBUG_ON
   int stepper = 0;
-
   stepper = PBAR_DbgTrace(E_FN_IN,"CLAV_GererTouche",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
-  PBAR_DbgInside(stepper,E_FN_IN,AppData);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
 #endif
 
   // Faire un Bip pour signal touche est detectee
-  vPrintf(" Emettre un BIP ?\n");
+  vPrintf("%sEmettre un BIP ?\n",gch_spaces);
 
   if(b_use_bip == TRUE){
-    vPrintf("  Use bip\n");
+    vPrintf("%s Use bip\n",gch_spaces);
     b_activer_bip=TRUE;
     vAHI_DioSetOutput(C_CLAV_BUZER,0);
   }
   else
   {
-    vPrintf("  Use NO bip\n");
+    vPrintf("%s Use NO bip\n",gch_spaces);
     b_activer_bip=FALSE;
     vAHI_DioSetOutput(0,C_CLAV_BUZER);
   }
@@ -90,8 +89,8 @@ PUBLIC teClavState CLAV_GererTouche(etCLAV_keys keys)
   }
 
 #if !NO_DEBUG_ON
-  PBAR_DbgInside(stepper,E_FN_OUT,AppData);
-  PBAR_DbgTrace(E_FN_OUT,"CLAV_GererMode",(void *)AppData.eAppState,E_DBG_TYPE_NET_STATE);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_OUT,AppData);
+  PBAR_DbgTrace(E_FN_OUT,"CLAV_GererTouche",(void *)AppData.eAppState,E_DBG_TYPE_NET_STATE);
 #endif
 
   return mef_clav;
@@ -107,17 +106,17 @@ PUBLIC teClavState CLAV_BoutonDeConfiguration(bool_t * bip_on)
   int stepper = 0;
 
   stepper = PBAR_DbgTrace(E_FN_IN,"CLAV_BoutonDeConfiguration",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
-  PBAR_DbgInside(stepper,E_FN_IN,AppData);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
 #endif
 
   if(timer_touche[AppData.ukey] <= C_PRESSION_T1)
   {
     if( (*bip_on) == FALSE){
-      vPrintf("  Activation bip clavier\n");
+      vPrintf("%sActivation bip clavier\n",gch_spaces);
     }
     else
     {
-      vPrintf("  Supression bip clavier\n");
+      vPrintf("%sSupression bip clavier\n",gch_spaces);
     }
     (*bip_on) = !(*bip_on);
     mef_clav = E_CLAV_ETAT_EN_ATTENTE;
@@ -125,18 +124,16 @@ PUBLIC teClavState CLAV_BoutonDeConfiguration(bool_t * bip_on)
   else
     if(bUltraCareMode == FALSE)
     {
-      vPrintf("Bouton PGM mode 1\n");
       mef_clav = clav_BtnPgmL1(mef_clav,&bUltraCareMode);
     }
     else
     {
-      vPrintf("Bouton PGM mode 2\n");
       mef_clav = clav_BtnPgmL2(mef_clav,&bUltraCareMode);
     }
 
 
 #if !NO_DEBUG_ON
-  PBAR_DbgInside(stepper,E_FN_OUT,AppData);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_OUT,AppData);
   PBAR_DbgTrace(E_FN_IN,"CLAV_BoutonDeConfiguration",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
 #endif
   return mef_clav;
@@ -151,7 +148,7 @@ PUBLIC void CLAV_NetMsgInput(tsData *psData)
   int stepper = 0;
 
   stepper = PBAR_DbgTrace(E_FN_IN,"CLAV_NetMsgInput",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
-  PBAR_DbgInside(stepper,E_FN_IN,AppData);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
 #endif
 
   if(AppData.usage == E_CLAV_USAGE_CONFIG)
@@ -168,8 +165,8 @@ PUBLIC void CLAV_NetMsgInput(tsData *psData)
     }
 
 #if !NO_DEBUG_ON
-  PBAR_DbgInside(stepper,E_FN_IN,AppData);
-  PBAR_DbgTrace(E_FN_IN,"CLAV_NetMsgInput",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
+  PBAR_DbgTrace(E_FN_OUT,"CLAV_NetMsgInput",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
 #endif
 
   AppData.eClavState = mef_clav;
@@ -178,13 +175,19 @@ PUBLIC void CLAV_NetMsgInput(tsData *psData)
 PRIVATE teClavState  clav_BtnPgmL1(teClavState mef_clav, uint8 *care)
 {
   static bool_t usr_or_tec = FALSE;
+#if !NO_DEBUG_ON
+  int stepper = 0;
+
+  stepper = PBAR_DbgTrace(E_FN_IN,"clav_BtnPgmL1",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
+#endif
 
   if(timer_touche[AppData.ukey] <= C_PRESSION_T3)
   {
     // On se met en mode defaut que ce soit en usr ou en pgm
     CLAV_GererMode(E_KEY_MOD_1);
     if(usr_or_tec == FALSE){
-      vPrintf(" Passage en usage : configuration systeme\n");
+      vPrintf("%sPassage en usage : configuration systeme\n",gch_spaces);
       AppData.usage = E_CLAV_USAGE_CONFIG;
 
       //au8Led_clav[C_CLAV_LED_INFO_1].mode = E_FLASH_RECHERCHE_RESEAU;
@@ -192,7 +195,7 @@ PRIVATE teClavState  clav_BtnPgmL1(teClavState mef_clav, uint8 *care)
     }
     else
     {
-      vPrintf(" Passage en usage : utilisation courante\n");
+      vPrintf("%sPassage en usage : utilisation courante\n",gch_spaces);
       AppData.usage = E_CLAV_USAGE_NORMAL;
 
       au8Led_clav[C_CLAV_LED_INFO_1].mode =E_FLASH_RESEAU_ACTIF;
@@ -203,7 +206,7 @@ PRIVATE teClavState  clav_BtnPgmL1(teClavState mef_clav, uint8 *care)
   }
   else
   {
-    vPrintf("Ultra mode On\n");
+    vPrintf("%sUltra mode On\n",gch_spaces);
 
     mef_clav = E_CLAV_ULTRA_MODE;
     // Memorisation de l'etat avant traitement de la touche
@@ -215,14 +218,26 @@ PRIVATE teClavState  clav_BtnPgmL1(teClavState mef_clav, uint8 *care)
     au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_RESET_POSSIBLE;
   }
 
+#if !NO_DEBUG_ON
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_OUT,AppData);
+  PBAR_DbgTrace(E_FN_OUT,"clav_BtnPgmL1",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
+#endif
+
   return(mef_clav);
 }
 PRIVATE teClavState  clav_BtnPgmL2(teClavState mef_clav, uint8 *care)
 {
   teClavState mef_ici = mef_clav;
+#if !NO_DEBUG_ON
+  int stepper = 0;
+
+  stepper = PBAR_DbgTrace(E_FN_IN,"clav_BtnPgmL2",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
+#endif
+
   if(timer_touche[AppData.ukey] <= C_PRESSION_T3)
   {
-    vPrintf("Ultra mode Off\n");
+    vPrintf("%sUltra mode Off\n",gch_spaces);
     *care = FALSE;
     au8Led_clav[C_CLAV_LED_INFO_1].mode = E_FLASH_RESEAU_ACTIF;
     au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_OFF;
@@ -231,6 +246,10 @@ PRIVATE teClavState  clav_BtnPgmL2(teClavState mef_clav, uint8 *care)
     AppData.ePrevClav = E_CLAV_ETAT_UNDEF;
   }
 
+#if !NO_DEBUG_ON
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_OUT,AppData);
+  PBAR_DbgTrace(E_FN_OUT,"clav_BtnPgmL2",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
+#endif
   return(mef_ici);
 }
 
@@ -286,19 +305,24 @@ PRIVATE teClavState  clav_BtnPgmL2(teClavState mef_clav, uint8 *care)
 
 PRIVATE void clav_EraseOrReset(etCLAV_keys keys)
 {
-  vPrintf("Fn : clav_EraseOrReset\n");
+#if !NO_DEBUG_ON
+  int stepper = 0;
+
+  stepper = PBAR_DbgTrace(E_FN_IN,"clav_EraseOrReset",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
+#endif
   if (keys == E_KEY_ETOILE)
   {
     if(timer_touche[AppData.ukey] >= C_PRESSION_T3)
     {
-      vPrintf("Demande effacement de config clavier !\n");
+      vPrintf("%sDemande effacement de config clavier !\n",gch_spaces);
 
       if(eeprom.nbBoite == 0xFF || eeprom.nbBoite == 0x00){
-        vPrintf(" La Flash n'a aucune config a effacer\n");
+        vPrintf("%s La Flash n'a aucune config a effacer\n",gch_spaces);
       }
       else
       {
-        vPrintf(" Effacement de la config en memoire Flash\n");
+        vPrintf("%s Effacement de la config en memoire Flash\n",gch_spaces);
         if(!bAHI_FlashEraseSector(7)){
           vPrintf("Pb lors effacement Secteur\n");
         }
@@ -309,7 +333,7 @@ PRIVATE void clav_EraseOrReset(etCLAV_keys keys)
     }
     else
     {
-      vPrintf("\n\nReset du module demande\n");
+      vPrintf("\n\n%sReset du module demande\n",gch_spaces);
       // Vidage buffer UART
       while ((u8JPI_UartReadLineStatus(E_JPI_UART_0) & (E_JPI_UART_LS_THRE | E_JPI_UART_LS_TEMT)) !=
           (E_JPI_UART_LS_THRE | E_JPI_UART_LS_TEMT));
@@ -318,4 +342,9 @@ PRIVATE void clav_EraseOrReset(etCLAV_keys keys)
       vAHI_SwReset ();
     }
   }
+#if !NO_DEBUG_ON
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
+  PBAR_DbgTrace(E_FN_OUT,"clav_EraseOrReset",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
+#endif
+
 }
