@@ -228,6 +228,7 @@ PUBLIC void vJenie_CbMain(void)
   uint8 keep;
   uint8 mask;
   uint8 valu;
+  uint8 valu2;
   //uint32 val = 0;
 
   /* regular watchdog reset */
@@ -315,6 +316,8 @@ PUBLIC void vJenie_CbMain(void)
         {
           vPrintf(" ios actuel:%x\n",etatSorties);
 
+          keep = (etatSorties & (~mask))|(mask & valu);
+#if 0
           if(bufReception[pBuff[1]] == E_MSG_DATA_ALL){
             vPrintf(" Impose bit\n");
             // impose bit
@@ -324,8 +327,30 @@ PUBLIC void vJenie_CbMain(void)
           {
             // bascule bit
             vPrintf(" Bascule bit\n");
-            keep = etatSorties ^ mask;
+            //keep = etatSorties + mask;
+            // A ton deja touche une sortie -> noveau mask
+
+            valu2=etatSorties & mask;
+            keep=~etatSorties & mask;
+            vPrintf(" valu2:%x,keep:%x\n",valu2,keep);
+
+            if(valu2 == mask || valu2 == 0)
+            {
+              keep = etatSorties ^ mask;
+            }
+            else
+            {
+              // un autre bit est modifie (moi ou le complement)
+              //keep = (~etatSorties&mask) ^ ~mask;
+              //keep = etatSorties ^ keep;
+              //mask =  ~valu2  ^ keep;
+              //keep =  etatSorties ^ mask;
+              //vPrintf(" Mask:%x,Keep:%x\n",mask,keep);
+              keep = etatSorties | mask;
+            }
+
           }
+#endif
           vPrintf(" Mask:%x,Value:%x\n",mask,valu);
           vPrintf(" Nouvelle config ios:%x\n",keep);
           etatSorties = keep;
