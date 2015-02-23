@@ -318,7 +318,7 @@ PUBLIC void vJenie_CbMain(void)
           if(bufReception[pBuff[1]] == E_MSG_DATA_ALL){
             vPrintf(" Impose bit\n");
             // impose bit
-            keep = (etatSorties & (~mask))|(mask & ~valu);
+            keep = (etatSorties & (~mask))|(mask & valu);
           }
           else
           {
