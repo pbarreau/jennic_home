@@ -130,7 +130,7 @@ PRIVATE uint8 showDipSwitch(void)
   // Mettre a 0 SIG_LE 573 pour charger bus
   vAHI_DioSetOutput(0,C_SEL_573);
   // Mettre les sorties a 0
-  vAHI_DioSetOutput(0,0xFF<<11);
+  vAHI_DioSetOutput(0,0xFF<<PBAR_DEBUT_IO);
   // Mettre a 1 SIG_LE 573 pour maintenir bus
   vAHI_DioSetOutput(C_SEL_573,0);
 
@@ -387,7 +387,8 @@ PUBLIC void vJenie_CbMain(void)
         case E_MSG_DATA_SELECT:
         {
           vPrintf(" ios actuel:%x\n",etatSorties);
-
+          keep = (etatSorties & (~mask))|(mask & valu);
+#if 0
           if(bufReception[pBuff[1]] == E_MSG_DATA_ALL){
             vPrintf(" Impose bit\n");
             // impose bit
@@ -399,6 +400,7 @@ PUBLIC void vJenie_CbMain(void)
             vPrintf(" Bascule bit\n");
             keep = etatSorties ^ mask;
           }
+#endif
           vPrintf(" Mask:%x,Value:%x\n",mask,valu);
           vPrintf(" Nouvelle config ios:%x\n",keep);
           etatSorties = keep;
@@ -407,7 +409,7 @@ PUBLIC void vJenie_CbMain(void)
           vAHI_DioSetOutput(C_SEL_573,0);
 
           // Configuer les sorties
-          vAHI_DioSetOutput(etatSorties<<11,(~etatSorties)<<11);
+          vAHI_DioSetOutput(etatSorties<<PBAR_DEBUT_IO,(~etatSorties)<<PBAR_DEBUT_IO);
 
           // Mettre a 0 SIG_LE 573 pour maintenir bus
           vAHI_DioSetOutput(0,C_SEL_573);
@@ -494,7 +496,7 @@ PUBLIC void vJenie_CbMain(void)
       // Mettre a 0 SIG_LE 573 pour charger bus
       vAHI_DioSetOutput(0,C_SEL_573);
       // Mettre les sorties au niveau de config
-      vAHI_DioSetOutput(config<<11,~config<<11);
+      vAHI_DioSetOutput(config<<PBAR_DEBUT_IO,~config<<PBAR_DEBUT_IO);
       // Mettre a 1 SIG_LE 573 pour maintenir bus
       vAHI_DioSetOutput(C_SEL_573,0);
 
@@ -828,7 +830,7 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
           // Mettre a 0 SIG_LE 573 pour charger bus
           vAHI_DioSetOutput(0,C_SEL_573);
           // Mettre les sorties a 0
-          vAHI_DioSetOutput(0,0xFF<<11);
+          vAHI_DioSetOutput(0,0xFF<<PBAR_DEBUT_IO);
           // Mettre a 1 SIG_LE 573 pour maintenir bus
           vAHI_DioSetOutput(C_SEL_573,0);
 
@@ -1080,11 +1082,11 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_TstOutput(uint8 *box_cnf)
       else {
         rf=0xFF;
         if(!pass){
-          vAHI_DioSetOutput(rf<<11,(~rf)<<11); // On
+          vAHI_DioSetOutput(rf<<PBAR_DEBUT_IO,(~rf)<<PBAR_DEBUT_IO); // On
         }
         else
         {
-          vAHI_DioSetOutput(~rf<<11,rf<<11);
+          vAHI_DioSetOutput(~rf<<PBAR_DEBUT_IO,rf<<PBAR_DEBUT_IO);
           rf = 0;
         }
         pass = !pass;
@@ -1191,7 +1193,7 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
           // Sauvegarde pour envoi a la boite
           // On montre la config a envoyer
           // Configuer les sorties
-          vAHI_DioSetOutput(config<<11,(~config)<<11);
+          vAHI_DioSetOutput(config<<PBAR_DEBUT_IO,(~config)<<PBAR_DEBUT_IO);
           bReturnConfig=TRUE;
         }
       }
@@ -1208,7 +1210,7 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
   if(sAppData.eAppState == APP_STATE_TST_STOP_LUMIERES){
     config = 0;
     // On quitte le mode test: eteidre les lumieres
-    vAHI_DioSetOutput(config<<11,(~config)<<11);
+    vAHI_DioSetOutput(config<<PBAR_DEBUT_IO,(~config)<<PBAR_DEBUT_IO);
   }
 
   return(bReturnConfig);
