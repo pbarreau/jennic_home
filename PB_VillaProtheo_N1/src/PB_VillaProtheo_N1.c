@@ -318,7 +318,7 @@ PUBLIC void vJenie_CbMain(void)
           if(bufReception[pBuff[1]] == E_MSG_DATA_ALL){
             vPrintf(" Impose bit\n");
             // impose bit
-            keep = (etatSorties & (~mask))|(mask & valu);
+            keep = (etatSorties & (~mask))|(mask & ~valu);
           }
           else
           {
@@ -599,7 +599,7 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
  *                  *psStackDataEvent       R   Pointer to data structure
  * RETURNS:
  * void
- *
+ * Impose
  ****************************************************************************/
 PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
 {
