@@ -303,6 +303,7 @@ PRIVATE teClavState pgm_GererBoiteEntrante(tsData *psData)
   return mef_clav;
 }
 
+
 PRIVATE void pgm_CreerConfigAll(uint8 box_id)
 {
   //teClavState mef_clav 	= E_CLAV_ETAT_UNDEF;
