@@ -338,15 +338,6 @@ PRIVATE uint32 vPRT_GererDios(uint32 cnf_a, uint32 cnf_b, uint32 cnf_ref, uint8 
 
   // Je memorise mes sorties*
   cnf_new = ~cnf_b & cnf_tmp;
-#if 0
-  if(~cnf_b){
-      cnf_new = ~cnf_b & cnf_tmp;
-  }
-  else
-    {
-      cnf_new = cnf_tmp;
-    }
-#endif
   vPrintf(" Msg:%x",(uint32)cnf_new);
 
   // Envoyer aux composant i2c 9555

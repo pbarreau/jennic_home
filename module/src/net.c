@@ -14,39 +14,40 @@
 
 
 PUBLIC void bp_CommunStackMgmtEvent(teAppState *eState,
-		teEventType eEventType, void *pvEventPrim)
+    teEventType eEventType, void *pvEventPrim)
 {
-	tsNwkStartUp *pNet = (tsNwkStartUp*)pvEventPrim;
+#if !NO_DEBUG_ON
+  tsNwkStartUp *pNet = (tsNwkStartUp*)pvEventPrim;
+#endif
 
+  switch(eEventType)
+  {
+    case E_JENIE_NETWORK_UP:
+    {
+      /* Indicates stack is up and running */
+      vPrintf("\nReseau Ok\n");
+      if(*eState == APP_STATE_WAITING_FOR_NETWORK)
+      {
+        vPrintf(" Canal:%d, Id:%x\n", pNet->u8Channel, pNet->u16PanID);
+        vPrintf(" Pere:[%x:%x]\n",
+            (uint32) (pNet->u64ParentAddress >> 32),
+            (uint32) (pNet->u64ParentAddress & 0xFFFFFFFF)
+        );
+        vPrintf(" Ici:[%x:%x], Niveau:%d\n\n",
+            (uint32) (pNet->u64LocalAddress >> 32),
+            (uint32) (pNet->u64LocalAddress & 0xFFFFFFFF),
+            pNet->u16Depth
+        );
+        *eState = APP_STATE_NETWORK_UP;
+      }
+    }
+    break;
 
-	switch(eEventType)
-	{
-		case E_JENIE_NETWORK_UP:
-		{
-			/* Indicates stack is up and running */
-			vPrintf("\nReseau Ok\n");
-			if(*eState == APP_STATE_WAITING_FOR_NETWORK)
-			{
-				vPrintf(" Canal:%d, Id:%x\n", pNet->u8Channel, pNet->u16PanID);
-				vPrintf(" Pere:[%x:%x]\n",
-						(uint32) (pNet->u64ParentAddress >> 32),
-						(uint32) (pNet->u64ParentAddress & 0xFFFFFFFF)
-				);
-				vPrintf(" Ici:[%x:%x], Niveau:%d\n\n",
-						(uint32) (pNet->u64LocalAddress >> 32),
-						(uint32) (pNet->u64LocalAddress & 0xFFFFFFFF),
-						pNet->u16Depth
-				);
-				*eState = APP_STATE_NETWORK_UP;
-			}
-		}
-		break;
-
-		default:
-		{
-			vPrintf("NotSet\n");
-		}
-		break;
-	}
+    default:
+    {
+      vPrintf("NotSet\n");
+    }
+    break;
+  }
 
 }

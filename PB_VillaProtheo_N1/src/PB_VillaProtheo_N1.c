@@ -228,8 +228,6 @@ PUBLIC void vJenie_CbMain(void)
   uint8 keep;
   uint8 mask;
   uint8 valu;
-  uint8 valu2;
-  //uint32 val = 0;
 
   /* regular watchdog reset */
 #ifdef WATCHDOG_ENABLED
@@ -317,40 +315,6 @@ PUBLIC void vJenie_CbMain(void)
           vPrintf(" ios actuel:%x\n",etatSorties);
 
           keep = (etatSorties & (~mask))|(mask & valu);
-#if 0
-          if(bufReception[pBuff[1]] == E_MSG_DATA_ALL){
-            vPrintf(" Impose bit\n");
-            // impose bit
-            keep = (etatSorties & (~mask))|(mask & valu);
-          }
-          else
-          {
-            // bascule bit
-            vPrintf(" Bascule bit\n");
-            //keep = etatSorties + mask;
-            // A ton deja touche une sortie -> noveau mask
-
-            valu2=etatSorties & mask;
-            keep=~etatSorties & mask;
-            vPrintf(" valu2:%x,keep:%x\n",valu2,keep);
-
-            if(valu2 == mask || valu2 == 0)
-            {
-              keep = etatSorties ^ mask;
-            }
-            else
-            {
-              // un autre bit est modifie (moi ou le complement)
-              //keep = (~etatSorties&mask) ^ ~mask;
-              //keep = etatSorties ^ keep;
-              //mask =  ~valu2  ^ keep;
-              //keep =  etatSorties ^ mask;
-              //vPrintf(" Mask:%x,Keep:%x\n",mask,keep);
-              keep = etatSorties | mask;
-            }
-
-          }
-#endif
           vPrintf(" Mask:%x,Value:%x\n",mask,valu);
           vPrintf(" Nouvelle config ios:%x\n",keep);
           etatSorties = keep;
@@ -496,9 +460,10 @@ PUBLIC void vJenie_CbMain(void)
     break;
 
     default:
+#if !NO_DEBUG_ON
       vUtils_DisplayMsg("!!Unknown state!!", sAppData.eAppState);
-      //au8Led[0]=E_FLASH_STA_ER;
       while(1);
+#endif
       break;
   }
 }
@@ -581,7 +546,7 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
       break;
 
     case E_JENIE_PACKET_FAILED:
-      vUtils_Debug("Packet failed");
+      vPrintf("Packet failed\n");
       break;
 
     case E_JENIE_CHILD_JOINED:
@@ -594,21 +559,24 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
     break;
 
     case E_JENIE_CHILD_LEAVE:
-      vUtils_Debug("Child Leave");
+      vPrintf("Child Leave\n");
       break;
 
     case E_JENIE_CHILD_REJECTED:
-      vUtils_Debug("Child Rejected");
+      vPrintf("Child Rejected\n");
       break;
 
     case E_JENIE_STACK_RESET:
-      vUtils_Debug("Stack Reset");
+      vPrintf("Stack Reset\n");
       sAppData.eAppState = APP_STATE_WAITING_FOR_NETWORK;
       break;
 
     default:
       /* Unknown data event type */
+#if !NO_DEBUG_ON
       vUtils_DisplayMsg("!!Unknown Mgmt Event!!", eEventType);
+      while(1);
+#endif
       break;
   }
 }
@@ -628,7 +596,10 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
  ****************************************************************************/
 PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
 {
+#if !NO_DEBUG_ON
   tsDataToService *psStackEventData = (tsDataToService *) pvEventPrim;
+#endif
+
   tsData *psData = (tsData *) pvEventPrim;
 
   switch(eEventType)
@@ -725,7 +696,7 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
     break;
 
     case E_JENIE_DATA_TO_SERVICE:
-      vUtils_Debug("Data to service event");
+      vPrintf("Data to service event\n");
 
       vPrintf("S:%d -> d:%d\n",psStackEventData->u8SrcService,psStackEventData->u8DestService);
       break;
@@ -767,12 +738,15 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
     break;
 
     case E_JENIE_DATA_TO_SERVICE_ACK:
-      vUtils_Debug("Data to service ack");
+      vPrintf("Data to service ack\n");
       break;
 
     default:
       // Unknown data event type
+#if !NO_DEBUG_ON
       vUtils_DisplayMsg("!!Unknown Data Event!!", eEventType);
+      while(1);
+#endif
       break;
   }
 }
@@ -843,7 +817,10 @@ PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId,uint32 u32ItemBitmap)
     break;
 
     default:
+#if !NO_DEBUG_ON
       vUtils_DisplayMsg("HWint: ", u32DeviceId);
+      while(1);
+#endif
       break;
   }
 }
@@ -855,9 +832,6 @@ PRIVATE void vPRT_TraiterChangementEntree(uint32 val)
   int i=0;
 
   // Recuperer la config actuelle
-  //uint32 req_on = ((prvCnf_O_9555 << 8) & 0x00FF0000 )| ((uint8)prvCnf_O_9555 & 0x00FF00FF);
-  //uint32 req_off = ((~prvCnf_O_9555 << 8) & 0x00FF0000 )| (~(uint8)prvCnf_O_9555 & 0x00FF00FF);
-
   uint32 req_on = ((prvCnf_O_9555 << 8) & 0xFFFF00FF )| ((uint8)prvCnf_O_9555 & 0xFFFF00FF);
   uint32 req_off = ((~prvCnf_O_9555 << 8) & 0xFFFF00FF )| (~(uint8)prvCnf_O_9555 & 0xFFFF00FF);
 
@@ -890,65 +864,6 @@ PRIVATE void vPRT_TraiterChangementEntree(uint32 val)
     prvCnf_I_9555 = lesEntrees;
   }
 }
-
-#if 0
-PRIVATE void vPRT_TraiterChangementEntree(uint32 val)
-{
-  uint16 lesEntrees = (val>>16 & 0xFF00) | (((uint16)val>>8) & 0x00FF);
-  uint16 tmp = prvCnf_I_9555 ^ lesEntrees;
-  uint8 un_port = 0;
-  uint8 val_port = 0;
-  uint8 une_entree = 0;
-
-  uint32 req_on = ((prvCnf_O_9555 << 8) & 0x00FF0000 )| ((uint8)prvCnf_O_9555 & 0x00FF00FF);
-  uint32 req_off = ((~prvCnf_O_9555 << 8) & 0x00FF0000 )| (~(uint8)prvCnf_O_9555 & 0x00FF00FF);
-
-  vPrintf("\nConfig entrees -> previous:%x, now:%x\n", prvCnf_I_9555, lesEntrees);
-  vPrintf(" Depart Req_on:%x, Req_off:%x\n",req_on,req_off);
-
-  if(tmp)
-  {
-    vPrintf("\nConfig sorties -> previous:%x\n",prvCnf_O_9555);
-
-    for(un_port=0;un_port<2;un_port++)
-    {
-      val_port = (uint8)tmp>>(8*un_port);
-      //out_cnf = (uint8)prevConfOutputs>>(8*un_port);
-
-      for(une_entree = 0; une_entree< 8; une_entree++)
-      {
-        if(IsBitSet(val_port, une_entree))
-        {
-          vPrintf(" Changement sur l'entree %d du port %d\n", une_entree, un_port);
-
-          // Memorisation du changement
-          prvCnf_I_9555 = lesEntrees;
-
-          // prendre la valeur du bit concerne pour faire on ou off
-          if(IsBitSet(lesEntrees,(une_entree + (un_port*8))))
-          {
-            // Si on a un 1 -> pull up active
-            // interrupteur branche a la masse
-            vPrintf("  Passage a OFF\n");
-            BitNset(req_on,(une_entree + ((un_port)*16)));
-            BitNclr(req_off,(une_entree + ((un_port)*16)));
-          }
-          else
-          {
-            vPrintf("  Passage a ON\n");
-            BitNset(req_off,(une_entree + ((un_port)*16)));
-            BitNclr(req_on,(une_entree + ((un_port)*16)));
-          }
-        }
-      }
-
-    }
-    // envoyer la commande de config des sorties
-    vPrintf(" Modif Req_on:%x, Req_off:%x\n",req_on,req_off);
-    vPRT_DioSetOutput(req_on,req_off);
-  }
-}
-#endif
 /****************************************************************************/
 /***        END OF FILE                                                   ***/
 /****************************************************************************/
