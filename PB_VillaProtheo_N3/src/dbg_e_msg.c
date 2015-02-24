@@ -6,7 +6,7 @@
  */
 
 
-#if !NO_DEBUG_ON
+
 #include <jendefs.h>
 #include <string.h>
 #include <Printf.h>
@@ -14,6 +14,7 @@
 #include "Utils.h"
 #include "e_config.h"
 
+#if !NO_DEBUG_ON
 PUBLIC   char gch_spaces[20]={0}; /// Global buffer definition for debug alignement
 
 PUBLIC char const *dbg_teClavState[]={
@@ -134,4 +135,5 @@ PUBLIC void  PBAR_DbgInside(int level, char * pSpaces, teDbgTrace eSens, tsClavD
   if(eSens == E_FN_IN)
     vPrintf("\n");
 }
-#endif
+
+#endif // #if !NO_DEBUG_ON

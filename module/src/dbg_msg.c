@@ -5,7 +5,6 @@
  *      Author: RapidOs
  */
 
-#if !NO_DEBUG_ON
 #include <jendefs.h>
 
 #include <string.h>
@@ -13,6 +12,8 @@
 
 #include "Utils.h"
 #include "m_config.h"
+
+#if !NO_DEBUG_ON
 
 PUBLIC char const *dbg_teNetState[]={
     "APP_INITIALISATION",
@@ -111,4 +112,4 @@ PUBLIC int PBAR_DbgTrace(teDbgTrace eSens, char *fn, void *val_enum, teDbgModulE
 
   return(level);
 }
-#endif
+#endif // #if !NO_DEBUG_ON

@@ -270,6 +270,10 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
     }
     break;
 
+    case E_JENIE_PACKET_SENT:
+      vPrintf("Msg emis\n");
+      break;
+
     default:
     {
       vPrintf("ERR:vJenie_CbStackDATAEvent ->%s\n",dbg_teEventType[eEventType]);

@@ -143,7 +143,9 @@ typedef struct
 	uint8		u8BoxId;
 	uint64     	u64ServiceAddress;
 } tsClavData;
+#if !NO_DEBUG_ON
 extern PUBLIC void PBAR_DbgInside(int level, char * pSpaces, teDbgTrace eSens, tsClavData val);
+#endif
 
 typedef struct _touche
 {
