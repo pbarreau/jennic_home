@@ -310,13 +310,26 @@ PUBLIC void vJenie_CbMain(void)
       switch(bufReception[pBuff[1]])
       {
         case E_MSG_DATA_ALL:
-        case E_MSG_DATA_SELECT:
         {
-          vPrintf(" ios actuel:%x\n",etatSorties);
+          vPrintf(" Data ALL ios actuel:%x\n",etatSorties);
 
           keep = (etatSorties & (~mask))|(mask & valu);
           vPrintf(" Mask:%x,Value:%x\n",mask,valu);
           vPrintf(" Nouvelle config ios:%x\n",keep);
+          etatSorties = keep;
+
+          // Configuer les sorties
+          vPRT_DioSetOutput((~etatSorties)<<PBAR_DEBUT_IO,etatSorties<<PBAR_DEBUT_IO);
+        }
+        break;
+
+        case E_MSG_DATA_SELECT:
+        {
+          vPrintf(" Data Spe ios actuel:%x\n",etatSorties);
+
+          keep = (etatSorties ^ mask);
+          vPrintf(" Mask:%x,Value:%x\n",mask,valu);
+          vPrintf(" Nouvelle config ios:%x\n\n",keep);
           etatSorties = keep;
 
           // Configuer les sorties
