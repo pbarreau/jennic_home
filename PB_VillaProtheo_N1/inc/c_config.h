@@ -1,29 +1,23 @@
-// -----------------------------------
-// Projet	: PBPJ1
-//	Fic		: c_config.h
-//  Cree	: 30 juil. 2012
-//	Par		: Administrateur
-// -----------------------------------
+/*
+ * c_config.h
+ *
+ *  Created on: 3 juil. 2013
+ *      Author: RapidOs
+ */
 
+#ifndef C_CONFIG_H_
+#define C_CONFIG_H_
 
+#include "m_config.h"
+#include "interrupteurs.h"
 
-// Noeud Coordonateur
+#define CARD_NB_LIGHT  8
 
-#ifndef _PBPJ1_CO_C_CONFIG_H_
-#define _PBPJ1_CO_C_CONFIG_H_
+#define PBAR_CFG_INPUT	(E_JPI_DIO0_INT|\
+		E_JPI_DIO1_INT |\
+		E_JPI_DIO9_INT |\
+		E_JPI_DIO8_INT)
 
-#if defined __cplusplus
-extern "C" {
-#endif
-
-
-/****************************************************************************/
-/***        Include Files                                                 ***/
-/****************************************************************************/
-
-/****************************************************************************/
-/***        Macro Definitions                                             ***/
-/****************************************************************************/
 
 // 10 outputs : 8 Relais lumiere + Led et LE 573
 // 0000 0000 0001 1111 1111 1000 0000 0000 (OUT)
@@ -34,34 +28,45 @@ extern "C" {
 		E_JPI_DIO15_INT |\
 		E_JPI_DIO16_INT |\
 		E_JPI_DIO17_INT |\
-		E_JPI_DIO18_INT |\
-		E_JPI_DIO19_INT |\
-		E_JPI_DIO20_INT)
+		E_JPI_DIO18_INT)
 
-// 0000 0000 0000 0000 0000 0011 0000 0011 (IN)
-#define PBAR_CFG_INPUT			0x00000303
+#define C_SEL_573	E_JPI_DIO20_INT
 
-#define CARD_NB_LIGHT  8
-#define C_LED_NETWORK				E_JPI_DIO19_INT
-#define C_SEL_573						E_JPI_DIO20_INT
-#define C_PIO_LED_1  19
-/****************************************************************************/
-/***        Type Definitions                                              ***/
-/****************************************************************************/
+#define	C_LID_1		0
+#define C_LPIO_1	E_JPI_DIO19_INT	// Reseau
+#define C_LPID_1	19
 
-/****************************************************************************/
-/***        Exported Functions                                            ***/
-/****************************************************************************/
+#define CARD_USE_LED_PGM 0
 
-/****************************************************************************/
-/***        Exported Variables                                            ***/
-/****************************************************************************/
-
-#if defined __cplusplus
-}
+#ifdef CARD_USE_LED_PGM
+#define	C_LID_2		1
+#define	C_LPIO_2	E_JPI_DIO10_INT	// Pgm (Non Assign)
+#define	C_LPID_2	10
+#define	PBAR_CFG_OUTPUT	(C_LPIO_1|C_LPIO_2|PBAR_CFG_CMD_RL|C_SEL_573)
+#else
+#define	PBAR_CFG_OUTPUT	(C_LPIO_1|PBAR_CFG_CMD_RL|C_SEL_573)
 #endif
 
-#endif // _PBPJ1_CO_C_CONFIG_H_
-/****************************************************************************/
-/***        End of File                                                   ***/
-/****************************************************************************/
+
+
+
+// Public variable
+extern PUBLIC tsAppData sAppData;
+extern PUBLIC uint8 uThisBox_Id;
+extern PUBLIC bool_t bStartPgmTimer;
+extern PUBLIC PBAR_E_KeyMode ePgmMode;
+extern PUBLIC uint16 TimePgmPressed;
+extern PUBLIC bool_t cbStartTempoRechercheClavier;
+extern PUBLIC bool_t cbUnClavierActif;
+extern PUBLIC uint64 LaBasId;
+extern PUBLIC uint8 	bufEmission[3];
+extern PUBLIC PBAR_KIT_8046		LabasKbd;
+extern PUBLIC PBAR_E_KeyMode	LabasMod;
+extern PUBLIC uint8 ledId;
+extern PUBLIC uint8 config;
+
+// Public fonctions
+extern PUBLIC void PBAR_LireBtnPgm(void);
+extern PUBLIC bool_t PBAR_DecodeBtnPgm(uint8 *box_cnf);
+
+#endif /* C_CONFIG_H_ */

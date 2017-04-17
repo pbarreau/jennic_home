@@ -25,7 +25,7 @@ extern "C" {
 /****************************************************************************/
 /***        Macro Definitions                                             ***/
 /****************************************************************************/
-#define NO_DEBUG_ON	        FALSE
+#define NO_DEBUG_ON	FALSE
 
 #if NO_DEBUG_ON
 #define vPrintf(...)
@@ -40,6 +40,7 @@ extern "C" {
 // Config du reseau
 #define	PBAR_E_POLL_PER		10
 #define PBAR_E_PING_PER		10
+
 #define PBAR_RTBL_SIZE		100
 
 #define PBAR_CHANNEL		0
@@ -69,74 +70,9 @@ extern "C" {
 #endif
 #endif
 
-#define C_CLEF_VIDE             0x00
-#define C_MAX_BOXES             20
-
-// Buffer reception de trames entre mes elements 2 * Taille msg trame
-#define	PBAR_RBUF_SIZE		6
-
-// Gestion bouton pgm de carte
-#define	PBAR_ATR_BTNPGM		30 // Anti rebond btn pgm
-#define BUTTON_P_MASK           (BUTTON_3_MASK << 1)  /* Mask for program button {v3} */
-
-#define PBAR_DEBUT_IO           11
-
-// Gestion des Leds
-#define vLedCtrlKpd(ON,LED) \
-    vAHI_DioSetOutput( \
-        (ON) ? 0             : (1<<LED), \
-            (ON) ? (1<<LED) : 0\
-    )
-
 #if 0
-vAHI_DioSetOutput( \
-    (ON) ? (C_BAR_LED_1) : 0, \
-        (ON) ? 0             : (C_BAR_LED_1)\
-)
-#endif
-
-// Manipulation de Bit
-#define BitMsk(bit) 		(1 << (bit))
-#define BitNset(arg,bit) 	((arg) |= BitMsk(bit))
-#define BitNclr(arg,bit) 	((arg) &= ~BitMsk(bit))
-#define IsBitSet(arg,bit)	(((arg>>bit)&1)?1:0)
-
-#ifdef HOWTO
-int setBit(int x, unsigned char position)
-{
-  int mask = 1 << position;
-  return x | mask;
-}
-
-int clearBit(int x, unsigned char position)
-{
-  int mask = 1 << position;
-  return x & ~mask;
-}
-
-int modifyBit(int x, unsigned char position, bool newState)
-{
-  nt mask = 1 << position;
-  int state = int(newState); // relies on true = 1 and false = 0
-  return (x & ~mask) | (-state & mask);
-}
-
-int flipBit(int x, unsigned char position)
-{
-  int mask = 1 << position;
-  return x ^ mask;
-}
-
-bool isBitSet(int x, unsigned char position)
-{
-  x >>= position;
-  return (x & 1) != 0;
-}
-#endif
-
-#if 0
-#define PBAR_DEBUT_LED_CO	19
-#define	PBAR_DEBUT_LED_ED	10
+#define PBAR_DEBUT_LED_CO       19
+#define PBAR_DEBUT_LED_ED       10
 
 
 #define vLedControl(LED,ON) \
@@ -145,9 +81,34 @@ bool isBitSet(int x, unsigned char position)
 #endif
 
 
-/****************************************************************************/
-/***        Type Definitions                                              ***/
-/****************************************************************************/
+#define C_CLEF_VIDE             0x00
+#define C_MAX_BOXES             20
+
+// Buffer reception de trames entre mes elements 2 * Taille msg trame
+#define	PBAR_RBUF_SIZE		6
+
+// Gestion bouton pgm de carte
+#define	PBAR_ATR_BTNPGM 	30 // Anti rebond btn pgm
+#define BUTTON_P_MASK           (BUTTON_3_MASK << 1)  /* Mask for program button {v3} */
+
+#if 0
+// Gestion des Leds
+#define vLedCtrlKpd(ON,LED) \
+    vAHI_DioSetOutput( \
+        (ON) ? 0             : (1<<LED), \
+            (ON) ? (1<<LED) : 0\
+    )
+
+vAHI_DioSetOutput( \
+    (ON) ? (C_BAR_LED_1) : 0, \
+        (ON) ? 0             : (C_BAR_LED_1)\
+)
+#endif
+
+
+#define PBAR_DEBUT_IO	        11
+
+
 typedef enum
 {
   E_FLASH_BP_TEST_SORTIES = 0x00,
@@ -274,7 +235,7 @@ extern PUBLIC  void PBAR_ClignoteLed_1(void);
 /****************************************************************************/
 extern PUBLIC bool_t bStartFlashing;
 extern PUBLIC uint32 mLedId;
-extern PUBLIC sbpLed au8Led[2];
+//extern PUBLIC sbpLed au8Led[2];
 
 #if defined __cplusplus
 }
