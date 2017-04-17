@@ -65,19 +65,12 @@ PRIVATE void vPRT_PrepareJennic(sBusSpeed speed)
 
 PRIVATE void vPRT_PrepareSlio(void)
 {
-	uint32 conf = 0;
-
 	// Mettre a 0 SIG_LE 573 pour charger bus
 	vAHI_DioSetOutput(0,C_SEL_573);
 	// Mettre les sorties a 0
 	vAHI_DioSetOutput(0,0xFF<<PBAR_DEBUT_IO);
 	// Mettre a 1 SIG_LE 573 pour maintenir bus
 	vAHI_DioSetOutput(C_SEL_573,0);
-
-	// config au demarrage input et ouput
-	conf = vPRT_DioReadInput();
-	prvCnf_I_9555 = 0;
-	prvCnf_O_9555 = 0;
 }
 
 /**
@@ -94,21 +87,18 @@ PUBLIC void vPRT_DioSetDirection(uint32 cnf_in, uint32 cnf_out)
 
 PUBLIC void vPRT_DioSetOutput(uint32 cnf_on, uint32 cnf_off)
 {
-	//PRIVATE uint8 i2cReg[] = {CMD_OUT_0, CMD_OUT_1};
-	static uint32 cnf_ref = 0xFFFFFFFF;
-
 	vPrintf("Affecter valeur output\n");
-    // Mettre a 1 SIG_LE 573 pour charger bus
-    vAHI_DioSetOutput(C_SEL_573,0);
+	// Mettre a 1 SIG_LE 573 pour charger bus
+	vAHI_DioSetOutput(C_SEL_573,0);
 
-    // Configuer les sorties
-    vAHI_DioSetOutput(cnf_on,cnf_off);
+	//cnf_on = ~cnf_on;
+	//cnf_off = ~cnf_off;
 
-    // Mettre a 0 SIG_LE 573 pour maintenir bus
-    vAHI_DioSetOutput(0,C_SEL_573);
-	// La config des output devrait etre ok
-	// On prend le risque de ne pas relire l'etat des ios.
-	prvCnf_O_9555 = (cnf_ref>>8 & 0xFF00) | (((uint16)cnf_ref) & 0x00FF);
+	// Configuer les sorties
+	vAHI_DioSetOutput(cnf_on,cnf_off);
+
+	// Mettre a 0 SIG_LE 573 pour maintenir bus
+	vAHI_DioSetOutput(0,C_SEL_573);
 }
 
 PRIVATE uint32 vPRT_GererDios(uint32 cnf_a, uint32 cnf_b, uint32 cnf_ref, uint8 *ptr_reg)
@@ -176,11 +166,10 @@ PUBLIC uint32 vPRT_DioReadInput (void)
 	uint32 val=0UL;
 
 	vPrintf("\n\nDemande de lecture des SLIOS\n");
-	for(i2c_device=0;i2c_device<4;i2c_device = i2c_device +2)
-	{
-		tmp = u16_I2CRead_9555(i2cAddr[i2c_device]);
-		val = val | (tmp<<i2c_device*8);
-	}
+	val = u32AHI_DioReadInput();
+	//Prendre les bits du composant
+	val = val & 0x00004F80;
+	//val  = val >> 3;
 
 	vPrintf("Fin lecture des SLIOS val=%x\n\n",val);
 	return val;
