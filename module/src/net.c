@@ -16,8 +16,9 @@
 PUBLIC void bp_CommunStackMgmtEvent(teAppState *eState,
     teEventType eEventType, void *pvEventPrim)
 {
+#if !NO_DEBUG_ON
   tsNwkStartUp *pNet = (tsNwkStartUp*)pvEventPrim;
-
+#endif
 
   switch(eEventType)
   {

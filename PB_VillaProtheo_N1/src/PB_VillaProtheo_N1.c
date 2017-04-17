@@ -1,41 +1,12 @@
 /****************************************************************************
  *
- * MODULE:             JenNet Null Coordinator Node
- * COMPONENT:          $RCSfile: Coordinator.c,v $
+ * MODULE:             JenNet Coordinator Node
  *
- * VERSION:
- *
- * REVISION:           0.0
- *
- * DATED:              2007/05/29 15:40:19
- *
- * STATUS:             Exp
- *
- * AUTHOR:             MM
- *
- * DESCRIPTION:
- *
- *
- * LAST MODIFIED BY:   $Author: jahme $
+ * LAST MODIFIED BY:   $Author: $
  *                     $Modtime: $
  *
  ****************************************************************************
  *
- * This software is owned by Jennic and/or its supplier and is protected
- * under applicable copyright laws. All rights are reserved. We grant You,
- * and any third parties, a license to use this software solely and
- * exclusively on Jennic products. You, and any third parties must reproduce
- * the copyright and warranty notice and any other legend of ownership on each
- * copy or partial copy of the software.
- *
- * THIS SOFTWARE IS PROVIDED "AS IS". JENNIC MAKES NO WARRANTIES, WHETHER
- * EXPRESS, IMPLIED OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE,
- * ACCURACY OR LACK OF NEGLIGENCE. JENNIC SHALL NOT, IN ANY CIRCUMSTANCES,
- * BE LIABLE FOR ANY DAMAGES, INCLUDING, BUT NOT LIMITED TO, SPECIAL,
- * INCIDENTAL OR CONSEQUENTIAL DAMAGES FOR ANY REASON WHATSOEVER.
- *
- * Copyright Jennic Ltd 2008. All rights reserved
  *
  ****************************************************************************/
 
@@ -50,31 +21,24 @@
 #include <Printf.h>
 #include "Utils.h"
 
-#include <Button.h>
-
-
-#include "m_config.h"
 #include "c_config.h"
-
+#include "bit.h"
+#include "led.h"
+#include "i2c_9555.h"
 
 /****************************************************************************/
 /***        Macro Definitions                                             ***/
 /****************************************************************************/
+
 /****************************************************************************/
 /***        Type Definitions                                              ***/
 /****************************************************************************/
+
 /****************************************************************************/
 /***        Local Function Prototypes                                     ***/
 /****************************************************************************/
-PRIVATE void PBAR_LireBtnPgm(void);
-PRIVATE void PBAR_LireBtnPgm_TstOutput(void);
-PRIVATE void PBAR_LireBtnPgm_NormalUsage(void);
-
-PRIVATE bool_t PBAR_DecodeBtnPgm(uint8 *box_cnf);
-PRIVATE bool_t PBAR_DecodeBtnPgm_TstOutput(uint8 *box_cnf);
-PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf);
-
-
+PRIVATE void vPRT_TraiterChangementEntree(uint32 val);
+PRIVATE uint8 showDipSwitch(void);
 /****************************************************************************/
 /***        Exported Variables                                            ***/
 /****************************************************************************/
@@ -82,65 +46,39 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf);
 /****************************************************************************/
 /***        Local Variables                                               ***/
 /****************************************************************************/
-PRIVATE tsAppData sAppData;
-PRIVATE PBAR_E_KeyMode ePgmMode = E_CLAV_MODE_NOT_SET;
-PRIVATE bool_t bStartPgmTimer = FALSE;
-PRIVATE uint16 TimePgmPressed = 0;
 
-// Pour config Clavier distant
-PRIVATE uint64					LaBasId	 = 0;
-PRIVATE PBAR_E_KeyMode	LabasMod = E_CLAV_MODE_NOT_SET;
-PRIVATE PBAR_KIT_8046		LabasKbd = E_KPD_NONE;
-PRIVATE uint8 ledId = 0;
-PRIVATE uint8 config = 0;
-PRIVATE uint8 prevConf = 0;
-
-PRIVATE bool_t cbStartTempoRechercheClavier = FALSE;
-PRIVATE uint16 TimeRechercheClavier = 0;
-PRIVATE bool_t cbUnClavierActif = FALSE;
-
-//
 /* Routing table storage */
-PRIVATE tsJenieRoutingTable asRoutingTable[PBAR_RTBL_SIZE];
-
-// Personnalisation
-//PRIVATE uint32	u32ServiceRq; //service request
+PRIVATE tsJenieRoutingTable asRoutingTable[100];
 
 PRIVATE uint8 	pBuff[2]; // pointeur In & Read du buffer
 PRIVATE uint8 	bufReception[PBAR_RBUF_SIZE]; // Buffer circulaire reception
 PRIVATE uint64	bufAddr[PBAR_RBUF_SIZE];
-PRIVATE uint8 	bufEmission[3] ={0,0,0};
 PRIVATE uint8 	buf2[3] ={0,0,0};
+
+// Pour config Clavier distant
+PRIVATE uint8 prevConf = 0;
+
+PRIVATE uint16 TimeRechercheClavier = 0;
 
 PRIVATE uint8 	etatSorties; // reflet des ios actuel
 
-// Reference de la boite
-PRIVATE uint8 uThisBox_Id = 0;
 
-PRIVATE uint8 showDipSwitch(void);
 
+/****************************************************************************/
 PRIVATE uint8 showDipSwitch(void)
 {
   uint32 val = 0L;
   uint8 uboxid = 0;
 
-  // Set Io Out
-  vAHI_DioSetDirection(0,PBAR_CFG_CMD_RL);
-
-  // Mettre a 0 SIG_LE 573 pour charger bus
-  vAHI_DioSetOutput(0,C_SEL_573);
-  // Mettre les sorties a 0
-  vAHI_DioSetOutput(0,0xFF<<PBAR_DEBUT_IO);
-  // Mettre a 1 SIG_LE 573 pour maintenir bus
-  vAHI_DioSetOutput(C_SEL_573,0);
-
-
   // Set IO In
-  vAHI_DioSetDirection(PBAR_CFG_INPUT,0);
-  val = u32AHI_DioReadInput();
+  vAHI_DioSetDirection(E_JPI_DIO0_INT |\
+      E_JPI_DIO1_INT |\
+      E_JPI_DIO8_INT |\
+      E_JPI_DIO9_INT,0);
 
+  val = u32AHI_DioReadInput();
   // Recuperer la valeur de conf de la boite
-  uboxid = ((uint8)((val>>6)&0x0C) |((uint8)val&0x03));;
+  uboxid = ((uint8)((val>>6)&0x0C) |((uint8)val&0x03));
 
 #if !NO_DEBUG_ON
   /* Open UART for printf use {v2} */
@@ -217,12 +155,14 @@ PUBLIC void vJenie_CbInit(bool_t bWarmStart)
   // Reset APP_STATES
   memset(&sAppData, 0, sizeof(sAppData));
 
+  u32AHI_Init();
 
 #if !NO_DEBUG_ON
   vUtils_Init();
   vUART_printInit();
 #endif
 
+  vPRT_Init_IosOfCard(E_BUS_400_KH);
 
   switch(uThisBox_Id)
   {
@@ -253,13 +193,13 @@ PUBLIC void vJenie_CbInit(bool_t bWarmStart)
   }
 
   // Activation de la led status
-  au8Led[0].actif = TRUE;
-  au8Led[0].pio = C_PIO_LED_1;
+  au8Led[C_LID_1].actif = TRUE;
+  au8Led[C_LID_1].pio = C_LPID_1;
 
 
   if((eStatus=eJenie_Start(eDevType)) != E_JENIE_SUCCESS)
   {
-    au8Led[0].mode = E_FLASH_ERREUR_DECTECTEE;
+    au8Led[C_LID_1].mode = E_FLASH_ERREUR_DECTECTEE;
 
     vPrintf("!!Jenie err: %d\n", eStatus);
     while(1);
@@ -288,7 +228,6 @@ PUBLIC void vJenie_CbMain(void)
   uint8 keep;
   uint8 mask;
   uint8 valu;
-  //uint32 val = 0;
 
   /* regular watchdog reset */
 #ifdef WATCHDOG_ENABLED
@@ -323,19 +262,6 @@ PUBLIC void vJenie_CbMain(void)
         sAppData.eAppState = APP_STATE_REGISTERING_SERVICE;
 
       }
-#if 0
-      if(uThisBox_Id == 0){
-        au8Led[0].actif = TRUE;
-        au8Led[0].pio = C_PIO_LED_1;
-        au8Led[0].mode = E_FLASH_BP_TEST_SORTIES;
-
-        sAppData.eAppState = APP_STATE_TST_START_LUMIERES;
-      }
-      else{
-        sAppData.eAppState = APP_STATE_TST_STOP_LUMIERES;
-
-      }
-#endif
       break;
 
     case APP_STATE_REGISTERING_SERVICE:
@@ -384,35 +310,30 @@ PUBLIC void vJenie_CbMain(void)
       switch(bufReception[pBuff[1]])
       {
         case E_MSG_DATA_ALL:
-        case E_MSG_DATA_SELECT:
         {
-          vPrintf(" ios actuel:%x\n",etatSorties);
+          vPrintf(" Data ALL ios actuel:%x\n",etatSorties);
+
           keep = (etatSorties & (~mask))|(mask & valu);
-#if 0
-          if(bufReception[pBuff[1]] == E_MSG_DATA_ALL){
-            vPrintf(" Impose bit\n");
-            // impose bit
-            keep = (etatSorties & (~mask))|(mask & valu);
-          }
-          else
-          {
-            // bascule bit
-            vPrintf(" Bascule bit\n");
-            keep = etatSorties ^ mask;
-          }
-#endif
           vPrintf(" Mask:%x,Value:%x\n",mask,valu);
           vPrintf(" Nouvelle config ios:%x\n",keep);
           etatSorties = keep;
 
-          // Mettre a 1 SIG_LE 573 pour charger bus
-          vAHI_DioSetOutput(C_SEL_573,0);
+          // Configuer les sorties
+          vPRT_DioSetOutput(etatSorties<<PBAR_DEBUT_IO,(~etatSorties)<<PBAR_DEBUT_IO);
+        }
+        break;
+
+        case E_MSG_DATA_SELECT:
+        {
+          vPrintf(" Data Spe ios actuel:%x\n",etatSorties);
+
+          keep = (etatSorties ^ mask);
+          vPrintf(" Mask:%x,Value:%x\n",mask,valu);
+          vPrintf(" Nouvelle config ios:%x\n\n",keep);
+          etatSorties = keep;
 
           // Configuer les sorties
-          vAHI_DioSetOutput(etatSorties<<PBAR_DEBUT_IO,(~etatSorties)<<PBAR_DEBUT_IO);
-
-          // Mettre a 0 SIG_LE 573 pour maintenir bus
-          vAHI_DioSetOutput(0,C_SEL_573);
+          vPRT_DioSetOutput(etatSorties<<PBAR_DEBUT_IO,(~etatSorties)<<PBAR_DEBUT_IO);
         }
         break;
 
@@ -493,14 +414,8 @@ PUBLIC void vJenie_CbMain(void)
 
 
       vPrintf(" Config actuelle:%x\n",config);
-      // Mettre a 0 SIG_LE 573 pour charger bus
-      vAHI_DioSetOutput(0,C_SEL_573);
       // Mettre les sorties au niveau de config
-      vAHI_DioSetOutput(config<<PBAR_DEBUT_IO,~config<<PBAR_DEBUT_IO);
-      // Mettre a 1 SIG_LE 573 pour maintenir bus
-      vAHI_DioSetOutput(C_SEL_573,0);
-
-
+      vPRT_DioSetOutput(config<<PBAR_DEBUT_IO,(~config)<<PBAR_DEBUT_IO);
 
       vPrintf(" En attente de changement programmation\n");
       au8Led[0].mode= E_FLASH_BP_EN_CONFIGURATION_SORTIES;
@@ -554,37 +469,14 @@ PUBLIC void vJenie_CbMain(void)
 
     case APP_STATE_TST_STOP_LUMIERES:
     {
-#if 0
-      // Relecture de la config dip
-      val = u32AHI_DioReadInput();
-
-      // Recuperer la nouvelle valeur de conf de la boite
-      uThisBox_Id = ((uint8)((val>>6)&0x0C) | ((uint8)val&0x03));;
-
-      /* as we are a coordinator, allow nodes to associate with us */
-      vPrintf("!!Box Id utilisation: %d\n", uThisBox_Id);
-
-      vPrintf("Possibilite d'association activee\n\n");
-      eJenie_SetPermitJoin(TRUE);
-
-      // Reseau actif on peut recevoir des donnees !!
-      au8Led[0].actif = TRUE;
-      au8Led[0].pio = C_PIO_LED_1;
-      au8Led[0].mode = E_FLASH_RESEAU_ACTIF;
-
-      // Pas de clavier distant
-      LaBasId = 0;
-
-      /* register services */
-      sAppData.eAppState = APP_STATE_REGISTERING_SERVICE;
-#endif
     }
     break;
 
     default:
+#if !NO_DEBUG_ON
       vUtils_DisplayMsg("!!Unknown state!!", sAppData.eAppState);
-      //au8Led[0]=E_FLASH_STA_ER;
       while(1);
+#endif
       break;
   }
 }
@@ -667,7 +559,7 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
       break;
 
     case E_JENIE_PACKET_FAILED:
-      vUtils_Debug("Packet failed");
+      vPrintf("Packet failed\n");
       break;
 
     case E_JENIE_CHILD_JOINED:
@@ -680,21 +572,24 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
     break;
 
     case E_JENIE_CHILD_LEAVE:
-      vUtils_Debug("Child Leave");
+      vPrintf("Child Leave\n");
       break;
 
     case E_JENIE_CHILD_REJECTED:
-      vUtils_Debug("Child Rejected");
+      vPrintf("Child Rejected\n");
       break;
 
     case E_JENIE_STACK_RESET:
-      vUtils_Debug("Stack Reset");
+      vPrintf("Stack Reset\n");
       sAppData.eAppState = APP_STATE_WAITING_FOR_NETWORK;
       break;
 
     default:
       /* Unknown data event type */
+#if !NO_DEBUG_ON
       vUtils_DisplayMsg("!!Unknown Mgmt Event!!", eEventType);
+      while(1);
+#endif
       break;
   }
 }
@@ -710,11 +605,14 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
  *                  *psStackDataEvent       R   Pointer to data structure
  * RETURNS:
  * void
- *
+ * Impose
  ****************************************************************************/
 PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
 {
+#if !NO_DEBUG_ON
   tsDataToService *psStackEventData = (tsDataToService *) pvEventPrim;
+#endif
+
   tsData *psData = (tsData *) pvEventPrim;
 
   switch(eEventType)
@@ -811,7 +709,7 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
     break;
 
     case E_JENIE_DATA_TO_SERVICE:
-      vUtils_Debug("Data to service event");
+      vPrintf("Data to service event\n");
 
       vPrintf("S:%d -> d:%d\n",psStackEventData->u8SrcService,psStackEventData->u8DestService);
       break;
@@ -827,12 +725,8 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
           vPrintf("En attente autre touche du boitier de commande\n");
 
           // On efface la config visible
-          // Mettre a 0 SIG_LE 573 pour charger bus
-          vAHI_DioSetOutput(0,C_SEL_573);
           // Mettre les sorties a 0
-          vAHI_DioSetOutput(0,0xFF<<PBAR_DEBUT_IO);
-          // Mettre a 1 SIG_LE 573 pour maintenir bus
-          vAHI_DioSetOutput(C_SEL_573,0);
+          vPRT_DioSetOutput(0,0xFF<<PBAR_DEBUT_IO);
 
           // on reinitialise les registre interne
           etatSorties = 0;
@@ -857,12 +751,15 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
     break;
 
     case E_JENIE_DATA_TO_SERVICE_ACK:
-      vUtils_Debug("Data to service ack");
+      vPrintf("Data to service ack\n");
       break;
 
     default:
       // Unknown data event type
+#if !NO_DEBUG_ON
       vUtils_DisplayMsg("!!Unknown Data Event!!", eEventType);
+      while(1);
+#endif
       break;
   }
 }
@@ -884,18 +781,23 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
  ****************************************************************************/
 PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId,uint32 u32ItemBitmap)
 {
+  static uint8 timer_it_dio11 = 0;
+  uint32 val = 0;
 
   switch (u32DeviceId)
   {
     case E_JPI_DEVICE_TICK_TIMER:
     {
-      PBAR_ClignoteLed_1();
+      IHM_ClignoteLed();
       PBAR_LireBtnPgm();
 
       /* regular 10ms tick generated here */
       if (bStartPgmTimer){
         TimePgmPressed++;
       }
+
+
+      /* regular 10ms tick generated here */
 
       if(cbStartTempoRechercheClavier){
         TimeRechercheClavier++;
@@ -911,311 +813,53 @@ PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId,uint32 u32ItemBitmap)
     break;
 
     default:
+#if !NO_DEBUG_ON
       vUtils_DisplayMsg("HWint: ", u32DeviceId);
+      while(1);
+#endif
       break;
   }
 }
 
-PRIVATE void PBAR_LireBtnPgm(void)
+PRIVATE void vPRT_TraiterChangementEntree(uint32 val)
 {
-  if(uThisBox_Id)
-  {
-    PBAR_LireBtnPgm_NormalUsage();
-  }
-  else
-  {
-    PBAR_LireBtnPgm_TstOutput();
-  }
-}
+  //static uint16 val_input = 0xFFFF;
+  uint16 lesEntrees = (val>>16 & 0xFF00) | (((uint16)val>>8) & 0x00FF);
+  int i=0;
 
-PRIVATE void PBAR_LireBtnPgm_TstOutput(void)
-{
-  if ((u8JPI_PowerStatus() & 0x10) == 0 )
-  {
-    bStartPgmTimer = TRUE; // Bouton appuyé
-  }
-  else
-  {
-    bStartPgmTimer = FALSE;
+  // Recuperer la config actuelle
+  uint32 req_on = ((prvCnf_O_9555 << 8) & 0xFFFF00FF )| ((uint8)prvCnf_O_9555 & 0xFFFF00FF);
+  uint32 req_off = ((~prvCnf_O_9555 << 8) & 0xFFFF00FF )| (~(uint8)prvCnf_O_9555 & 0xFFFF00FF);
 
-  }
-}
+  vPrintf("\nConfig entrees -> previous:%x, now:%x\n", prvCnf_I_9555, lesEntrees);
 
-PRIVATE void PBAR_LireBtnPgm_NormalUsage(void)
-{
-  uint8 boxConf;
+  // Recherche des bits modifies
+  for(i=0;i<16;i++)
+  {
+    // Pas de changement
+    if(IsBitSet(prvCnf_I_9555,i) == IsBitSet(lesEntrees,i))
+      continue;
 
-  // Bouton Pgm appuye ??
-  if ((u8JPI_PowerStatus() & 0x10) == 0 && ePgmMode == E_CLAV_MODE_NOT_SET)
-  {
-    bStartPgmTimer = TRUE;
-  }
-  else
-  {
-    switch(ePgmMode)
+    // modifier le bit out de cette entree
+    if(i<8)
     {
-      case E_CLAV_MODE_NOT_SET:
-      {
-        bStartPgmTimer = FALSE;
-        if(TimePgmPressed)
-        {
-          if (TimePgmPressed<30)
-          {
-            // On demarre une compteur de temps
-            cbStartTempoRechercheClavier = TRUE;
-            sAppData.eAppState = APP_STATE_RECHERCHE_CLAVIER;
-          }
-          else {
-            if(LaBasId != 0){
-              cbUnClavierActif = FALSE;
-              sAppData.eAppState = APP_STATE_FIN_CFG_BOX;
-            }
-            else
-            {
-              ; // Rien on reste comme on est
-            }
-          }
-          //vPrintf(" Time:%d\n",TimePgmPressed);
-          TimePgmPressed = 0;
-        }
-      }
-      break;
-      case E_CLAV_MODE_1:
-      {
-        if(PBAR_DecodeBtnPgm(&boxConf))
-        {
-          if(sAppData.eAppState == APP_STATE_ATTENDRE_FIN_CFG_LOCAL)
-          {
-            vPrintf("> Envoyer config:%x\n",boxConf);
-            bufEmission[0]=E_MSG_CFG_LIENS;
-            bufEmission[1]=LabasMod<<4 |LabasKbd;
-            bufEmission[2]=boxConf;
+      vPrintf("bit %i different\n",i);
+      // Premier composant i2c
+      BitNinv(req_on,i);
+      BitNinv(req_off,i);
+      vPRT_DioSetOutput(req_on,req_off);
 
-            // Emettre
-            eJenie_SendData(LaBasId,
-                bufEmission, 3,TXOPTION_ACKREQ);
-
-            // Montrer emission
-            au8Led[0].mode= E_FLASH_RECHERCHE_RESEAU;
-          }
-        }
-
-      }
-      break;
-
-      default:
-      {
-        vPrintf("Mode inconnu\n");
-      }
-      break;
+      //memoriser le changement
+      BitNinv(etatSorties,i);
     }
-
-  }
-}
-
-PRIVATE bool_t PBAR_DecodeBtnPgm(uint8 *box_cnf)
-{
-  bool_t bValue = FALSE;
-
-  if(uThisBox_Id)
-  {
-    bValue=PBAR_DecodeBtnPgm_NormalUsage(box_cnf);
-  }
-  else
-  {
-    bValue=PBAR_DecodeBtnPgm_TstOutput(box_cnf);
-  }
-  return bValue;
-}
-
-PRIVATE bool_t PBAR_DecodeBtnPgm_TstOutput(uint8 *box_cnf)
-{
-  static uint8 io = 0;
-  static uint8 rf = 0;
-  static bool_t pass = FALSE;
-
-  if ((u8JPI_PowerStatus() & 0x10) == 0)
-  {
-    bStartPgmTimer = TRUE;
-  }
-  else
-  {
-    bStartPgmTimer = FALSE;
-
-    if(TimePgmPressed)
+    else
     {
-      // Mettre a 0 SIG_LE 573 pour Acces Lumiere
-      vAHI_DioSetOutput(0,C_SEL_573);
-
-      // Analyse duree appui
-      if (TimePgmPressed<30)
-      {
-        if(rf != 0xFF)
-        {
-          //vPrintf("rf=%x;io=%x\n",rf,io);
-          if(io >=1 && io <CARD_NB_LIGHT)
-          {
-            if((IsBitSet(rf,(io-1))))
-            {
-              vAHI_DioSetOutput(0,(1 << (PBAR_DEBUT_IO + (io-1)))); //off
-              rf = rf ^ (1<<(io-1));
-            }
-            vAHI_DioSetOutput((1 << (PBAR_DEBUT_IO + (io))),0); //on
-
-          }
-          else
-          {
-            if((IsBitSet(rf,(CARD_NB_LIGHT-1))))
-            {
-              vAHI_DioSetOutput(0,(1 << (PBAR_DEBUT_IO + (CARD_NB_LIGHT-1)))); //off
-              rf = rf ^ (1<<(CARD_NB_LIGHT-1));
-            }
-            vAHI_DioSetOutput((1 << (PBAR_DEBUT_IO + (0))),0); //on
-
-          }
-
-          rf = rf ^ (1<<io);
-          io++;
-          io%=CARD_NB_LIGHT;
-        }
-      }
-      else {
-        rf=0xFF;
-        if(!pass){
-          vAHI_DioSetOutput(rf<<PBAR_DEBUT_IO,(~rf)<<PBAR_DEBUT_IO); // On
-        }
-        else
-        {
-          vAHI_DioSetOutput(~rf<<PBAR_DEBUT_IO,rf<<PBAR_DEBUT_IO);
-          rf = 0;
-        }
-        pass = !pass;
-      }
-      TimePgmPressed = 0;
+      ;
     }
+    // Memorisation du changement
+    prvCnf_I_9555 = lesEntrees;
   }
-  return TRUE;
 }
-
-PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
-{
-  PRIVATE uint8 passage = 0;
-  bool_t bReturnConfig = FALSE;
-  uint8 saveLed = 0;
-
-  // Bouton Pgm appuye ??
-  if ((u8JPI_PowerStatus() & 0x10) == 0)
-  {
-    bStartPgmTimer = TRUE;
-  }
-  else
-  {
-    bStartPgmTimer = FALSE;
-
-    if(TimePgmPressed){
-      // TBD: ne pas activer les lumieres
-      // mais uniquement les leds
-      // Mettre a 0 SIG_LE 573 pour Acces Lumiere
-      vAHI_DioSetOutput(0,C_SEL_573);
-
-      // Analyse duree appui
-      if (TimePgmPressed<30){
-        // Appui cour
-        // on montre la sortie a configurer
-        //vPrintf("Id:%d\tCnf:%x, led:%d\n",passage,config,ledId);
-        if(ledId)
-        {
-          //eteindre la precedente si elle n'est pas a memoriser
-          if(!(IsBitSet(config,(ledId-1))))
-          {
-            vAHI_DioSetOutput(0,(1 << (PBAR_DEBUT_IO + (ledId-1))));
-          }
-          else
-          {
-            // sinon la ralummer
-            vAHI_DioSetOutput((1 << (PBAR_DEBUT_IO + (ledId-1))),0);
-          }
-        }
-        else{
-          if(!(IsBitSet(config,(ledId+(CARD_NB_LIGHT-1)))))
-          {
-            vAHI_DioSetOutput(0,(1 << (PBAR_DEBUT_IO + (ledId+(CARD_NB_LIGHT-1)))));
-          }
-          else
-          {
-            // sinon la ralumer
-            vAHI_DioSetOutput((1 << (PBAR_DEBUT_IO + (ledId+(CARD_NB_LIGHT-1)))),0);
-          }
-        }
-        // si La led n'est pas deja alummee on l'allume
-        //sinon on l'eteint
-        if((IsBitSet(config,ledId)))
-        {
-          vAHI_DioSetOutput(0,(1 << (PBAR_DEBUT_IO + (ledId))));
-
-        }
-        else
-        {
-          vAHI_DioSetOutput((1 << (PBAR_DEBUT_IO + (ledId))),0);
-        }
-        ledId++;
-        ledId%=CARD_NB_LIGHT;
-      }
-      else if(TimePgmPressed<80){
-        // Dans quel etat config ou test
-        if(sAppData.eAppState == APP_STATE_TST_START_LUMIERES){
-          sAppData.eAppState = APP_STATE_TST_STOP_LUMIERES;
-          bReturnConfig = FALSE;
-        }
-        else
-        {
-          // demande de memorisation de config de led
-          saveLed = ledId;
-          if (!saveLed){
-            saveLed = CARD_NB_LIGHT -1;
-          }
-          else{
-            saveLed--;
-          }
-          vPrintf("  Memorisation de la led id:%d\n",saveLed);
-          config = config ^ (1<<saveLed);
-          passage++;
-        }
-      }
-      else{
-        if(sAppData.eAppState == APP_STATE_TST_START_LUMIERES){
-          sAppData.eAppState = APP_STATE_TST_STOP_LUMIERES;
-          bReturnConfig = FALSE;
-        }
-        else
-        {
-
-          // Sauvegarde pour envoi a la boite
-          // On montre la config a envoyer
-          // Configuer les sorties
-          vAHI_DioSetOutput(config<<PBAR_DEBUT_IO,(~config)<<PBAR_DEBUT_IO);
-          bReturnConfig=TRUE;
-        }
-      }
-      // Mettre a 1 SIG_LE 573 pour BLOQUER bus
-      //vPrintf("Time pressed : %d\n", TimePgmPressed);
-      TimePgmPressed=0;
-    }
-  }
-
-  if(bReturnConfig){
-    *box_cnf=config;
-  }
-
-  if(sAppData.eAppState == APP_STATE_TST_STOP_LUMIERES){
-    config = 0;
-    // On quitte le mode test: eteidre les lumieres
-    vAHI_DioSetOutput(config<<PBAR_DEBUT_IO,(~config)<<PBAR_DEBUT_IO);
-  }
-
-  return(bReturnConfig);
-}
-
 /****************************************************************************/
 /***        END OF FILE                                                   ***/
 /****************************************************************************/
