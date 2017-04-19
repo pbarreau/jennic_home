@@ -23,10 +23,10 @@
 		E_JPI_DIO1_INT |\
 		E_JPI_DIO2_INT |\
 		E_JPI_DIO3_INT |\
-		E_JPI_DIO11_INT |\
 		E_JPI_DIO12_INT |\
 		E_JPI_DIO13_INT |\
-		E_JPI_DIO14_INT)
+		E_JPI_DIO14_INT |\
+		E_JPI_DIO15_INT)
 
 #define C_SEL_573	E_JPI_DIO8_INT
 
@@ -62,9 +62,11 @@ extern PUBLIC PBAR_KIT_8046		LabasKbd;
 extern PUBLIC PBAR_E_KeyMode	LabasMod;
 extern PUBLIC uint8 ledId;
 extern PUBLIC uint8 config;
+extern PUBLIC uint8 MesIos[8];
 
 // Public fonctions
 extern PUBLIC void PBAR_LireBtnPgm(void);
 extern PUBLIC bool_t PBAR_DecodeBtnPgm(uint8 *box_cnf);
+extern PUBLIC void PBAR_ConstruitreTabIOs(void);
 
 #endif /* C_CONFIG_H_ */

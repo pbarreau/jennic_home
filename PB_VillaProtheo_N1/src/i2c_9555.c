@@ -54,6 +54,9 @@ PRIVATE void vPRT_PrepareJennic(sBusSpeed speed)
 	// Pio en sortie
 	vAHI_DioSetDirection(0,PBAR_CFG_OUTPUT);
 
+	// Mettre a 0 les donnees pour relais.
+	vAHI_DioSetOutput(PBAR_CFG_CMD_RL,0);
+
 #ifdef CARD_USE_LED_PGM
 	vAHI_DioSetOutput(C_LPIO_2,0); //Eteindre la led mode pgm
 	au8Led[C_LID_2].actif = TRUE;
@@ -65,12 +68,6 @@ PRIVATE void vPRT_PrepareJennic(sBusSpeed speed)
 
 PRIVATE void vPRT_PrepareSlio(void)
 {
-	// Mettre a 0 SIG_LE 573 pour charger bus
-	vAHI_DioSetOutput(0,C_SEL_573);
-	// Mettre les sorties a 0
-	vAHI_DioSetOutput(0,0xFF<<PBAR_DEBUT_IO);
-	// Mettre a 1 SIG_LE 573 pour maintenir bus
-	vAHI_DioSetOutput(C_SEL_573,0);
 }
 
 /**

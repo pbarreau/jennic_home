@@ -42,6 +42,23 @@ PUBLIC PBAR_E_KeyMode	LabasMod = E_CLAV_MODE_NOT_SET;
 PUBLIC uint8 ledId = 0;
 PUBLIC uint8 config = 0;
 
+PUBLIC uint8 MesIos[8];
+//---------------------------------------------------
+
+PUBLIC void PBAR_ConstruitreTabIOs(void)
+{
+	int i = 0;
+	int pos = 0;
+	for(i=0;i<32;i++)
+	{
+		if(PBAR_CFG_CMD_RL & (1<<i))
+		{
+			vPrintf("Io (%d): pin Id %d\n", pos, i);
+			MesIos[pos]=i;
+			pos++;
+		}
+	}
+}
 
 PUBLIC void PBAR_LireBtnPgm(void)
 {
@@ -160,6 +177,7 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_TstOutput(uint8 *box_cnf)
 	static uint8 io = 0;
 	static bool_t pass = FALSE;
 	static uint32 conf = 0;
+	int i = 0;
 
 	if ((u8JPI_PowerStatus() & 0x10) == 0)
 	{
@@ -176,30 +194,32 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_TstOutput(uint8 *box_cnf)
 			{
 				vPrintf("\nTst(%d):conf=%x;\n",io,(uint32)conf);
 
-				BitNset(conf,PBAR_DEBUT_IO+io);
+				BitNset(conf,MesIos[io]);
 				vPrintf("\nTst(%d):conf=%x;\n",io,(uint32)conf);
 
 				if(io)
-					BitNclr(conf,PBAR_DEBUT_IO+io-1);
+					BitNclr(conf,MesIos[io-1]);
 
 				// Mettre la config
-				vPRT_DioSetOutput(conf,~conf);
+				vPRT_DioSetOutput(~conf,conf);
 
 				if(io == CARD_NB_LIGHT -1)
-					BitNclr(conf,PBAR_DEBUT_IO+io);
+					BitNclr(conf,MesIos[io]);
 
 				// Passer au bit suivant
 				io = (io + 1 )%CARD_NB_LIGHT;
 			}
 			else {
 				if(!pass){
-					vPrintf("\nMode OFF\n");
-					vPRT_DioSetOutput((conf & (0x0<<PBAR_DEBUT_IO)),(conf | (0xFF<<PBAR_DEBUT_IO)));
+					vPrintf("\nMode ON\n");
+					for(i=0;i<CARD_NB_LIGHT;i++)
+						vPRT_DioSetOutput((conf & (0x0<<MesIos[i])),(conf | (0x1<<MesIos[i])));
 				}
 				else
 				{
-					vPrintf("\nMode ON\n");
-					vPRT_DioSetOutput((conf | (0xFF<<PBAR_DEBUT_IO)),(conf & (0x0<<PBAR_DEBUT_IO)));
+					vPrintf("\nMode OFF\n");
+					for(i=0;i<CARD_NB_LIGHT;i++)
+						vPRT_DioSetOutput((conf | (0x1<<MesIos[i])),(conf & (0x0<<MesIos[i])));
 				}
 				pass = !pass;
 

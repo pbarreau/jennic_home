@@ -69,7 +69,7 @@ PRIVATE uint8 showDipSwitch(void)
 {
   uint8 uboxid = 0;
 
-   uboxid = 17; //Routeur uniquement
+   uboxid = 0; //Routeur uniquement
 
 #if !NO_DEBUG_ON
   /* Open UART for printf use {v2} */
@@ -78,6 +78,7 @@ PRIVATE uint8 showDipSwitch(void)
   vUtils_Init();
 #endif
 
+  PBAR_ConstruitreTabIOs();
   // Detection type de boite
   vPrintf("!!Box Id set by dip switch : %d\n\n", uboxid);
 
