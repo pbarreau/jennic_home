@@ -67,18 +67,9 @@ PRIVATE uint8 	etatSorties; // reflet des ios actuel
 /****************************************************************************/
 PRIVATE uint8 showDipSwitch(void)
 {
-  uint32 val = 0L;
   uint8 uboxid = 0;
 
-  // Set IO In
-  vAHI_DioSetDirection(E_JPI_DIO0_INT |\
-      E_JPI_DIO1_INT |\
-      E_JPI_DIO8_INT |\
-      E_JPI_DIO9_INT,0);
-
-  val = u32AHI_DioReadInput();
-  // Recuperer la valeur de conf de la boite
-  uboxid = ((uint8)((val>>6)&0x0C) |((uint8)val&0x03));
+   uboxid = 17; //Routeur uniquement
 
 #if !NO_DEBUG_ON
   /* Open UART for printf use {v2} */

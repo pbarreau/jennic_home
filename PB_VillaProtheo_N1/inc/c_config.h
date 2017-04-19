@@ -13,35 +13,33 @@
 
 #define CARD_NB_LIGHT  8
 
-#define PBAR_CFG_INPUT	(E_JPI_DIO0_INT|\
-		E_JPI_DIO1_INT |\
-		E_JPI_DIO9_INT |\
-		E_JPI_DIO8_INT)
+#define PBAR_CFG_INPUT	(E_JPI_DIO9_INT|\
+		E_JPI_DIO10_INT)
 
 
 // 10 outputs : 8 Relais lumiere + Led et LE 573
 // 0000 0000 0001 1111 1111 1000 0000 0000 (OUT)
-#define	PBAR_CFG_CMD_RL			(E_JPI_DIO11_INT|\
+#define	PBAR_CFG_CMD_RL			(E_JPI_DIO0_INT|\
+		E_JPI_DIO1_INT |\
+		E_JPI_DIO2_INT |\
+		E_JPI_DIO3_INT |\
+		E_JPI_DIO11_INT |\
 		E_JPI_DIO12_INT |\
 		E_JPI_DIO13_INT |\
-		E_JPI_DIO14_INT |\
-		E_JPI_DIO15_INT |\
-		E_JPI_DIO16_INT |\
-		E_JPI_DIO17_INT |\
-		E_JPI_DIO18_INT)
+		E_JPI_DIO14_INT)
 
-#define C_SEL_573	E_JPI_DIO20_INT
+#define C_SEL_573	E_JPI_DIO8_INT
 
 #define	C_LID_1		0
-#define C_LPIO_1	E_JPI_DIO19_INT	// Reseau
-#define C_LPID_1	19
+#define C_LPIO_1	E_JPI_DIO16_INT	// Reseau
+#define C_LPID_1	16
 
 #define CARD_USE_LED_PGM 0
 
 #ifdef CARD_USE_LED_PGM
 #define	C_LID_2		1
-#define	C_LPIO_2	E_JPI_DIO10_INT	// Pgm (Non Assign)
-#define	C_LPID_2	10
+#define	C_LPIO_2	E_JPI_DIO17_INT	// Pgm (Non Assign)
+#define	C_LPID_2	17
 #define	PBAR_CFG_OUTPUT	(C_LPIO_1|C_LPIO_2|PBAR_CFG_CMD_RL|C_SEL_573)
 #else
 #define	PBAR_CFG_OUTPUT	(C_LPIO_1|PBAR_CFG_CMD_RL|C_SEL_573)
