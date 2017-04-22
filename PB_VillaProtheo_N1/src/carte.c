@@ -239,6 +239,7 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
 	uint8 saveLed = 0;
 	uint32 Maconf = 0;
 	static int sel_led = 0;
+	int i;
 
 	// Bouton Pgm appuye ??
 	if ((u8JPI_PowerStatus() & 0x10) == 0)
@@ -286,6 +287,20 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
 
 
 					// Mettre la config
+					for(i=0;i<8;i++)
+					{
+//#if 0
+						if(sel_led<<i)
+						{
+							Maconf = Maconf | (1<< MesIos[i]);
+						}
+						else
+						{
+							Maconf = Maconf & (0<< MesIos[i]);
+						}
+//#endif
+						vPrintf("Maconf = %x\n",Maconf);
+					}
 					Maconf = sel_led<< PBAR_DEBUT_IO;
 					vPRT_DioSetOutput(Maconf,~Maconf);
 
@@ -357,121 +372,3 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
 
 	return(bReturnConfig);
 }
-
-
-#ifdef test2
-PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
-{
-	PRIVATE uint8 passage = 0;
-	bool_t bReturnConfig = FALSE;
-	uint8 saveLed = 0;
-
-	// Bouton Pgm appuye ??
-	if ((u8JPI_PowerStatus() & 0x10) == 0)
-	{
-		bStartPgmTimer = TRUE;
-	}
-	else
-	{
-		bStartPgmTimer = FALSE;
-
-		if(TimePgmPressed){
-			// TBD: ne pas activer les lumieres
-			// mais uniquement les leds
-
-			// Analyse duree appui
-			if (TimePgmPressed<30){
-				// Appui cour
-				// on montre la sortie a configurer
-				//vPrintf("Id:%d\tCnf:%x, led:%d\n",passage,config,ledId);
-				if(ledId)
-				{
-					//eteindre la precedente si elle n'est pas a memoriser
-					if(!(IsBitSet(config,(ledId-1))))
-					{
-						vPRT_DioSetOutput((1 << (PBAR_DEBUT_IO + (ledId-1))),0);
-					}
-					else
-					{
-						// sinon la ralummer
-						vPRT_DioSetOutput(0,(1 << (PBAR_DEBUT_IO + (ledId-1))));
-					}
-				}
-				else{
-					if(!(IsBitSet(config,(ledId+(CARD_NB_LIGHT-1)))))
-					{
-						vPRT_DioSetOutput((1 << (PBAR_DEBUT_IO + (ledId+(CARD_NB_LIGHT-1)))),0);
-					}
-					else
-					{
-						// sinon la ralumer
-						vPRT_DioSetOutput(0,(1 << (PBAR_DEBUT_IO + (ledId+(CARD_NB_LIGHT-1)))));
-					}
-				}
-				// si La led n'est pas deja alummee on l'allume
-				//sinon on l'eteint
-				if((IsBitSet(config,ledId)))
-				{
-					vPRT_DioSetOutput((1 << (PBAR_DEBUT_IO + (ledId))),0);
-
-				}
-				else
-				{
-					vPRT_DioSetOutput(0,(1 << (PBAR_DEBUT_IO + (ledId))));
-				}
-				ledId++;
-				ledId%=CARD_NB_LIGHT;
-			}
-			else if(TimePgmPressed<80){
-				// Dans quel etat config ou test
-				if(sAppData.eAppState == APP_STATE_TST_START_LUMIERES){
-					sAppData.eAppState = APP_STATE_TST_STOP_LUMIERES;
-					bReturnConfig = FALSE;
-				}
-				else
-				{
-					// demande de memorisation de config de led
-					saveLed = ledId;
-					if (!saveLed){
-						saveLed = CARD_NB_LIGHT -1;
-					}
-					else{
-						saveLed--;
-					}
-					vPrintf("  Memorisation de la led id:%d\n",saveLed);
-					config = config ^ (1<<saveLed);
-					passage++;
-				}
-			}
-			else{
-				if(sAppData.eAppState == APP_STATE_TST_START_LUMIERES){
-					sAppData.eAppState = APP_STATE_TST_STOP_LUMIERES;
-					bReturnConfig = FALSE;
-				}
-				else
-				{
-
-					// Sauvegarde pour envoi a la boite
-					// On montre la config a envoyer
-					// Configuer les sorties
-					vPRT_DioSetOutput((~config)<<PBAR_DEBUT_IO,config<<PBAR_DEBUT_IO);
-					bReturnConfig=TRUE;
-				}
-			}
-			TimePgmPressed=0;
-		}
-	}
-
-	if(bReturnConfig){
-		*box_cnf=config;
-	}
-
-	if(sAppData.eAppState == APP_STATE_TST_STOP_LUMIERES){
-		config = 0;
-		// On quitte le mode test: eteidre les lumieres
-		vPRT_DioSetOutput((~config)<<PBAR_DEBUT_IO,config<<PBAR_DEBUT_IO);
-	}
-
-	return(bReturnConfig);
-}
-#endif
