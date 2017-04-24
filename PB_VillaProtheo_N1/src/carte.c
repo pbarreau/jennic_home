@@ -183,7 +183,7 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_TstOutput(uint8 *box_cnf)
 					BitNclr(conf,PBAR_DEBUT_IO+io-1);
 
 				// Mettre la config
-				vPRT_DioSetOutput(conf,~conf);
+				vPRT_DioSetOutput(~conf,conf);
 
 				if(io == CARD_NB_LIGHT -1)
 					BitNclr(conf,PBAR_DEBUT_IO+io);
@@ -193,12 +193,12 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_TstOutput(uint8 *box_cnf)
 			}
 			else {
 				if(!pass){
-					vPrintf("\nMode OFF\n");
+					vPrintf("\nMode ON\n");
 					vPRT_DioSetOutput((conf & (0x0<<PBAR_DEBUT_IO)),(conf | (0xFF<<PBAR_DEBUT_IO)));
 				}
 				else
 				{
-					vPrintf("\nMode ON\n");
+					vPrintf("\nMode OFF\n");
 					vPRT_DioSetOutput((conf | (0xFF<<PBAR_DEBUT_IO)),(conf & (0x0<<PBAR_DEBUT_IO)));
 				}
 				pass = !pass;
@@ -267,7 +267,7 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
 
 					// Mettre la config
 					Maconf = sel_led<< PBAR_DEBUT_IO;
-					vPRT_DioSetOutput(Maconf,~Maconf);
+					vPRT_DioSetOutput(~Maconf,Maconf);
 
 					if(ledId == CARD_NB_LIGHT -1){
 						if(IsBitSet(config,ledId))

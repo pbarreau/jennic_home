@@ -68,7 +68,7 @@ PRIVATE void vPRT_PrepareSlio(void)
 	// Mettre a 0 SIG_LE 573 pour charger bus
 	vAHI_DioSetOutput(0,C_SEL_573);
 	// Mettre les sorties a 0
-	vAHI_DioSetOutput(0,0xFF<<PBAR_DEBUT_IO);
+	vAHI_DioSetOutput(0xFF<<PBAR_DEBUT_IO,0);
 	// Mettre a 1 SIG_LE 573 pour maintenir bus
 	vAHI_DioSetOutput(C_SEL_573,0);
 }
