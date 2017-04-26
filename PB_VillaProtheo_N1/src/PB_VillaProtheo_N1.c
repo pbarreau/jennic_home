@@ -42,7 +42,7 @@ PRIVATE uint8 showDipSwitch(void);
 /****************************************************************************/
 /***        Exported Variables                                            ***/
 /****************************************************************************/
-
+PUBLIC ebpLedInfo mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
 /****************************************************************************/
 /***        Local Variables                                               ***/
 /****************************************************************************/
@@ -253,7 +253,7 @@ PUBLIC void vJenie_CbMain(void)
         eJenie_SetPermitJoin(TRUE);
 
         // Reseau actif on peut recevoir des donnees !!
-        au8Led[0].mode = E_FLASH_RESEAU_ACTIF;
+        au8Led[0].mode = mNetOkTypeFlash;
 
         // Pas de clavier distant
         LaBasId = 0;
@@ -396,7 +396,7 @@ PUBLIC void vJenie_CbMain(void)
       vPrintf("Attente boitier commande trop longue!!\n");
       vPrintf("Verifier si en mode programmation\n");
       vPrintf("Reour BP en mode normal\n");
-      au8Led[0].mode=E_FLASH_RESEAU_ACTIF;
+      au8Led[0].mode=mNetOkTypeFlash;
       sAppData.eAppState = APP_STATE_RUNNING;
     }
     break;
@@ -436,7 +436,7 @@ PUBLIC void vJenie_CbMain(void)
       vPrintf("Retour de BP en mode usage courant\n");
 
       // On Montre mode user
-      au8Led[0].mode= E_FLASH_RESEAU_ACTIF;
+      au8Led[0].mode= mNetOkTypeFlash;
 
       ePgmMode = E_CLAV_MODE_NOT_SET;
 

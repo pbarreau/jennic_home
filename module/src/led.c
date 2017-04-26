@@ -29,6 +29,10 @@ PUBLIC  void IHM_ClignoteLed(void)
 				else
 					vLedSet(au8Led[i].mode & (uTick),au8Led[i].pio);
 			}
+			else
+			{
+				vLedSet(au8Led[i].mode,au8Led[i].pio);
+			}
 		}
 		uTick++;    // Ticker increment
 	}
