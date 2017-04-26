@@ -59,7 +59,7 @@ extern "C" {
 #endif
 #endif
 
-#define C_MAX_BOXES 12
+#define C_MAX_BOXES 20
 
 // Buffer reception de trames entre mes elements 2 * Taille msg trame
 #define	PBAR_RBUF_SIZE			6
