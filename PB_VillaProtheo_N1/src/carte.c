@@ -239,7 +239,7 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
 	bool_t bReturnConfig = FALSE;
 	uint8 saveLed = 0;
 	uint32 Maconf = 0;
-	static int sel_led = 0;
+	static uint8 sel_led = 0;
 
 	// Bouton Pgm appuye ??
 	if ((u8JPI_PowerStatus() & 0x10) == 0)
@@ -337,7 +337,8 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
 						// Sauvegarde pour envoi a la boite
 						// On montre la config a envoyer
 						// Configuer les sorties
-						vPRT_DioSetOutput(config<<PBAR_DEBUT_IO,(~config)<<PBAR_DEBUT_IO);
+						vPrintf("Show new config to user\n");
+						vPRT_DioSetOutput((~config)<<PBAR_DEBUT_IO,(config)<<PBAR_DEBUT_IO);
 						bReturnConfig=TRUE;
 					}
 				}
@@ -353,7 +354,8 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
 	if(sAppData.eAppState == APP_STATE_TST_STOP_LUMIERES){
 		config = 0;
 		// On quitte le mode test: eteindre les lumieres
-		vPRT_DioSetOutput(config<<PBAR_DEBUT_IO,(~config)<<PBAR_DEBUT_IO);
+		vPrintf("switch off evrything\n");
+		vPRT_DioSetOutput((~config)<<PBAR_DEBUT_IO,(config)<<PBAR_DEBUT_IO);
 	}
 
 	return(bReturnConfig);
