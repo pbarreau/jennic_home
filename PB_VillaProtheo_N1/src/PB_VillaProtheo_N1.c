@@ -42,7 +42,7 @@ PRIVATE uint8 showDipSwitch(void);
 /****************************************************************************/
 /***        Exported Variables                                            ***/
 /****************************************************************************/
-
+PUBLIC ebpLedInfo mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
 /****************************************************************************/
 /***        Local Variables                                               ***/
 /****************************************************************************/
@@ -244,7 +244,7 @@ PUBLIC void vJenie_CbMain(void)
     case APP_STATE_NETWORK_UP:
       if(uThisBox_Id == 0)
       {
-        au8Led[0].mode = E_FLASH_BP_TEST_SORTIES;
+        au8Led[0].mode = ~E_FLASH_BP_TEST_SORTIES;
         sAppData.eAppState = APP_STATE_TST_START_LUMIERES;
       }
       else
@@ -253,7 +253,7 @@ PUBLIC void vJenie_CbMain(void)
         eJenie_SetPermitJoin(TRUE);
 
         // Reseau actif on peut recevoir des donnees !!
-        au8Led[0].mode = E_FLASH_RESEAU_ACTIF;
+        au8Led[0].mode = mNetOkTypeFlash;
 
         // Pas de clavier distant
         LaBasId = 0;
@@ -396,7 +396,7 @@ PUBLIC void vJenie_CbMain(void)
       vPrintf("Attente boitier commande trop longue!!\n");
       vPrintf("Verifier si en mode programmation\n");
       vPrintf("Reour BP en mode normal\n");
-      au8Led[0].mode=E_FLASH_RESEAU_ACTIF;
+      au8Led[0].mode=mNetOkTypeFlash;
       sAppData.eAppState = APP_STATE_RUNNING;
     }
     break;
@@ -436,7 +436,7 @@ PUBLIC void vJenie_CbMain(void)
       vPrintf("Retour de BP en mode usage courant\n");
 
       // On Montre mode user
-      au8Led[0].mode= E_FLASH_RESEAU_ACTIF;
+      au8Led[0].mode= mNetOkTypeFlash;
 
       ePgmMode = E_CLAV_MODE_NOT_SET;
 
@@ -726,11 +726,13 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
 
           // On efface la config visible
           // Mettre les sorties a 0
-          vPRT_DioSetOutput(0xFFFFFFFF,0);
+			config = 0;
+			// On quitte le mode test: eteindre les lumieres
+			// vPrintf("switch off evrything\n");
+			vPRT_DioSetOutput((~config)<<PBAR_DEBUT_IO,(config)<<PBAR_DEBUT_IO);
 
-          // on reinitialise les registre interne
-          etatSorties = 0;
-          config = 0;
+			// on reinitialise les registre interne
+			etatSorties = 0;
 
           // On remet la led en normal
           au8Led[0].mode= E_FLASH_EN_ATTENTE_TOUCHE_BC;
