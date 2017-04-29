@@ -116,7 +116,7 @@ PRIVATE void PBAR_LireBtnPgm_NormalUsage(void)
 					if(showNet)
 					{
 						vPrintf("Cacher Net Ok\n");
-						mNetOkTypeFlash = E_FLASH_FIN;
+						mNetOkTypeFlash = ~E_FLASH_FIN;
 						au8Led[0].mode = mNetOkTypeFlash;
 					}
 					else

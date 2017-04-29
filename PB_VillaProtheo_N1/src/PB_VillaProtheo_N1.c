@@ -261,7 +261,7 @@ PUBLIC void vJenie_CbMain(void)
 	case APP_STATE_NETWORK_UP:
 		if(uThisBox_Id == 0)
 		{
-			au8Led[0].mode = E_FLASH_BP_TEST_SORTIES;
+			au8Led[0].mode = ~E_FLASH_BP_TEST_SORTIES;
 			sAppData.eAppState = APP_STATE_TST_START_LUMIERES;
 		}
 		else
