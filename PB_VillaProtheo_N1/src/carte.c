@@ -71,6 +71,7 @@ PRIVATE void PBAR_LireBtnPgm_TstOutput(void)
 PRIVATE void PBAR_LireBtnPgm_NormalUsage(void)
 {
 	uint8 boxConf=0;
+	static bool showNet = TRUE;
 
 	// Bouton Pgm appuye ??
 	if ((u8JPI_PowerStatus() & 0x10) == 0 && ePgmMode == E_CLAV_MODE_NOT_SET)
@@ -92,6 +93,25 @@ PRIVATE void PBAR_LireBtnPgm_NormalUsage(void)
 					cbStartTempoRechercheClavier = TRUE;
 					sAppData.eAppState = APP_STATE_RECHERCHE_CLAVIER;
 				}
+				else if (TimePgmPressed < 100)
+				{
+					// eteindre ou alummer led conection ok
+					if(showNet)
+					{
+						vPrintf("Cacher Net Ok\n");
+						mNetOkTypeFlash = E_FLASH_FIN;
+						au8Led[0].mode = E_FLASH_FIN;
+					}
+					else
+					{
+						vPrintf("Montrer Net Ok\n");
+						mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
+						au8Led[0].mode = E_FLASH_RESEAU_ACTIF;
+					}
+					showNet = !showNet;
+					sAppData.eAppState = APP_STATE_RUNNING;
+				}
+
 				else {
 					if(LaBasId != 0){
 						cbUnClavierActif = FALSE;
@@ -107,6 +127,7 @@ PRIVATE void PBAR_LireBtnPgm_NormalUsage(void)
 			}
 		}
 		break;
+
 		case E_CLAV_MODE_1:
 		{
 			if(PBAR_DecodeBtnPgm(&boxConf))
@@ -337,121 +358,3 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
 
 	return(bReturnConfig);
 }
-
-
-#ifdef test2
-PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
-{
-	PRIVATE uint8 passage = 0;
-	bool_t bReturnConfig = FALSE;
-	uint8 saveLed = 0;
-
-	// Bouton Pgm appuye ??
-	if ((u8JPI_PowerStatus() & 0x10) == 0)
-	{
-		bStartPgmTimer = TRUE;
-	}
-	else
-	{
-		bStartPgmTimer = FALSE;
-
-		if(TimePgmPressed){
-			// TBD: ne pas activer les lumieres
-			// mais uniquement les leds
-
-			// Analyse duree appui
-			if (TimePgmPressed<30){
-				// Appui cour
-				// on montre la sortie a configurer
-				//vPrintf("Id:%d\tCnf:%x, led:%d\n",passage,config,ledId);
-				if(ledId)
-				{
-					//eteindre la precedente si elle n'est pas a memoriser
-					if(!(IsBitSet(config,(ledId-1))))
-					{
-						vPRT_DioSetOutput((1 << (PBAR_DEBUT_IO + (ledId-1))),0);
-					}
-					else
-					{
-						// sinon la ralummer
-						vPRT_DioSetOutput(0,(1 << (PBAR_DEBUT_IO + (ledId-1))));
-					}
-				}
-				else{
-					if(!(IsBitSet(config,(ledId+(CARD_NB_LIGHT-1)))))
-					{
-						vPRT_DioSetOutput((1 << (PBAR_DEBUT_IO + (ledId+(CARD_NB_LIGHT-1)))),0);
-					}
-					else
-					{
-						// sinon la ralumer
-						vPRT_DioSetOutput(0,(1 << (PBAR_DEBUT_IO + (ledId+(CARD_NB_LIGHT-1)))));
-					}
-				}
-				// si La led n'est pas deja alummee on l'allume
-				//sinon on l'eteint
-				if((IsBitSet(config,ledId)))
-				{
-					vPRT_DioSetOutput((1 << (PBAR_DEBUT_IO + (ledId))),0);
-
-				}
-				else
-				{
-					vPRT_DioSetOutput(0,(1 << (PBAR_DEBUT_IO + (ledId))));
-				}
-				ledId++;
-				ledId%=CARD_NB_LIGHT;
-			}
-			else if(TimePgmPressed<80){
-				// Dans quel etat config ou test
-				if(sAppData.eAppState == APP_STATE_TST_START_LUMIERES){
-					sAppData.eAppState = APP_STATE_TST_STOP_LUMIERES;
-					bReturnConfig = FALSE;
-				}
-				else
-				{
-					// demande de memorisation de config de led
-					saveLed = ledId;
-					if (!saveLed){
-						saveLed = CARD_NB_LIGHT -1;
-					}
-					else{
-						saveLed--;
-					}
-					vPrintf("  Memorisation de la led id:%d\n",saveLed);
-					config = config ^ (1<<saveLed);
-					passage++;
-				}
-			}
-			else{
-				if(sAppData.eAppState == APP_STATE_TST_START_LUMIERES){
-					sAppData.eAppState = APP_STATE_TST_STOP_LUMIERES;
-					bReturnConfig = FALSE;
-				}
-				else
-				{
-
-					// Sauvegarde pour envoi a la boite
-					// On montre la config a envoyer
-					// Configuer les sorties
-					vPRT_DioSetOutput((~config)<<PBAR_DEBUT_IO,config<<PBAR_DEBUT_IO);
-					bReturnConfig=TRUE;
-				}
-			}
-			TimePgmPressed=0;
-		}
-	}
-
-	if(bReturnConfig){
-		*box_cnf=config;
-	}
-
-	if(sAppData.eAppState == APP_STATE_TST_STOP_LUMIERES){
-		config = 0;
-		// On quitte le mode test: eteidre les lumieres
-		vPRT_DioSetOutput((~config)<<PBAR_DEBUT_IO,config<<PBAR_DEBUT_IO);
-	}
-
-	return(bReturnConfig);
-}
-#endif
