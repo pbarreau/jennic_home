@@ -88,6 +88,7 @@ PRIVATE void PBAR_LireBtnPgm_TstOutput(void)
 PRIVATE void PBAR_LireBtnPgm_NormalUsage(void)
 {
 	uint8 boxConf=0;
+	static bool showNet = TRUE;
 
 	// Bouton Pgm appuye ??
 	if ((u8JPI_PowerStatus() & 0x10) == 0 && ePgmMode == E_CLAV_MODE_NOT_SET)
@@ -109,6 +110,25 @@ PRIVATE void PBAR_LireBtnPgm_NormalUsage(void)
 					cbStartTempoRechercheClavier = TRUE;
 					sAppData.eAppState = APP_STATE_RECHERCHE_CLAVIER;
 				}
+				else if (TimePgmPressed < 100)
+				{
+					// eteindre ou alummer led conection ok
+					if(showNet)
+					{
+						vPrintf("Cacher Net Ok\n");
+						mNetOkTypeFlash = E_FLASH_FIN;
+						au8Led[0].mode = mNetOkTypeFlash;
+					}
+					else
+					{
+						vPrintf("Montrer Net Ok\n");
+						mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
+						au8Led[0].mode = mNetOkTypeFlash;
+					}
+					showNet = !showNet;
+					sAppData.eAppState = APP_STATE_RUNNING;
+				}
+
 				else {
 					if(LaBasId != 0){
 						cbUnClavierActif = FALSE;
@@ -124,6 +144,7 @@ PRIVATE void PBAR_LireBtnPgm_NormalUsage(void)
 			}
 		}
 		break;
+
 		case E_CLAV_MODE_1:
 		{
 			if(PBAR_DecodeBtnPgm(&boxConf))
@@ -238,7 +259,7 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
 	bool_t bReturnConfig = FALSE;
 	uint8 saveLed = 0;
 	uint32 Maconf = 0;
-	static int sel_led = 0;
+	static uint8 sel_led = 0;
 	int i;
 
 	// Bouton Pgm appuye ??

@@ -212,13 +212,19 @@ typedef enum{
   E_KPD_B,
   E_KPD_C,
   E_KPD_D,
+  E_KPD_0,
   E_KPD_1,
   E_KPD_2,
   E_KPD_3,
   E_KPD_4,
-  E_KPD_ALL,
+  E_KPD_5,
+  E_KPD_6,
+  E_KPD_7,
+  E_KPD_8,
+  E_KPD_9,
+  E_KPD_ALL, /// touche *
   E_KPD_NONE,
-  E_KPD_MODE,
+  E_KPD_MODE, /// touche #
   E_KPD_END_DEF
 }PBAR_KIT_8046;
 
