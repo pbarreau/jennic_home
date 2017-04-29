@@ -100,13 +100,13 @@ PRIVATE void PBAR_LireBtnPgm_NormalUsage(void)
 					{
 						vPrintf("Cacher Net Ok\n");
 						mNetOkTypeFlash = E_FLASH_FIN;
-						au8Led[0].mode = E_FLASH_FIN;
+						au8Led[0].mode = mNetOkTypeFlash;
 					}
 					else
 					{
 						vPrintf("Montrer Net Ok\n");
 						mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
-						au8Led[0].mode = E_FLASH_RESEAU_ACTIF;
+						au8Led[0].mode = mNetOkTypeFlash;
 					}
 					showNet = !showNet;
 					sAppData.eAppState = APP_STATE_RUNNING;

@@ -252,8 +252,8 @@ PUBLIC void vJenie_CbMain(void)
 			vPrintf(" Possibilite d'association activee\n\n");
 			eJenie_SetPermitJoin(TRUE);
 
-			// Reseau actif on peut recevoir des donnees !!
-			au8Led[0].mode = mNetOkTypeFlash;
+        // Reseau actif on peut recevoir des donnees !!
+        au8Led[0].mode = mNetOkTypeFlash;
 
 			// Pas de clavier distant
 			LaBasId = 0;
