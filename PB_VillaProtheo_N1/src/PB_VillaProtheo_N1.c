@@ -436,7 +436,7 @@ PUBLIC void vJenie_CbMain(void)
       vPrintf("Retour de BP en mode usage courant\n");
 
       // On Montre mode user
-      au8Led[0].mode= E_FLASH_RESEAU_ACTIF;
+      au8Led[0].mode= mNetOkTypeFlash;
 
       ePgmMode = E_CLAV_MODE_NOT_SET;
 
