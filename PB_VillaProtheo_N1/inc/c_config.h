@@ -18,7 +18,6 @@
 		E_JPI_DIO9_INT |\
 		E_JPI_DIO8_INT)
 
-
 // 10 outputs : 8 Relais lumiere + Led et LE 573
 // 0000 0000 0001 1111 1111 1000 0000 0000 (OUT)
 #define	PBAR_CFG_CMD_RL			(E_JPI_DIO11_INT|\
@@ -47,9 +46,6 @@
 #define	PBAR_CFG_OUTPUT	(C_LPIO_1|PBAR_CFG_CMD_RL|C_SEL_573)
 #endif
 
-
-
-
 // Public variable
 extern PUBLIC tsAppData sAppData;
 extern PUBLIC uint8 uThisBox_Id;
@@ -59,9 +55,9 @@ extern PUBLIC uint16 TimePgmPressed;
 extern PUBLIC bool_t cbStartTempoRechercheClavier;
 extern PUBLIC bool_t cbUnClavierActif;
 extern PUBLIC uint64 LaBasId;
-extern PUBLIC uint8 	bufEmission[3];
-extern PUBLIC PBAR_KIT_8046		LabasKbd;
-extern PUBLIC PBAR_E_KeyMode	LabasMod;
+extern PUBLIC uint8 bufEmission[3];
+extern PUBLIC PBAR_KIT_8046 LabasKbd;
+extern PUBLIC PBAR_E_KeyMode LabasMod;
 extern PUBLIC uint8 ledId;
 extern PUBLIC uint8 config;
 extern PUBLIC ebpLedInfo mNetOkTypeFlash;
