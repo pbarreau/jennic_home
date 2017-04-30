@@ -29,7 +29,6 @@
 		C_CLAV_MSK_INFO_2 |\
 		C_CLAV_MSK_INFO_3)
 
-
 extern PUBLIC sLed au8Led_clav[C_CLAV_NB_IHM_LED];
 
 #endif /* E_LED_H_ */

@@ -42,7 +42,8 @@
 #define PRINTF_H_INCLUDED
 
 #if defined __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 /****************************************************************************/
@@ -72,5 +73,4 @@ PUBLIC void vUART_Init(bool bWaitForKey);
 #endif
 
 #endif /* PRINTF_H_INCLUDED */
-
 

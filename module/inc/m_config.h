@@ -5,15 +5,14 @@
 //	Par		: Administrateur
 // -----------------------------------
 
-
-
 // Definitions communes a : Coordonateur, routeur, end device
 
 #ifndef _PBPJ1_MO_M_CONFIG_H_
 #define _PBPJ1_MO_M_CONFIG_H_
 
 #if defined __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 /****************************************************************************/
 /***        Include Files                                                 ***/
@@ -29,7 +28,6 @@ extern "C" {
 #if NO_DEBUG_ON
 #define vPrintf(...)
 #endif
-
 
 // Config du reseau
 #define PBAR_CHANNEL			0
@@ -68,31 +66,24 @@ extern "C" {
 #define	PBAR_ATR_BTNPGM						30 // Anti rebond btn pgm
 #define BUTTON_P_MASK (BUTTON_3_MASK << 1)  /* Mask for program button {v3} */
 
-
 /****************************************************************************/
 /***        Type Definitions                                              ***/
 /****************************************************************************/
 
 #if !NO_DEBUG_ON
-typedef enum
-{
-  E_FN_IN,
-  E_FN_OUT,
-  E_FN_END
-}teDbgTrace;
+typedef enum {
+  E_FN_IN, E_FN_OUT, E_FN_END
+} teDbgTrace;
 
-typedef enum
-{
-  E_DBG_TYPE_NET_STATE,
-  E_DBG_TYPE_TYPE_MSG,
-  E_DBG_TYPE_END
-}teDbgModulEnum;
+typedef enum {
+  E_DBG_TYPE_NET_STATE, E_DBG_TYPE_TYPE_MSG, E_DBG_TYPE_END
+} teDbgModulEnum;
 
-extern PUBLIC int PBAR_DbgTrace(teDbgTrace eSens, char *fn, void * val_enum, teDbgModulEnum enumType);
+extern PUBLIC int PBAR_DbgTrace(teDbgTrace eSens, char *fn, void * val_enum,
+    teDbgModulEnum enumType);
 #endif
 
-typedef enum
-{
+typedef enum {
   APP_INITIALISATION,
   APP_RECHERCHE_RESEAU,
   APP_RESEAU_ETABLI,
@@ -105,15 +96,18 @@ typedef enum
 extern PUBLIC char const *dbg_teNetState[];
 extern PUBLIC char const *dbg_teEventType[];
 
-typedef enum{
+typedef enum {
+  E_MSG_NOT_SET,
   E_MSG_DATA_ALL,
   E_MSG_DATA_SELECT,
   E_MSG_ASK_ID_BOX,
   E_MSG_RSP_ID_BOX,
   E_MSG_CFG_LIENS,
   E_MSG_CFG_BOX_END,
+  E_MSG_NET_LED_OFF,
+  E_MSG_NET_LED_ON,
   E_MSG_DEFINITION_END
-}PBAR_TypeMsg;
+} PBAR_TypeMsg;
 extern PUBLIC char const *dbg_PBAR_TypeMsg[];
 
 /****************************************************************************/

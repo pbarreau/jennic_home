@@ -12,36 +12,31 @@
 
 #include "m_config.h"
 
-
-PUBLIC void bp_CommunMsgReseau(teNetState *eState,
-    teEventType eEventType, void *pvEventPrim)
+PUBLIC void bp_CommunMsgReseau(teNetState *eState, teEventType eEventType,
+    void *pvEventPrim)
 {
 #if !NO_DEBUG_ON
-  tsNwkStartUp *pNet = (tsNwkStartUp*)pvEventPrim;
+  tsNwkStartUp *pNet = (tsNwkStartUp*) pvEventPrim;
   tsData *psData = (tsData *) pvEventPrim;
 #endif
 
-  switch(eEventType)
+  switch (eEventType)
   {
     case E_JENIE_REG_SVC_RSP:
-      break;
+    break;
 
     case E_JENIE_NETWORK_UP:
     {
       /* Indicates stack is up and running */
       vPrintf("\nReseau Ok\n");
-      if(*eState == APP_RECHERCHE_RESEAU)
+      if (*eState == APP_RECHERCHE_RESEAU)
       {
         vPrintf(" Canal:%d, Id:%x\n", pNet->u8Channel, pNet->u16PanID);
-        vPrintf(" Pere:[%x:%x]\n",
-            (uint32) (pNet->u64ParentAddress >> 32),
-            (uint32) (pNet->u64ParentAddress & 0xFFFFFFFF)
-        );
+        vPrintf(" Pere:[%x:%x]\n", (uint32) (pNet->u64ParentAddress >> 32),
+            (uint32) (pNet->u64ParentAddress & 0xFFFFFFFF));
         vPrintf(" Ici:[%x:%x], Niveau:%d\n\n",
             (uint32) (pNet->u64LocalAddress >> 32),
-            (uint32) (pNet->u64LocalAddress & 0xFFFFFFFF),
-            pNet->u16Depth
-        );
+            (uint32) (pNet->u64LocalAddress & 0xFFFFFFFF), pNet->u16Depth);
         //*eState = APP_RESEAU_ETABLI;
       }
     }
@@ -50,28 +45,25 @@ PUBLIC void bp_CommunMsgReseau(teNetState *eState,
     case E_JENIE_DATA:
     {
       vPrintf("\nMsg de[%x:%x] sur %d octets\n",
-          (uint32)(psData->u64SrcAddress >> 32),
-          (uint32)(psData->u64SrcAddress &  0xFFFFFFFF),
-          psData->u16Length
-      );
+          (uint32) (psData->u64SrcAddress >> 32),
+          (uint32) (psData->u64SrcAddress & 0xFFFFFFFF), psData->u16Length);
     }
     break;
 
-
     case E_JENIE_STACK_RESET:
-      vPrintf("Reset pile jeni\n");
-      break;
+      vPrintf("Reset de ma pile jenic\n");
+    break;
 
     case E_JENIE_PACKET_SENT:
       vPrintf("Packet emis\n");
-      break;
+    break;
 
     case E_JENIE_POLL_CMPLT:
-      break;
+    break;
 
     default:
     {
-      vPrintf("ERR:bp_CommunMsgReseau ->%s\n",dbg_teEventType[eEventType]);
+      vPrintf("ERR:bp_CommunMsgReseau ->%s\n", dbg_teEventType[eEventType]);
     }
     break;
   }

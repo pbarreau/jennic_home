@@ -17,29 +17,27 @@
 						(ON) ? (1<<LED) 	: 0\
 		)
 
-typedef enum
-{
-	E_FLASH_BP_TEST_SORTIES = 0x00,
-	E_FLASH_OFF=0x00,
-	E_FLASH_RECHERCHE_RESEAU = 0x01,
-	E_FLASH_RECHERCHE_BC = 0x01,
-	E_FLASH_ERREUR_DECTECTEE = 0x03,
-	E_FLASH_RESET_POSSIBLE = 0x05,
-	E_FLASH_EN_ATTENTE_TOUCHE_BC = 0x07,
-	E_FLASH_LIAISON_BP_BC_ON = 0x07,
-	E_FLASH_ERASE_RESET_POSSIBLE=0x09,
-	E_FLASH_RESEAU_ACTIF = 0x10,
-	E_FLASH_BP_EN_CONFIGURATION_SORTIES=0x20,
-	E_FLASH_ALWAYS=0xFF,
-	E_FLASH_FIN = 0xFF
+typedef enum {
+  E_FLASH_BP_TEST_SORTIES = 0x00,
+  E_FLASH_OFF = 0x00,
+  E_FLASH_RECHERCHE_RESEAU = 0x01,
+  E_FLASH_RECHERCHE_BC = 0x01,
+  E_FLASH_ERREUR_DECTECTEE = 0x03,
+  E_FLASH_RESET_POSSIBLE = 0x05,
+  E_FLASH_EN_ATTENTE_TOUCHE_BC = 0x07,
+  E_FLASH_LIAISON_BP_BC_ON = 0x07,
+  E_FLASH_ERASE_RESET_POSSIBLE = 0x09,
+  E_FLASH_RESEAU_ACTIF = 0x10,
+  E_FLASH_BP_EN_CONFIGURATION_SORTIES = 0x20,
+  E_FLASH_ALWAYS = 0xFF,
+  E_FLASH_FIN = 0xFF
 } eLedInfo;
 
-typedef struct
-{
-	bool_t		actif;	/// Flag indiquant s'il faut utiliser la led
-	eLedInfo	mode;	/// Type de Flash, Fixe, Eteinte, ..
-	uint8		pio;	/// Pio ou est branché la led
-}sLed;
+typedef struct {
+  bool_t actif;	/// Flag indiquant s'il faut utiliser la led
+  eLedInfo mode;	/// Type de Flash, Fixe, Eteinte, ..
+  uint8 pio;	/// Pio ou est branché la led
+} sLed;
 
 extern PUBLIC void IHM_ClignoteLed(void);
 

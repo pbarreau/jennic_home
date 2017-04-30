@@ -22,72 +22,68 @@
 //#include "services.h"
 #include "e_config.h"
 
-
 //PRIVATE void CLAV_GererMultiple();
 //---------------------------------------------------
 
-
 PUBLIC bool_t b_activer_bip = FALSE;
-
-
 
 //---------------------------
 PUBLIC void CLAV_AnalyserEtat(teClavState mef_clavier)
 {
-  uint16 max_time =0;
+  uint16 max_time = 0;
   static bool_t oneshot = FALSE;
 
 #ifdef WATCHDOG_ENABLED
   vAHI_WatchdogRestart();
 #endif
 
-  switch(mef_clavier)
+  switch (mef_clavier)
   {
     case E_CLAV_ETAT_EN_INITIALISATION:
       vPrintf("Passage clavier en attente touche\n");
       AppData.eClavState = E_CLAV_ETAT_EN_ATTENTE;
       AppData.eClavmod = E_CLAV_MODE_DEFAULT;
       AppData.usage = E_CLAV_USAGE_NORMAL;
-      break;
+    break;
 
     case E_CLAV_ETAT_EN_ATTENTE:
-      break;
+    break;
 
     case E_CLAV_SERVICE_ON:
-      break;
+    break;
 
     case E_CLAV_SERVICE_OFF:
-      break;
+    break;
 
     case E_CLAV_ULTRA_MODE:
-      break;
+    break;
 
     case E_CLAV_ATTENDRE_BOITE:
       au8Led_clav[C_CLAV_LED_INFO_1].mode = E_FLASH_RECHERCHE_RESEAU;
-      break;
+    break;
 
     case E_CLAV_EN_PROGR_AVEC_BOITE:
-      break;
+    break;
 
     case E_CLAV_ATTENDRE_FIN_CONFIG_BOITE:
-      break;
+    break;
 
     case E_CLAV_ETAT_TRAITER_IT:
-      if(AppData.eKeyPressed == E_KEY_DIESE||AppData.eKeyPressed == E_KEY_ETOILE)
+      if (AppData.eKeyPressed == E_KEY_DIESE
+          || AppData.eKeyPressed == E_KEY_ETOILE)
       {
         max_time = C_TIME_ULTRA;
-
       }
       else
       {
-        max_time = 	C_MAX_DURE_PRESSION;
+        max_time = C_MAX_DURE_PRESSION;
       }
       // Verif que l'appuie sur le clavier est franc
-      if(timer_appuie_touche >= max_time)
+      if (timer_appuie_touche >= max_time)
       {
         CLAV_ResetLecture();
       }
-      break;
+    break;
 
     case E_CLAV_ETAT_ANALYSER_TOUCHE:
     {
@@ -98,11 +94,12 @@ PUBLIC void CLAV_AnalyserEtat(teClavState mef_clavier)
     break;
 
     default:
-      if (oneshot == FALSE){
+      if (oneshot == FALSE)
+      {
         oneshot = TRUE;
         vPrintf("Etat clavier non prevu :%s\n", dbg_teClavState[mef_clavier]);
       }
-      break;
+    break;
   }
 }
 
@@ -113,44 +110,45 @@ PUBLIC void CLAV_GererMode(etCLAV_keys mode)
 #if !NO_DEBUG_ON
   int stepper = 0;
 
-  stepper = PBAR_DbgTrace(E_FN_IN,"CLAV_GererMode",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
-  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
+  stepper = PBAR_DbgTrace(E_FN_IN, "CLAV_GererMode",
+      (void *) (AppData.eAppState), E_DBG_TYPE_NET_STATE);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
 #endif
 
-  switch(mode)
+  switch (mode)
   {
     case E_KEY_MOD_1:
       au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_OFF;
       au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_OFF;
       modif_mode = E_CLAV_MODE_DEFAULT;
-      break;
+    break;
 
     case E_KEY_MOD_2:
       au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_ERREUR_DECTECTEE;
       au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_OFF;
       modif_mode = E_CLAV_MODE_2;
-      break;
+    break;
 
     case E_KEY_MOD_3:
       au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_OFF;
       au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_ERREUR_DECTECTEE;
       modif_mode = E_CLAV_MODE_3;
-      break;
+    break;
 
     case E_KEY_MOD_4:
       au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_ALWAYS;
       au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_ALWAYS;
       modif_mode = E_CLAV_MODE_4;
-      break;
+    break;
 
     default:
       au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_ERREUR_DECTECTEE;
       au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_ERREUR_DECTECTEE;
       modif_mode = E_CLAV_MODE_NOT_SET;
-      break;
+    break;
   }
 
-  if(modif_mode != E_CLAV_MODE_DEFAULT)
+  if (modif_mode != E_CLAV_MODE_DEFAULT)
   {
     compter_duree_mode = 0;
     start_timer_of_mode = TRUE;
@@ -158,51 +156,62 @@ PUBLIC void CLAV_GererMode(etCLAV_keys mode)
 
   AppData.eClavmod = modif_mode;
 #if !NO_DEBUG_ON
-  PBAR_DbgInside(stepper, gch_spaces, E_FN_OUT,AppData);
-  PBAR_DbgTrace(E_FN_OUT,"CLAV_GererMode",(void *)AppData.eAppState,E_DBG_TYPE_NET_STATE);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_OUT, AppData);
+  PBAR_DbgTrace(E_FN_OUT, "CLAV_GererMode", (void *) AppData.eAppState,
+      E_DBG_TYPE_NET_STATE);
 #endif
 }
 
-
-PUBLIC bool_t CLAV_TrouverAssociationToucheBoite(stToucheDef *touche, uint8 BoxId, uint8 *position)
+PUBLIC bool_t CLAV_TrouverAssociationToucheBoite(stToucheDef *touche,
+    uint8 BoxId, uint8 *position)
 {
   bool_t eReturn = FALSE;
-  uint8 key_code = ((touche->la_touche==E_KEY_ETOILE)?C_KEY_MEM_ALL:touche->la_touche - E_KEY_NUM_1);;
+  uint8 key_code = (
+      (touche->la_touche == E_KEY_ETOILE) ?
+          C_KEY_MEM_ALL : touche->la_touche - E_KEY_NUM_1);
+  ;
   uint8 key_mode = touche->le_mode - E_CLAV_MODE_DEFAULT;
-  uint8 nbBox = eeprom.netConf.ptr_boxList[key_mode][key_code];;
-  uint8 i =0;
+  uint8 nbBox = eeprom.netConf.ptr_boxList[key_mode][key_code];
+  ;
+  uint8 i = 0;
   uint8 useBox = 0;
 
 #if !NO_DEBUG_ON
   int stepper = 0;
 
-  stepper = PBAR_DbgTrace(E_FN_IN,"CLAV_TrouverAssociationToucheBoite",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
-  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
+  stepper = PBAR_DbgTrace(E_FN_IN, "CLAV_TrouverAssociationToucheBoite",
+      (void *) (AppData.eAppState), E_DBG_TYPE_NET_STATE);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
 #endif
-  vPrintf("%sNb boite associee à la touche %s -> %d\n",gch_spaces,dbg_etCLAV_keys[touche->la_touche],nbBox);
+  vPrintf("%sNb boite associee à la touche %s -> %d\n", gch_spaces,
+      dbg_etCLAV_keys[touche->la_touche], nbBox);
 
-  vPrintf("%sRecherche dans la liste chainee des boites associee à la touche\n",gch_spaces);
-  for(i=0;(i<=nbBox)&& (i<C_MAX_BOXES);i++)
+  vPrintf("%sRecherche dans la liste chainee des boites associee à la touche\n",
+      gch_spaces);
+  for (i = 0; (i <= nbBox) && (i < C_MAX_BOXES); i++)
   {
     useBox = eeprom.netConf.boxList[key_mode][key_code][i];
-    vPrintf("%sPtr_box:%d, boxid : %d\n",gch_spaces,i,useBox);
+    vPrintf("%sPtr_box:%d, boxid : %d\n", gch_spaces, i, useBox);
 
-    if(useBox == 0x00){
+    if (useBox == 0x00)
+    {
       // On a parcouru toute la liste
       // sans trouver de correspondance
-      vPrintf("%s Sauvegarde necessaire a position %d !\n",gch_spaces,i);
+      vPrintf("%s Sauvegarde necessaire a position %d !\n", gch_spaces, i);
       eReturn = FALSE;
       break;
     }
     else
     {
-      if(useBox == BoxId){
-        vPrintf("%sTrouve a position:%d !\n",gch_spaces, i);
+      if (useBox == BoxId)
+      {
+        vPrintf("%sTrouve a position:%d !\n", gch_spaces, i);
         eReturn = TRUE;
         break;
       }
-      else{
-        vPrintf("%s On regarde avec la suivante\n",gch_spaces);
+      else
+      {
+        vPrintf("%s On regarde avec la suivante\n", gch_spaces);
         continue;
       }
     }
@@ -212,8 +221,9 @@ PUBLIC bool_t CLAV_TrouverAssociationToucheBoite(stToucheDef *touche, uint8 BoxI
   // On memorise la position trouvee
   *position = i;
 #if !NO_DEBUG_ON
-  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
-  PBAR_DbgTrace(E_FN_OUT,"CLAV_TrouverAssociationToucheBoite",(void *)(AppData.eAppState),E_DBG_TYPE_NET_STATE);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
+  PBAR_DbgTrace(E_FN_OUT, "CLAV_TrouverAssociationToucheBoite",
+      (void *) (AppData.eAppState), E_DBG_TYPE_NET_STATE);
 #endif
   return eReturn;
 }
