@@ -9,7 +9,6 @@
 #define LED_H_
 
 #define	CST_NB_IHM_LED	2
-
 #define	CST_LED_PERIOD	8
 
 // Gestion des Leds
