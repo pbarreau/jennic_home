@@ -131,9 +131,11 @@ PUBLIC void vUtils_Debug(char *pcMessage)
 {
   vUtils_String(pcMessage);
   vAHI_UartWriteData(UTILS_UART, '\r');
-  while ((u8AHI_UartReadLineStatus(UTILS_UART) & 0x20) == 0);
+  while ((u8AHI_UartReadLineStatus(UTILS_UART) & 0x20) == 0)
+    ;
   vAHI_UartWriteData(UTILS_UART, '\n');
-  while ((u8AHI_UartReadLineStatus(UTILS_UART) & 0x20) == 0);
+  while ((u8AHI_UartReadLineStatus(UTILS_UART) & 0x20) == 0)
+    ;
 }
 /****************************************************************************
  *
@@ -153,7 +155,8 @@ PUBLIC void vUtils_String(char *pcMessage)
 {
   while (*pcMessage)
   {
-    while ((u8AHI_UartReadLineStatus(UTILS_UART) & 0x20) == 0);
+    while ((u8AHI_UartReadLineStatus(UTILS_UART) & 0x20) == 0)
+      ;
     vAHI_UartWriteData(UTILS_UART, *pcMessage);
     pcMessage++;
   }
@@ -219,7 +222,7 @@ PUBLIC void vUtils_ValToHex(char *pcString, uint32 u32Data, int iSize)
   j = 0;
   for (i = (iSize << 2) - 4; i >= 0; i -= 4)
   {
-    u8Nybble = (uint8)((u32Data >> i) & 0x0f);
+    u8Nybble = (uint8) ((u32Data >> i) & 0x0f);
     u8Nybble += 0x30;
     if (u8Nybble > 0x39)
       u8Nybble += 7;
@@ -245,7 +248,7 @@ PUBLIC void vUtils_ValToHex(char *pcString, uint32 u32Data, int iSize)
  ****************************************************************************/
 PUBLIC void vUtils_ValToDec(char *pcOutString, uint8 u8Value)
 {
-  static const uint8 au8Digits[3] = {100, 10, 1};
+  static const uint8 au8Digits[3] = { 100, 10, 1 };
   uint8 u8Digit;
   uint8 u8DigitIndex;
   uint8 u8Count;
@@ -272,35 +275,39 @@ PUBLIC void vUtils_ValToDec(char *pcOutString, uint8 u8Value)
 PUBLIC void vUtils_DisplayBytes(uint8 *pcOutString, uint8 u8Num)
 {
   uint8 chr;
-  while(u8Num--)
+  while (u8Num--)
   {
-    chr=(*pcOutString >> 4)+0x30;
-    if(chr > 0x39)
+    chr = (*pcOutString >> 4) + 0x30;
+    if (chr > 0x39)
     {
-      chr+=0x07;
+      chr += 0x07;
     }
-    vAHI_UartWriteData(UTILS_UART,chr);
-    while ((u8AHI_UartReadLineStatus(UTILS_UART) & 0x20) == 0);
-    chr=(*pcOutString & 0x0f)+0x30;
-    if(chr > 0x39)
+    vAHI_UartWriteData(UTILS_UART, chr);
+    while ((u8AHI_UartReadLineStatus(UTILS_UART) & 0x20) == 0)
+      ;
+    chr = (*pcOutString & 0x0f) + 0x30;
+    if (chr > 0x39)
     {
-      chr+=0x07;
+      chr += 0x07;
     }
-    vAHI_UartWriteData(UTILS_UART,chr);
-    while ((u8AHI_UartReadLineStatus(UTILS_UART) & 0x20) == 0);
-    vAHI_UartWriteData(UTILS_UART,' ');
-    while ((u8AHI_UartReadLineStatus(UTILS_UART) & 0x20) == 0);
+    vAHI_UartWriteData(UTILS_UART, chr);
+    while ((u8AHI_UartReadLineStatus(UTILS_UART) & 0x20) == 0)
+      ;
+    vAHI_UartWriteData(UTILS_UART, ' ');
+    while ((u8AHI_UartReadLineStatus(UTILS_UART) & 0x20) == 0)
+      ;
     pcOutString++;
   }
   vAHI_UartWriteData(UTILS_UART, '\r');
-  while ((u8AHI_UartReadLineStatus(UTILS_UART) & 0x20) == 0);
+  while ((u8AHI_UartReadLineStatus(UTILS_UART) & 0x20) == 0)
+    ;
   vAHI_UartWriteData(UTILS_UART, '\n');
-  while ((u8AHI_UartReadLineStatus(UTILS_UART) & 0x20) == 0);
+  while ((u8AHI_UartReadLineStatus(UTILS_UART) & 0x20) == 0)
+    ;
 }
 /****************************************************************************/
 /***        Local Functions                                               ***/
 /****************************************************************************/
-
 
 /****************************************************************************/
 /***        END OF FILE                                                   ***/
