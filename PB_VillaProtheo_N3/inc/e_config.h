@@ -34,13 +34,14 @@ extern "C" {
 #define C_TEMPS_ANTI_REBOND	2		//10*ms
 
 #define C_MIN_DURE_PRESSION	4
-#define C_MAX_DURE_PRESSION	100
-#define C_TIME_ULTRA		300
+#define C_MAX_DURE_PRESSION	200
+#define C_TIME_ULTRA		200
 
 #define C_PRESSION_T1		30	/// valeur de temps limite pour une pression courte
 #define C_PRESSION_T2		50	/// valeur de temps limite pour une pression courte
-#define C_PRESSION_T3		100	/// valeur de temps limite pour une pression courte
-#define C_PRESSION_T4		200	/// valeur de temps limite pour une pression courte
+#define C_PRESSION_T3		70	/// valeur de temps limite pour une pression courte
+#define C_PRESSION_T4		100	/// valeur de temps limite pour une pression courte
+#define C_PRESSION_T5		150	/// valeur de temps limite pour une pression courte
 
 #define	PBAR_CFG_NUMPAD_IN	(\
 		E_AHI_DIO12_INT |\
@@ -54,7 +55,7 @@ extern "C" {
 		E_JPI_DIO10_INT|\
 		E_JPI_DIO11_INT)
 
-#define	C_TEMPS_BIT			5
+#define	C_TEMPS_BIP			5
 #define	C_CLAV_BUZER		E_AHI_DIO16_INT
 
 

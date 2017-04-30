@@ -41,7 +41,6 @@ typedef struct
 	uint8		pio;	/// Pio ou est branché la led
 }sLed;
 
-
 extern PUBLIC void IHM_ClignoteLed(void);
 
 #endif /* LED_H_ */

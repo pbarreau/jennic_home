@@ -10,6 +10,7 @@
 #include "led.h"
 
 #define	C_CLAV_NB_IHM_LED	3
+#define	CST_LED_PERIOD		8
 
 #define	C_CLAV_LED_INFO_1	0
 #define	C_CLAV_LED_INFO_2	1
@@ -28,7 +29,6 @@
 		C_CLAV_MSK_INFO_2 |\
 		C_CLAV_MSK_INFO_3)
 
-#define	C_CLAV_LED_PERIOD	5
 
 extern PUBLIC sLed au8Led_clav[C_CLAV_NB_IHM_LED];
 

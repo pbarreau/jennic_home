@@ -47,7 +47,7 @@ PUBLIC  void IHM_ClignoteLed(void)
   }
 
   periode ++;
-  periode%=C_CLAV_LED_PERIOD;
+  periode%=CST_LED_PERIOD;
 }
 
 

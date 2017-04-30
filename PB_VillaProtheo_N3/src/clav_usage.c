@@ -109,6 +109,7 @@ PUBLIC teClavState CLAV_BoutonDeConfiguration(bool_t * bip_on)
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
 #endif
 
+  // Activation ou pas du Bip Clavier ?
   if(timer_touche[AppData.ukey] <= C_PRESSION_T1)
   {
     if( (*bip_on) == FALSE){
@@ -121,13 +122,22 @@ PUBLIC teClavState CLAV_BoutonDeConfiguration(bool_t * bip_on)
     (*bip_on) = !(*bip_on);
     mef_clav = E_CLAV_ETAT_EN_ATTENTE;
   }
-  else
-    if(bUltraCareMode == FALSE)
+  else if(timer_touche[AppData.ukey] <= C_PRESSION_T2)
+  {
+	  vPrintf("Broadcast Net Off\n");
+  }
+  else if(timer_touche[AppData.ukey] <= C_PRESSION_T3)
+  {
+	  vPrintf("Broadcast Net On\n");
+  }
+  else  if(bUltraCareMode == FALSE)
     {
+    	// Programmation de niveau 1
       mef_clav = clav_BtnPgmL1(mef_clav,&bUltraCareMode);
     }
     else
     {
+    	// Programmation niveau 2
       mef_clav = clav_BtnPgmL2(mef_clav,&bUltraCareMode);
     }
 
@@ -182,7 +192,7 @@ PRIVATE teClavState  clav_BtnPgmL1(teClavState mef_clav, uint8 *care)
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
 #endif
 
-  if(timer_touche[AppData.ukey] <= C_PRESSION_T3)
+  if(timer_touche[AppData.ukey] <= C_PRESSION_T4)
   {
     // On se met en mode defaut que ce soit en usr ou en pgm
     CLAV_GererMode(E_KEY_MOD_1);
@@ -214,8 +224,8 @@ PRIVATE teClavState  clav_BtnPgmL1(teClavState mef_clav, uint8 *care)
 
     *care = TRUE;
     au8Led_clav[C_CLAV_LED_INFO_1].mode = E_FLASH_RESET_POSSIBLE;
-    au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_RESET_POSSIBLE;
-    au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_RESET_POSSIBLE;
+    au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_OFF;
+    au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_OFF;
   }
 
 #if !NO_DEBUG_ON
@@ -235,7 +245,7 @@ PRIVATE teClavState  clav_BtnPgmL2(teClavState mef_clav, uint8 *care)
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN,AppData);
 #endif
 
-  if(timer_touche[AppData.ukey] <= C_PRESSION_T3)
+  if(timer_touche[AppData.ukey] <= C_PRESSION_T5)
   {
     vPrintf("%sUltra mode Off\n",gch_spaces);
     *care = FALSE;

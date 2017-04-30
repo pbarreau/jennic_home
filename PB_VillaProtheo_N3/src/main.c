@@ -310,7 +310,7 @@ PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId,uint32 u32ItemBitmap)
       if(b_activer_bip == TRUE)
       {
         temps_bip++;
-        if(temps_bip >= C_TEMPS_BIT){
+        if(temps_bip >= C_TEMPS_BIP){
           b_activer_bip = FALSE;
           vAHI_DioSetOutput(0,C_CLAV_BUZER);
         }

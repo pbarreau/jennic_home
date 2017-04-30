@@ -278,7 +278,7 @@ PRIVATE teClavState pgm_GererBoiteEntrante(tsData *psData)
     }
     vPrintf("%s   Selectionner un mode et une touche\n\n",gch_spaces);
 
-    au8Led_clav[C_CLAV_LED_INFO_1].mode=E_FLASH_BP_EN_CONFIGURATION_SORTIES;
+    au8Led_clav[C_CLAV_LED_INFO_1].mode=0x7;
 
     mef_clav = E_CLAV_EN_PROGR_AVEC_BOITE;
     AppData.u8BoxId = box_number;
