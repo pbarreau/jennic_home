@@ -9,7 +9,4 @@
 #define PB_VILLAPROTHEO_N1_INC_CARTE_H_
 // Reference de la boite
 
-
-
-
 #endif /* PB_VILLAPROTHEO_N1_INC_CARTE_H_ */

@@ -21,7 +21,6 @@
 		E_JPI_DIO19_INT |\
 		E_JPI_DIO20_INT)
 
-
 #define	C_LID_1		0
 #define C_LPIO_1	E_JPI_DIO9_INT	// Reseau
 #define C_LPID_1	9
@@ -41,9 +40,9 @@ extern PUBLIC uint16 TimePgmPressed;
 extern PUBLIC bool_t cbStartTempoRechercheClavier;
 extern PUBLIC bool_t cbUnClavierActif;
 extern PUBLIC uint64 LaBasId;
-extern PUBLIC uint8 	bufEmission[3];
-extern PUBLIC PBAR_KIT_8046		LabasKbd;
-extern PUBLIC PBAR_E_KeyMode	LabasMod;
+extern PUBLIC uint8 bufEmission[3];
+extern PUBLIC PBAR_KIT_8046 LabasKbd;
+extern PUBLIC PBAR_E_KeyMode LabasMod;
 extern PUBLIC uint8 ledId;
 extern PUBLIC uint8 config;
 extern PUBLIC ebpLedInfo mNetOkTypeFlash;

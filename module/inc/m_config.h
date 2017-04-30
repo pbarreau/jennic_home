@@ -5,15 +5,14 @@
 //	Par		: Administrateur
 // -----------------------------------
 
-
-
 // Definitions communes a : Coordonateur, routeur, end device
 
 #ifndef _PBPJ1_MO_M_CONFIG_H_
 #define _PBPJ1_MO_M_CONFIG_H_
 
 #if defined __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 /****************************************************************************/
 /***        Include Files                                                 ***/
@@ -74,12 +73,10 @@ extern "C" {
 #define PBAR_DEBUT_LED_CO       19
 #define PBAR_DEBUT_LED_ED       10
 
-
 #define vLedControl(LED,ON) \
     vAHI_DioSetOutput((ON) ? 0 : (1 << (PBAR_DEBUT_LED_CO + LED)), \
         (ON) ? (1 << (PBAR_DEBUT_LED_CO + LED)) : 0)
 #endif
-
 
 #define C_CLEF_VIDE             0x00
 #define C_MAX_BOXES             20
@@ -99,40 +96,37 @@ extern "C" {
             (ON) ? (1<<LED) : 0\
     )
 
-vAHI_DioSetOutput( \
-    (ON) ? (C_BAR_LED_1) : 0, \
-        (ON) ? 0             : (C_BAR_LED_1)\
+vAHI_DioSetOutput(
+    (ON) ? (C_BAR_LED_1) : 0,
+    (ON) ? 0 : (C_BAR_LED_1)\
 )
 #endif
 
-
 #define PBAR_DEBUT_IO	        0
 
-
-typedef enum
-{
+typedef enum {
   E_FLASH_BP_TEST_SORTIES = 0x00,
+  E_FLASH_OFF = 0x00,
   E_FLASH_RECHERCHE_RESEAU = 0x01,
   E_FLASH_RECHERCHE_BC = 0x01,
   E_FLASH_ERREUR_DECTECTEE = 0x03,
   E_FLASH_RESET_POSSIBLE = 0x05,
   E_FLASH_EN_ATTENTE_TOUCHE_BC = 0x07,
   E_FLASH_LIAISON_BP_BC_ON = 0x07,
-  E_FLASH_ERASE_RESET_POSSIBLE=0x09,
+  E_FLASH_ERASE_RESET_POSSIBLE = 0x09,
   E_FLASH_RESEAU_ACTIF = 0x10,
-  E_FLASH_BP_EN_CONFIGURATION_SORTIES=0x20,
+  E_FLASH_BP_EN_CONFIGURATION_SORTIES = 0x20,
+  E_FLASH_ALWAYS = 0xFF,
   E_FLASH_FIN = 0xFF
 } ebpLedInfo;
 
-typedef struct
-{
-    uint8      pio;
-    ebpLedInfo mode;
-    bool_t     actif;
-}sbpLed;
+typedef struct {
+  uint8 pio;
+  ebpLedInfo mode;
+  bool_t actif;
+} sbpLed;
 
-typedef enum
-{
+typedef enum {
   APP_STATE_WAITING_FOR_NETWORK,
   APP_STATE_NETWORK_UP,
   APP_STATE_REGISTERING_SERVICE,
@@ -141,7 +135,6 @@ typedef enum
   APP_STATE_REQUEST_SERVICES,
   APP_STATE_WAITING_FOR_REQUEST_SERVICE,
   APP_STATE_SERVICE_REQUEST_RETURNED,
-
 
   // Clavier
   APP_STATE_CONF_NEEDED,
@@ -174,61 +167,66 @@ typedef enum
   APP_STATE_RUNNING
 } teAppState;
 
-typedef struct
-{
-    teAppState eAppState;
-    uint8		 u8BoxId;
-    uint64     u64ServiceAddress;
+typedef struct {
+  teAppState eAppState;
+  uint8 u8BoxId;
+  uint64 u64ServiceAddress;
 } tsAppData;
 
+typedef enum {
+  E_CLAV_EN_NON_DEFINI, E_CLAV_EN_USAGE, E_CLAV_EN_CONFIG
+} bpeClav;
 
-typedef enum{
-  E_CLAV_EN_NON_DEFINI,
-  E_CLAV_EN_USAGE,
-  E_CLAV_EN_CONFIG
-}bpeClav;
-
-typedef enum
-{
+typedef enum {
   E_CLAV_MODE_NOT_SET,
   E_CLAV_MODE_DEFAULT,
   E_CLAV_MODE_1,
   E_CLAV_MODE_2,
   E_CLAV_MODE_3,
   E_CLAV_MODE_END
-}PBAR_E_KeyMode;
+} PBAR_E_KeyMode;
 
-typedef enum{
+typedef enum {
+  E_MSG_NOT_SET,
   E_MSG_DATA_ALL,
   E_MSG_DATA_SELECT,
   E_MSG_ASK_ID_BOX,
   E_MSG_RSP_ID_BOX,
   E_MSG_CFG_LIENS,
-  E_MSG_CFG_BOX_END
-}PBAR_TypeMsg;
+  E_MSG_CFG_BOX_END,
+  E_MSG_NET_LED_OFF,
+  E_MSG_NET_LED_ON,
+  E_MSG_DEFINITION_END
+} PBAR_TypeMsg;
 
-typedef enum{
+typedef enum {
   E_KPD_A,
   E_KPD_B,
   E_KPD_C,
   E_KPD_D,
+  E_KPD_0,
   E_KPD_1,
   E_KPD_2,
   E_KPD_3,
   E_KPD_4,
-  E_KPD_ALL,
+  E_KPD_5,
+  E_KPD_6,
+  E_KPD_7,
+  E_KPD_8,
+  E_KPD_9,
+  E_KPD_ALL, /// touche *
   E_KPD_NONE,
-  E_KPD_MODE,
+  E_KPD_MODE, /// touche #
   E_KPD_END_DEF
-}PBAR_KIT_8046;
+} PBAR_KIT_8046;
 
 /****************************************************************************/
 /***        Exported Functions                                            ***/
 /****************************************************************************/
-extern PUBLIC void PBAR_ClignoterLedNFois(uint32 gpio,uint8 n);
+extern PUBLIC void PBAR_ClignoterLedNFois(uint32 gpio, uint8 n);
 extern PUBLIC void bp_CommunStackMgmtEvent(teAppState *eState,
     teEventType eEventType, void *pvEventPrim);
-extern PUBLIC  void PBAR_ClignoteLed_1(void);
+extern PUBLIC void PBAR_ClignoteLed_1(void);
 
 /****************************************************************************/
 /***        Exported Variables                                            ***/

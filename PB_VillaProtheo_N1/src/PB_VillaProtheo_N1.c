@@ -50,19 +50,17 @@ PUBLIC ebpLedInfo mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
 /* Routing table storage */
 PRIVATE tsJenieRoutingTable asRoutingTable[100];
 
-PRIVATE uint8 	pBuff[2]; // pointeur In & Read du buffer
-PRIVATE uint8 	bufReception[PBAR_RBUF_SIZE]; // Buffer circulaire reception
-PRIVATE uint64	bufAddr[PBAR_RBUF_SIZE];
-PRIVATE uint8 	buf2[3] ={0,0,0};
+PRIVATE uint8 pBuff[2]; // pointeur In & Read du buffer
+PRIVATE uint8 bufReception[PBAR_RBUF_SIZE]; // Buffer circulaire reception
+PRIVATE uint64 bufAddr[PBAR_RBUF_SIZE];
+PRIVATE uint8 buf2[3] = { 0, 0, 0 };
 
 // Pour config Clavier distant
 PRIVATE uint8 prevConf = 0;
 
 PRIVATE uint16 TimeRechercheClavier = 0;
 
-PRIVATE uint8 	etatSorties; // reflet des ios actuel
-
-
+PRIVATE uint8 etatSorties; // reflet des ios actuel
 
 /****************************************************************************/
 PRIVATE uint8 showDipSwitch(void)
@@ -71,14 +69,16 @@ PRIVATE uint8 showDipSwitch(void)
   uint8 uboxid = 0;
 
   // Set IO In
-  vAHI_DioSetDirection(E_JPI_DIO17_INT |\
-      E_JPI_DIO18_INT |\
-      E_JPI_DIO19_INT |\
-      E_JPI_DIO20_INT,0);
+  vAHI_DioSetDirection(
+      E_JPI_DIO17_INT |\
+ E_JPI_DIO18_INT |\
+ E_JPI_DIO19_INT
+          |\
+ E_JPI_DIO20_INT, 0);
 
   val = u32AHI_DioReadInput();
   // Recuperer la valeur de conf de la boite
-  uboxid = (uint8)((val>>17)&0x0F);
+  uboxid = (uint8) ((val >> 17) & 0x0F);
 
 #if !NO_DEBUG_ON
   /* Open UART for printf use {v2} */
@@ -90,9 +90,8 @@ PRIVATE uint8 showDipSwitch(void)
   // Detection type de boite
   vPrintf("!!Box Id set by dip switch : %d\n\n", uboxid);
 
-  return(uboxid);
+  return (uboxid);
 }
-
 
 /****************************************************************************
  *
@@ -112,23 +111,23 @@ PUBLIC void vJenie_CbConfigureNetwork(void)
   uThisBox_Id = showDipSwitch();
 
   /* Change default network config */
-  if(!uThisBox_Id)
+  if (!uThisBox_Id)
   {
-    gJenie_Channel              = 0;
+    gJenie_Channel = 0;
     gJenie_NetworkApplicationID = 0xbadebade;
-    gJenie_PanID                = 0x1111;
+    gJenie_PanID = 0x1111;
   }
   else
   {
-    gJenie_Channel              = PBAR_CHANNEL;
+    gJenie_Channel = PBAR_CHANNEL;
     gJenie_NetworkApplicationID = PBAR_NID;
-    gJenie_PanID                = PBAR_PAN_ID;
+    gJenie_PanID = PBAR_PAN_ID;
   }
 
   /* Configure stack with routing table data */
-  gJenie_RoutingEnabled    = TRUE;
-  gJenie_RoutingTableSize  = PBAR_RTBL_SIZE;
-  gJenie_RoutingTableSpace = (void *)asRoutingTable;
+  gJenie_RoutingEnabled = TRUE;
+  gJenie_RoutingTableSize = PBAR_RTBL_SIZE;
+  gJenie_RoutingTableSpace = (void *) asRoutingTable;
 }
 /****************************************************************************
  *
@@ -164,7 +163,7 @@ PUBLIC void vJenie_CbInit(bool_t bWarmStart)
 
   vPRT_Init_9555(E_BUS_400_KH);
 
-  switch(uThisBox_Id)
+  switch (uThisBox_Id)
   {
     case 0:
     {
@@ -185,7 +184,7 @@ PUBLIC void vJenie_CbInit(bool_t bWarmStart)
     }
     break;
 
-    default :
+    default:
     {
       vPrintf("Mode Installation Routeur\n");
     }
@@ -196,13 +195,13 @@ PUBLIC void vJenie_CbInit(bool_t bWarmStart)
   au8Led[C_LID_1].actif = TRUE;
   au8Led[C_LID_1].pio = C_LPID_1;
 
-
-  if((eStatus=eJenie_Start(eDevType)) != E_JENIE_SUCCESS)
+  if ((eStatus = eJenie_Start(eDevType)) != E_JENIE_SUCCESS)
   {
     au8Led[C_LID_1].mode = E_FLASH_ERREUR_DECTECTEE;
 
     vPrintf("!!Jenie err: %d\n", eStatus);
-    while(1);
+    while (1)
+      ;
   }
   else
   {
@@ -234,15 +233,15 @@ PUBLIC void vJenie_CbMain(void)
   vAHI_WatchdogRestart();
 #endif
 
-  switch(sAppData.eAppState)
+  switch (sAppData.eAppState)
   {
     case APP_STATE_WAITING_FOR_NETWORK:
       /* nothing to do till network is up and running */
       au8Led[0].mode = E_FLASH_RECHERCHE_RESEAU;
-      break;
+    break;
 
     case APP_STATE_NETWORK_UP:
-      if(uThisBox_Id == 0)
+      if (uThisBox_Id == 0)
       {
         au8Led[0].mode = ~E_FLASH_BP_TEST_SORTIES;
         sAppData.eAppState = APP_STATE_TST_START_LUMIERES;
@@ -262,27 +261,27 @@ PUBLIC void vJenie_CbMain(void)
         sAppData.eAppState = APP_STATE_REGISTERING_SERVICE;
 
       }
-      break;
+    break;
 
     case APP_STATE_REGISTERING_SERVICE:
     {
       /* services disponible aux autres */
-      vPrintf(" Enregistrement du service:%x, ",SRV_LUMIR|SRV_VOLET);
-      eStatus = eJenie_RegisterServices(SRV_LUMIR|SRV_VOLET);
+      vPrintf(" Enregistrement du service:%x, ", SRV_LUMIR | SRV_VOLET);
+      eStatus = eJenie_RegisterServices(SRV_LUMIR | SRV_VOLET);
       switch (eStatus)
       {
         case E_JENIE_SUCCESS:
           vPrintf("ok\n");
-          break;
+        break;
         case E_JENIE_ERR_STACK_BUSY:
           vPrintf(" Erreur de Pile\n");
-          break;
+        break;
         case E_JENIE_ERR_UNKNOWN:
           vPrintf(" Erreur critique\n");
-          break;
+        break;
         default:
-          vPrintf(" Erreur inconue:%d\n",eStatus);
-          break;
+          vPrintf(" Erreur inconue:%d\n", eStatus);
+        break;
       }
 
       /* go to the running state */
@@ -292,55 +291,70 @@ PUBLIC void vJenie_CbMain(void)
 
     case APP_STATE_TRAITER_INPUT_MESSAGE:
     {
-      if(pBuff[1] == PBAR_RBUF_SIZE)
-        pBuff[1]=0;
+      if (pBuff[1] == PBAR_RBUF_SIZE)
+        pBuff[1] = 0;
       // 1er octet 0 -> impose
       // 2em octet id bit sur lesquel agir
       // 3em octet config des bits
-      mask = bufReception[pBuff[1]+1];
-      valu = bufReception[pBuff[1]+2];
+      mask = bufReception[pBuff[1] + 1];
+      valu = bufReception[pBuff[1] + 2];
 
-      vPrintf(" Ptr Lecture:%d\n",pBuff[1]);
+      vPrintf(" Ptr Lecture:%d\n", pBuff[1]);
 
-      vPrintf(" Buffer:%x,%x,%x\n",
-          bufReception[pBuff[1]],
-          bufReception[pBuff[1]+1],
-          bufReception[pBuff[1]+2]);
+      vPrintf(" Buffer:%x,%x,%x\n", bufReception[pBuff[1]],
+          bufReception[pBuff[1] + 1], bufReception[pBuff[1] + 2]);
 
-      switch(bufReception[pBuff[1]])
+      switch (bufReception[pBuff[1]])
       {
+        case E_MSG_NET_LED_OFF:
+        {
+          vPrintf("Net ask Led Off\n");
+          mNetOkTypeFlash = ~E_FLASH_FIN;
+          au8Led[0].mode = mNetOkTypeFlash;
+        }
+        break;
+
+        case E_MSG_NET_LED_ON:
+        {
+          mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
+          au8Led[0].mode = mNetOkTypeFlash;
+        }
+        break;
+
         case E_MSG_DATA_ALL:
         {
-          vPrintf(" Data ALL ios actuel:%x\n",etatSorties);
+          vPrintf(" Data ALL ios actuel:%x\n", etatSorties);
 
-          keep = (etatSorties & (~mask))|(mask & valu);
-          vPrintf(" Mask:%x,Value:%x\n",mask,valu);
-          vPrintf(" Nouvelle config ios:%x\n",keep);
+          keep = (etatSorties & (~mask)) | (mask & valu);
+          vPrintf(" Mask:%x,Value:%x\n", mask, valu);
+          vPrintf(" Nouvelle config ios:%x\n", keep);
           etatSorties = keep;
 
           // Configuer les sorties
-          vPRT_DioSetOutput((~etatSorties)<<PBAR_DEBUT_IO,etatSorties<<PBAR_DEBUT_IO);
+          vPRT_DioSetOutput((~etatSorties) << PBAR_DEBUT_IO,
+              etatSorties << PBAR_DEBUT_IO);
         }
         break;
 
         case E_MSG_DATA_SELECT:
         {
-          vPrintf(" Data Spe ios actuel:%x\n",etatSorties);
+          vPrintf(" Data Spe ios actuel:%x\n", etatSorties);
 
           keep = (etatSorties ^ mask);
-          vPrintf(" Mask:%x,Value:%x\n",mask,valu);
-          vPrintf(" Nouvelle config ios:%x\n\n",keep);
+          vPrintf(" Mask:%x,Value:%x\n", mask, valu);
+          vPrintf(" Nouvelle config ios:%x\n\n", keep);
           etatSorties = keep;
 
           // Configuer les sorties
-          vPRT_DioSetOutput((~etatSorties)<<PBAR_DEBUT_IO,etatSorties<<PBAR_DEBUT_IO);
+          vPRT_DioSetOutput((~etatSorties) << PBAR_DEBUT_IO,
+              etatSorties << PBAR_DEBUT_IO);
         }
         break;
 
         case E_MSG_ASK_ID_BOX:
         {
           bufEmission[0] = E_MSG_RSP_ID_BOX;
-          bufEmission[1] = bufReception[pBuff[1]+1];
+          bufEmission[1] = bufReception[pBuff[1] + 1];
           bufEmission[2] = uThisBox_Id;
 
           // etablissement de lien
@@ -348,15 +362,11 @@ PUBLIC void vJenie_CbMain(void)
 
           vPrintf("Rsp a demande Box Id:\n D:[%x:%x], Msg:%x, %x, %x\n",
               (uint32) (bufAddr[pBuff[1]] >> 32),
-              (uint32) (bufAddr[pBuff[1]] & 0xFFFFFFFF),
-              bufEmission[0],
-              bufEmission[1],
-              bufEmission[2]
-          );
+              (uint32) (bufAddr[pBuff[1]] & 0xFFFFFFFF), bufEmission[0],
+              bufEmission[1], bufEmission[2]);
           // renvoyer la reponse
-          eJenie_SendData(bufAddr[pBuff[1]],
-              bufEmission, 3,
-              TXOPTION_SILENT);
+          eJenie_SendData(bufAddr[pBuff[1]], bufEmission, 3,
+          TXOPTION_SILENT);
         }
         break;
 
@@ -366,7 +376,7 @@ PUBLIC void vJenie_CbMain(void)
         }
         break;
       }
-      pBuff[1]+=3;
+      pBuff[1] += 3;
 
       sAppData.eAppState = APP_STATE_RUNNING;
     }
@@ -379,7 +389,7 @@ PUBLIC void vJenie_CbMain(void)
       // Recherche de la boite ayant le service:
       // clavier_conf positionne
       eJenie_RequestServices(SRV_INTER, TRUE);
-      au8Led[0].mode= E_FLASH_RECHERCHE_BC;
+      au8Led[0].mode = E_FLASH_RECHERCHE_BC;
 
       sAppData.eAppState = APP_STATE_ATTENTE_CLAV_RSP;
     }
@@ -387,7 +397,7 @@ PUBLIC void vJenie_CbMain(void)
 
     case APP_STATE_ATTENTE_CLAV_RSP:
     {
-      ;//Rien
+      ;      //Rien
     }
     break;
 
@@ -396,15 +406,14 @@ PUBLIC void vJenie_CbMain(void)
       vPrintf("Attente boitier commande trop longue!!\n");
       vPrintf("Verifier si en mode programmation\n");
       vPrintf("Reour BP en mode normal\n");
-      au8Led[0].mode=mNetOkTypeFlash;
+      au8Led[0].mode = mNetOkTypeFlash;
       sAppData.eAppState = APP_STATE_RUNNING;
     }
     break;
 
-
     case APP_STATE_CLAV_READY:
     {
-      au8Led[0].mode=E_FLASH_LIAISON_BP_BC_ON;
+      au8Led[0].mode = E_FLASH_LIAISON_BP_BC_ON;
       PBAR_LireBtnPgm();
     }
     break;
@@ -412,13 +421,12 @@ PUBLIC void vJenie_CbMain(void)
     case APP_STATE_SET_MY_OUTPUT:
     {
 
-
-      vPrintf(" Config actuelle:%x\n",config);
+      vPrintf(" Config actuelle:%x\n", config);
       // Mettre les sorties au niveau de config
-      vPRT_DioSetOutput(~config<<PBAR_DEBUT_IO,config<<PBAR_DEBUT_IO);
+      vPRT_DioSetOutput(~config << PBAR_DEBUT_IO, config << PBAR_DEBUT_IO);
 
       vPrintf(" En attente de changement programmation\n");
-      au8Led[0].mode= E_FLASH_BP_EN_CONFIGURATION_SORTIES;
+      au8Led[0].mode = E_FLASH_BP_EN_CONFIGURATION_SORTIES;
       ePgmMode = E_CLAV_MODE_1;
       sAppData.eAppState = APP_STATE_ATTENDRE_FIN_CFG_LOCAL;
     }
@@ -436,17 +444,16 @@ PUBLIC void vJenie_CbMain(void)
       vPrintf("Retour de BP en mode usage courant\n");
 
       // On Montre mode user
-      au8Led[0].mode= mNetOkTypeFlash;
+      au8Led[0].mode = mNetOkTypeFlash;
 
       ePgmMode = E_CLAV_MODE_NOT_SET;
 
       bufEmission[0] = E_MSG_CFG_BOX_END;
-      bufEmission[1]= 0;
-      bufEmission[2]= 0;
+      bufEmission[1] = 0;
+      bufEmission[2] = 0;
 
-      eJenie_SendData(LaBasId,
-          bufEmission, 3,
-          TXOPTION_SILENT);
+      eJenie_SendData(LaBasId, bufEmission, 3,
+      TXOPTION_SILENT);
 
       LaBasId = 0;
       sAppData.eAppState = APP_STATE_RUNNING;
@@ -475,12 +482,12 @@ PUBLIC void vJenie_CbMain(void)
     default:
 #if !NO_DEBUG_ON
       vUtils_DisplayMsg("!!Unknown state!!", sAppData.eAppState);
-      while(1);
+      while (1)
+        ;
 #endif
-      break;
+    break;
   }
 }
-
 
 /****************************************************************************
  *
@@ -501,13 +508,11 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
 {
   tsChildJoined *psStackMgmtData = (tsChildJoined *) pvEventPrim;
 
-  switch(eEventType)
+  switch (eEventType)
   {
     case E_JENIE_NETWORK_UP:
     {
-      bp_CommunStackMgmtEvent(&sAppData.eAppState,
-          eEventType,
-          pvEventPrim);
+      bp_CommunStackMgmtEvent(&sAppData.eAppState, eEventType, pvEventPrim);
     }
     break;
 
@@ -520,52 +525,47 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
     case E_JENIE_SVC_REQ_RSP:
       vPrintf(" > Trouve : ");
       {
-        if(sAppData.eAppState == APP_STATE_ATTENTE_CLAV_RSP)
+        if (sAppData.eAppState == APP_STATE_ATTENTE_CLAV_RSP)
         {
           // Stop Timer
           cbStartTempoRechercheClavier = FALSE;
           TimeRechercheClavier = 0;
 
-          vPrintf
-          ("Boitier [%x:%x]\n",
+          vPrintf("Boitier [%x:%x]\n",
               (uint32) (psStackMgmtData->u64SrcAddress >> 32),
-              (uint32) (psStackMgmtData->u64SrcAddress & 0xFFFFFFFF)
-          );
+              (uint32) (psStackMgmtData->u64SrcAddress & 0xFFFFFFFF));
 
           // Memorisation du @ clavier
           LaBasId = psStackMgmtData->u64SrcAddress;
 
           // Indiquer mon numero de boite au clavier
-          vPrintf("    Envoie de mon box id:%d\n\n",uThisBox_Id);
+          vPrintf("    Envoie de mon box id:%d\n\n", uThisBox_Id);
           vPrintf("En attente d'une touche du Boitier de commande\n");
-          bufEmission[0]=uThisBox_Id;
-          eJenie_SendData(LaBasId,
-              bufEmission, 1,TXOPTION_SILENT);
+          bufEmission[0] = uThisBox_Id;
+          eJenie_SendData(LaBasId, bufEmission, 1, TXOPTION_SILENT);
           /// ZZZZZZZZZZZZZZZZZZZ
           /// Avec ack ou sans ack ? TXOPTION_ACKREQ);
           // On montre Led
-          au8Led[0].mode= E_FLASH_RECHERCHE_BC;
+          au8Led[0].mode = E_FLASH_RECHERCHE_BC;
 
           sAppData.eAppState = APP_STATE_CLAV_READY;
 
         }
 
       }
-      break;
-
+    break;
 
     case E_JENIE_PACKET_SENT:
       vPrintf("> Packet sent\n");
-      break;
+    break;
 
     case E_JENIE_PACKET_FAILED:
       vPrintf("Packet failed\n");
-      break;
+    break;
 
     case E_JENIE_CHILD_JOINED:
     {
-      vPrintf
-      ("> Arrivage d'un fils ->[%x:%x]\n",
+      vPrintf("> Arrivage d'un fils ->[%x:%x]\n",
           (uint32) (psStackMgmtData->u64SrcAddress >> 32),
           (uint32) (psStackMgmtData->u64SrcAddress & 0xFFFFFFFF));
     }
@@ -573,24 +573,25 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
 
     case E_JENIE_CHILD_LEAVE:
       vPrintf("Child Leave\n");
-      break;
+    break;
 
     case E_JENIE_CHILD_REJECTED:
       vPrintf("Child Rejected\n");
-      break;
+    break;
 
     case E_JENIE_STACK_RESET:
       vPrintf("Stack Reset\n");
       sAppData.eAppState = APP_STATE_WAITING_FOR_NETWORK;
-      break;
+    break;
 
     default:
       /* Unknown data event type */
 #if !NO_DEBUG_ON
       vUtils_DisplayMsg("!!Unknown Mgmt Event!!", eEventType);
-      while(1);
+      while (1)
+        ;
 #endif
-      break;
+    break;
   }
 }
 
@@ -615,45 +616,45 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
 
   tsData *psData = (tsData *) pvEventPrim;
 
-  switch(eEventType)
+  switch (eEventType)
   {
     case E_JENIE_PACKET_SENT:
       vPrintf("Mesg envoyee\n");
-      break;
+    break;
 
     case E_JENIE_PACKET_FAILED:
       vPrintf("Mesg echoue\n");
-      break;
+    break;
 
     case E_JENIE_DATA:
     {
       /* Get pointer to correct primitive structure */
       /* Output to UART */
       vPrintf("\nMsg du noeud[%x:%x] sur %d octets\n",
-          (uint32)(psData->u64SrcAddress >> 32),
-          (uint32)(psData->u64SrcAddress &  0xFFFFFFFF),
-          psData->u16Length
-      );
+          (uint32) (psData->u64SrcAddress >> 32),
+          (uint32) (psData->u64SrcAddress & 0xFFFFFFFF), psData->u16Length);
 
-      switch(sAppData.eAppState)
+      switch (sAppData.eAppState)
       {
         case APP_STATE_CLAV_READY:
         {
-          if(psData->u16Length == 3){
-            buf2[0]= psData->pau8Data[psData->u16Length-3];
-            buf2[1]= psData->pau8Data[psData->u16Length-2];
-            buf2[2]= psData->pau8Data[psData->u16Length-1];
+          if (psData->u16Length == 3)
+          {
+            buf2[0] = psData->pau8Data[psData->u16Length - 3];
+            buf2[1] = psData->pau8Data[psData->u16Length - 2];
+            buf2[2] = psData->pau8Data[psData->u16Length - 1];
 
-            vPrintf(" Msg: %x,%x,%x\n",buf2[0],buf2[1],buf2[2]);
+            vPrintf(" Msg: %x,%x,%x\n", buf2[0], buf2[1], buf2[2]);
 
-            switch(buf2[0]){
+            switch (buf2[0])
+            {
               case E_MSG_CFG_LIENS:
               {
-                config=buf2[2];
+                config = buf2[2];
                 prevConf = config;
                 LabasKbd = buf2[1] & 0x0F;
-                LabasMod = buf2[1]>>4 & 0xF;
-                vPrintf("  ie: touche '%d', mode '%d'\n",LabasKbd,LabasMod);
+                LabasMod = buf2[1] >> 4 & 0xF;
+                vPrintf("  ie: touche '%d', mode '%d'\n", LabasKbd, LabasMod);
 
                 sAppData.eAppState = APP_STATE_SET_MY_OUTPUT;
               }
@@ -673,23 +674,23 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
         case APP_STATE_RUNNING:
         {
           // Mettre info dans buffer circulaire pour traitement
-          if(pBuff[0] == PBAR_RBUF_SIZE)
-            pBuff[0]=0;
+          if (pBuff[0] == PBAR_RBUF_SIZE)
+            pBuff[0] = 0;
 
           // Addresse emetteur
-          bufAddr[pBuff[0]]=psData->u64SrcAddress;
+          bufAddr[pBuff[0]] = psData->u64SrcAddress;
 
           // Debut format message (sur 3 octets)
           // octet 0
-          bufReception[pBuff[0]]=psData->pau8Data[psData->u16Length-3];
+          bufReception[pBuff[0]] = psData->pau8Data[psData->u16Length - 3];
           pBuff[0]++;
 
           // octel 1
-          bufReception[pBuff[0]]=psData->pau8Data[psData->u16Length-2];
+          bufReception[pBuff[0]] = psData->pau8Data[psData->u16Length - 2];
           pBuff[0]++;
 
           // octel 2
-          bufReception[pBuff[0]]=psData->pau8Data[psData->u16Length-1];
+          bufReception[pBuff[0]] = psData->pau8Data[psData->u16Length - 1];
           pBuff[0]++;
           // Fin format message
 
@@ -711,13 +712,14 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
     case E_JENIE_DATA_TO_SERVICE:
       vPrintf("Data to service event\n");
 
-      vPrintf("S:%d -> d:%d\n",psStackEventData->u8SrcService,psStackEventData->u8DestService);
-      break;
+      vPrintf("S:%d -> d:%d\n", psStackEventData->u8SrcService,
+          psStackEventData->u8DestService);
+    break;
 
     case E_JENIE_DATA_ACK:
     {
       //vPrintf("\n> Data ack");
-      switch(sAppData.eAppState)
+      switch (sAppData.eAppState)
       {
         case APP_STATE_ATTENDRE_FIN_CFG_LOCAL:
         {
@@ -726,16 +728,17 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
 
           // On efface la config visible
           // Mettre les sorties a 0
-			config = 0;
-			// On quitte le mode test: eteindre les lumieres
-			// vPrintf("switch off evrything\n");
-			vPRT_DioSetOutput((~config)<<PBAR_DEBUT_IO,(config)<<PBAR_DEBUT_IO);
+          config = 0;
+          // On quitte le mode test: eteindre les lumieres
+          vPrintf("switch off everything after data ack\n");
+          vPRT_DioSetOutput((~config) << PBAR_DEBUT_IO,
+              (config) << PBAR_DEBUT_IO);
 
-			// on reinitialise les registre interne
-			etatSorties = 0;
+          // on reinitialise les registre interne
+          etatSorties = 0;
 
           // On remet la led en normal
-          au8Led[0].mode= E_FLASH_EN_ATTENTE_TOUCHE_BC;
+          au8Led[0].mode = E_FLASH_EN_ATTENTE_TOUCHE_BC;
 
           ledId = 0;
           ePgmMode = E_CLAV_MODE_NOT_SET;
@@ -754,15 +757,16 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
 
     case E_JENIE_DATA_TO_SERVICE_ACK:
       vPrintf("Data to service ack\n");
-      break;
+    break;
 
     default:
       // Unknown data event type
 #if !NO_DEBUG_ON
       vUtils_DisplayMsg("!!Unknown Data Event!!", eEventType);
-      while(1);
+      while (1)
+        ;
 #endif
-      break;
+    break;
   }
 }
 
@@ -781,7 +785,7 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
  * void
  *
  ****************************************************************************/
-PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId,uint32 u32ItemBitmap)
+PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId, uint32 u32ItemBitmap)
 {
   static uint8 timer_it_dio11 = 0;
   uint32 val = 0;
@@ -794,19 +798,21 @@ PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId,uint32 u32ItemBitmap)
       PBAR_LireBtnPgm();
 
       /* regular 10ms tick generated here */
-      if (bStartPgmTimer){
+      if (bStartPgmTimer)
+      {
         TimePgmPressed++;
       }
 
-      if (bIt_DIO11){
+      if (bIt_DIO11)
+      {
         timer_it_dio11++;
 
-        if(timer_it_dio11 == CST_ANTI_REBOND_IT)
+        if (timer_it_dio11 == CST_ANTI_REBOND_IT)
         {
           timer_it_dio11 = 0;
-          bIt_DIO11=FALSE;
+          bIt_DIO11 = FALSE;
           val = vPRT_DioReadInput();
-          vPrintf("It read = %x\n",val);
+          vPrintf("It read = %x\n", val);
           vPRT_TraiterChangementEntree(val);
         }
       }
@@ -818,10 +824,12 @@ PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId,uint32 u32ItemBitmap)
 
       /* regular 10ms tick generated here */
 
-      if(cbStartTempoRechercheClavier){
+      if (cbStartTempoRechercheClavier)
+      {
         TimeRechercheClavier++;
 
-        if(TimeRechercheClavier == 400){
+        if (TimeRechercheClavier == 400)
+        {
           // On arrete de chercher
           cbStartTempoRechercheClavier = FALSE;
           TimeRechercheClavier = 0;
@@ -834,42 +842,46 @@ PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId,uint32 u32ItemBitmap)
     default:
 #if !NO_DEBUG_ON
       vUtils_DisplayMsg("HWint: ", u32DeviceId);
-      while(1);
+      while (1)
+        ;
 #endif
-      break;
+    break;
   }
 }
 
 PRIVATE void vPRT_TraiterChangementEntree(uint32 val)
 {
   //static uint16 val_input = 0xFFFF;
-  uint16 lesEntrees = (val>>16 & 0xFF00) | (((uint16)val>>8) & 0x00FF);
-  int i=0;
+  uint16 lesEntrees = (val >> 16 & 0xFF00) | (((uint16) val >> 8) & 0x00FF);
+  int i = 0;
 
   // Recuperer la config actuelle
-  uint32 req_on = ((prvCnf_O_9555 << 8) & 0xFFFF00FF )| ((uint8)prvCnf_O_9555 & 0xFFFF00FF);
-  uint32 req_off = ((~prvCnf_O_9555 << 8) & 0xFFFF00FF )| (~(uint8)prvCnf_O_9555 & 0xFFFF00FF);
+  uint32 req_on = ((prvCnf_O_9555 << 8) & 0xFFFF00FF)
+      | ((uint8) prvCnf_O_9555 & 0xFFFF00FF);
+  uint32 req_off = ((~prvCnf_O_9555 << 8) & 0xFFFF00FF)
+      | (~(uint8) prvCnf_O_9555 & 0xFFFF00FF);
 
-  vPrintf("\nConfig entrees -> previous:%x, now:%x\n", prvCnf_I_9555, lesEntrees);
+  vPrintf("\nConfig entrees -> previous:%x, now:%x\n", prvCnf_I_9555,
+      lesEntrees);
 
   // Recherche des bits modifies
-  for(i=0;i<16;i++)
+  for (i = 0; i < 16; i++)
   {
     // Pas de changement
-    if(IsBitSet(prvCnf_I_9555,i) == IsBitSet(lesEntrees,i))
+    if (IsBitSet(prvCnf_I_9555,i) == IsBitSet(lesEntrees, i))
       continue;
 
     // modifier le bit out de cette entree
-    if(i<8)
+    if (i < 8)
     {
-      vPrintf("bit %i different\n",i);
+      vPrintf("bit %i different\n", i);
       // Premier composant i2c
-      BitNinv(req_on,i);
-      BitNinv(req_off,i);
-      vPRT_DioSetOutput(req_on,req_off);
+      BitNinv(req_on, i);
+      BitNinv(req_off, i);
+      vPRT_DioSetOutput(req_on, req_off);
 
       //memoriser le changement
-      BitNinv(etatSorties,i);
+      BitNinv(etatSorties, i);
     }
     else
     {
