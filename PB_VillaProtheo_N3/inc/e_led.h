@@ -16,6 +16,19 @@
 #define	C_CLAV_LED_INFO_2	1
 #define	C_CLAV_LED_INFO_3	2
 
+#define CLAV_IS_VELLMAN TRUE
+
+#ifdef CLAV_IS_VELLMAN
+// Clavier vellman
+#define C_CLAV_MSK_INFO_1 E_AHI_DIO10_INT
+#define C_CLAV_MSK_INFO_2 E_AHI_DIO9_INT
+#define C_CLAV_MSK_INFO_3 E_AHI_DIO8_INT
+
+#define C_CLAV_PIO_INFO_1 10
+#define C_CLAV_PIO_INFO_2 9
+#define C_CLAV_PIO_INFO_3 8
+#else
+// Clavier 16 touches
 #define	C_CLAV_MSK_INFO_1	E_AHI_DIO19_INT
 #define	C_CLAV_MSK_INFO_2	E_AHI_DIO18_INT
 #define	C_CLAV_MSK_INFO_3	E_AHI_DIO17_INT
@@ -23,6 +36,7 @@
 #define	C_CLAV_PIO_INFO_1	19
 #define	C_CLAV_PIO_INFO_2	18
 #define	C_CLAV_PIO_INFO_3	17
+#endif
 
 #define PBAR_CFG_LED		(\
 		C_CLAV_MSK_INFO_1 |\

@@ -41,6 +41,37 @@ extern "C"
 #define C_PRESSION_T4		120	/// Limite Save
 #define C_PRESSION_T5		150	/// Limite Ultracare
 
+
+// --------------------------
+#ifdef CLAV_IS_VELLMAN
+
+extern PUBLIC bool_t bStartTimerIo_19;
+extern PUBLIC bool_t OneIt20;
+
+extern PUBLIC uint16 TimingIo_19;
+
+#define CLAV_NB_KEYS  10
+
+#define PBAR_CFG_NUMPAD_IN  (\
+    E_JPI_DIO11_INT |\
+    E_JPI_DIO12_INT |\
+    E_JPI_DIO13_INT |\
+    E_JPI_DIO14_INT |\
+    E_JPI_DIO15_INT |\
+    E_JPI_DIO16_INT |\
+    E_JPI_DIO17_INT |\
+    E_JPI_DIO18_INT |\
+    E_JPI_DIO19_INT |\
+    E_JPI_DIO20_INT )
+
+#define PBAR_CFG_NUMPAD_OUT (\
+    E_JPI_DIO8_INT|\
+    E_JPI_DIO9_INT|\
+    E_JPI_DIO10_INT)
+
+#define TEMPS_IT_19 50
+//---------END OF VELLMAN DEF -------------
+#else
 #define	PBAR_CFG_NUMPAD_IN	(\
 		E_AHI_DIO12_INT |\
 		E_AHI_DIO13_INT |\
@@ -53,18 +84,21 @@ extern "C"
 		E_JPI_DIO10_INT|\
 		E_JPI_DIO11_INT)
 
-#define	C_TEMPS_BIP			5
-#define	C_CLAV_BUZER		E_AHI_DIO16_INT
+#define C_CLAV_BUZER    E_AHI_DIO16_INT
 
-#define C_CLAV_LGN_OUT		4	/// Nombre de ligne en sortie pour le clavier
-#define C_CLAV_PIO_OUT_1	8	/// val L1
-#define C_CLAV_PIO_OUT_2	9
-#define C_CLAV_PIO_OUT_3	10
-#define C_CLAV_PIO_OUT_4	11
+#define C_CLAV_LGN_OUT    4 /// Nombre de ligne en sortie pour le clavier
+#define C_CLAV_PIO_OUT_1  8 /// val L1
+#define C_CLAV_PIO_OUT_2  9
+#define C_CLAV_PIO_OUT_3  10
+#define C_CLAV_PIO_OUT_4  11
+#endif
+
+#define	C_TEMPS_BIP			5
+
+#define C_MAX_KEYS  10
+#define C_KEY_MEM_ALL C_MAX_KEYS
 
 #define C_MAX_TENTATIVES	4	/// Nb d'essai decodage clavier avant echec
-#define	C_MAX_KEYS	10
-#define C_KEY_MEM_ALL	C_MAX_KEYS
 #define	C_MAX_MODES	4
 /****************************************************************************/
 /***        Type Definitions                                              ***/
@@ -233,7 +267,7 @@ extern PUBLIC uint16 compter_duree_mode;
 
 extern PUBLIC uint16 timer_appuie_touche;
 extern PUBLIC bool_t b_activer_bip;
-extern PUBLIC uint16 timer_touche[16];
+extern PUBLIC uint16 timer_touche[];
 extern PUBLIC uint8 bufEmission[3];
 
 extern PUBLIC char gch_spaces[20];

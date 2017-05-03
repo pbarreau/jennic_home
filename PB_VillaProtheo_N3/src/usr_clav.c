@@ -13,6 +13,12 @@
 
 #include "e_config.h"
 
+PUBLIC bool_t bStartTimerIo_19 = FALSE;
+PUBLIC bool_t OneIt20 = FALSE;
+
+PUBLIC uint16 TimingIo_19 = 0;
+
+
 PUBLIC teClavState CLAV_UsrNetMsgInput(tsData *psData)
 {
   teClavState mef_clav = E_CLAV_ETAT_UNDEF;

@@ -35,6 +35,7 @@ PUBLIC teClavState CLAV_GererTouche(etCLAV_keys keys)
   // Faire un Bip pour signal touche est detectee
   vPrintf("%sEmettre un BIP ?\n", gch_spaces);
 
+#ifndef CLAV_IS_VELLMAN
   if (b_use_bip == TRUE)
   {
     vPrintf("%s Use bip\n", gch_spaces);
@@ -47,6 +48,7 @@ PUBLIC teClavState CLAV_GererTouche(etCLAV_keys keys)
     b_activer_bip = FALSE;
     vAHI_DioSetOutput(0, C_CLAV_BUZER);
   }
+#endif
 
   if ((mef_clav == E_CLAV_ULTRA_MODE)
       || (AppData.ePrevClav == E_CLAV_ULTRA_MODE))
@@ -129,7 +131,11 @@ PUBLIC teClavState CLAV_BoutonDeConfiguration(bool_t * bip_on)
   else if (timer_touche[AppData.ukey] <= C_PRESSION_T2)
   {
     vPrintf("Broadcast Net Off\n");
+#ifdef CLAV_IS_VELLMAN
+    mNetOkTypeFlash = ~E_FLASH_OFF;
+#else
     mNetOkTypeFlash = E_FLASH_OFF;
+#endif
     au8Led_clav[C_CLAV_LED_INFO_1].mode =mNetOkTypeFlash;
 
     bufEmission[0] = E_MSG_NET_LED_OFF;
