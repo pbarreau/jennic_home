@@ -92,10 +92,11 @@ PRIVATE void PBAR_LireBtnPgm_NormalUsage(void)
             cbStartTempoRechercheClavier = TRUE;
             sAppData.eAppState = APP_STATE_RECHERCHE_CLAVIER;
           }
-          else if (TimePgmPressed < 100)
+          else if ((TimePgmPressed < 100) && (sAppData.eClavState ==
+              E_CLAV_EN_USAGE))
           {
             // eteindre ou alummer led conection ok
-            if (showNet)
+            if (mNetOkTypeFlash == E_FLASH_RESEAU_ACTIF)
             {
               vPrintf("Cacher Net Ok\n");
               mNetOkTypeFlash = ~E_FLASH_OFF;
@@ -107,11 +108,12 @@ PRIVATE void PBAR_LireBtnPgm_NormalUsage(void)
               mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
               au8Led[0].mode = mNetOkTypeFlash;
             }
-            showNet = !showNet;
             sAppData.eAppState = APP_STATE_RUNNING;
           }
           else
           {
+            sAppData.eClavState = E_CLAV_EN_CONFIG;
+
             if (LaBasId != 0)
             {
               cbUnClavierActif = FALSE;

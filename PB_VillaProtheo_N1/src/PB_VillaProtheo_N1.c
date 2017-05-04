@@ -153,6 +153,7 @@ PUBLIC void vJenie_CbInit(bool_t bWarmStart)
 
   // Reset APP_STATES
   memset(&sAppData, 0, sizeof(sAppData));
+  sAppData.eClavState = E_CLAV_EN_USAGE;
 
   u32AHI_Init();
 
@@ -446,6 +447,7 @@ PUBLIC void vJenie_CbMain(void)
       // On Montre mode user
       au8Led[0].mode = mNetOkTypeFlash;
 
+      sAppData.eClavState = E_CLAV_EN_USAGE;
       ePgmMode = E_CLAV_MODE_NOT_SET;
 
       bufEmission[0] = E_MSG_CFG_BOX_END;

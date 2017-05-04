@@ -167,12 +167,6 @@ typedef enum {
   APP_STATE_RUNNING
 } teAppState;
 
-typedef struct {
-  teAppState eAppState;
-  uint8 u8BoxId;
-  uint64 u64ServiceAddress;
-} tsAppData;
-
 typedef enum {
   E_CLAV_EN_NON_DEFINI, E_CLAV_EN_USAGE, E_CLAV_EN_CONFIG
 } bpeClav;
@@ -219,6 +213,13 @@ typedef enum {
   E_KPD_MODE, /// touche #
   E_KPD_END_DEF
 } PBAR_KIT_8046;
+
+typedef struct {
+  teAppState eAppState;
+  bpeClav eClavState;
+  uint8 u8BoxId;
+  uint64 u64ServiceAddress;
+} tsAppData;
 
 /****************************************************************************/
 /***        Exported Functions                                            ***/
