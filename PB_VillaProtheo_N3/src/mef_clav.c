@@ -141,6 +141,18 @@ PUBLIC void CLAV_GererMode(etCLAV_keys mode)
       modif_mode = E_CLAV_MODE_4;
     break;
 
+    case E_KEY_MOD_5:
+      au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_ERREUR_DECTECTEE;
+      au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_ALWAYS;
+      modif_mode = E_CLAV_MODE_4;
+    break;
+
+    case E_KEY_MOD_6:
+      au8Led_clav[C_CLAV_LED_INFO_2].mode = ~E_FLASH_ALWAYS;
+      au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_ERREUR_DECTECTEE;
+      modif_mode = E_CLAV_MODE_4;
+    break;
+
     default:
       au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_ERREUR_DECTECTEE;
       au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_ERREUR_DECTECTEE;
@@ -183,10 +195,10 @@ PUBLIC bool_t CLAV_TrouverAssociationToucheBoite(stToucheDef *touche,
       (void *) (AppData.eAppState), E_DBG_TYPE_NET_STATE);
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
 #endif
-  vPrintf("%sNb boite associee à la touche %s -> %d\n", gch_spaces,
+  vPrintf("%sNb boite associee a la touche %s -> %d\n", gch_spaces,
       dbg_etCLAV_keys[touche->la_touche], nbBox);
 
-  vPrintf("%sRecherche dans la liste chainee des boites associee à la touche\n",
+  vPrintf("%sRecherche dans la liste chainee des boites associee a la touche\n",
       gch_spaces);
   for (i = 0; (i <= nbBox) && (i < C_MAX_BOXES); i++)
   {

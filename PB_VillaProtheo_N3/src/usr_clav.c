@@ -146,7 +146,7 @@ PUBLIC teClavState CLAV_UsrActionTouche(etCLAV_keys keys)
               }
             }
 #if 0
-            // envoyer le message à cette boite
+            // envoyer le message a cette boite
             if(keys != E_KEY_ETOILE)
             {
               //Demande sous forme de bascule

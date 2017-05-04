@@ -32,10 +32,10 @@ PUBLIC teClavState CLAV_GererTouche(etCLAV_keys keys)
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
 #endif
 
+#ifndef CLAV_IS_VELLMAN
   // Faire un Bip pour signal touche est detectee
   vPrintf("%sEmettre un BIP ?\n", gch_spaces);
 
-#ifndef CLAV_IS_VELLMAN
   if (b_use_bip == TRUE)
   {
     vPrintf("%s Use bip\n", gch_spaces);
@@ -107,7 +107,7 @@ PUBLIC teClavState CLAV_BoutonDeConfiguration(bool_t * bip_on)
   teClavState mef_clav = E_CLAV_ETAT_UNDEF;
 
   static uint8 mode_clavier = 1;
-  //etCLAV_mod cur_mod = E_CLAV_MODE_NOT_SET;
+  static bool_t usr_or_tec = FALSE;
   etCLAV_keys choix_mode;
 
 #if !NO_DEBUG_ON
@@ -145,7 +145,7 @@ PUBLIC teClavState CLAV_BoutonDeConfiguration(bool_t * bip_on)
     mef_clav = E_CLAV_ETAT_EN_ATTENTE;
   }
 #endif
-  else if (timer_touche[AppData.ukey] <= C_PRESSION_T2)
+  else if ((timer_touche[AppData.ukey] <= C_PRESSION_T2) && (AppData.usage == E_CLAV_USAGE_NORMAL))
   {
     bufEmission[1] = 0;
     bufEmission[2] = 0;
@@ -175,18 +175,43 @@ PUBLIC teClavState CLAV_BoutonDeConfiguration(bool_t * bip_on)
   }
   else if (timer_touche[AppData.ukey] <= C_PRESSION_T3)
   {
-    vPrintf("Passage en mode programmation clavier\n");
+    vPrintf("Mode installateur ou utilisateur ?\n");
+
+    // On se met en mode defaut que ce soit en usr ou en pgm
+    if (usr_or_tec == FALSE)
+    {
+      CLAV_GererMode(E_NO_KEYS);
+      vPrintf("%sPassage en usage : configuration systeme\n", gch_spaces);
+      AppData.usage = E_CLAV_USAGE_CONFIG;
+
+      mef_clav = CLAV_PgmNetMontrerClavier();
+    }
+    else
+    {
+      CLAV_GererMode(E_KEY_MOD_1);
+      vPrintf("%sPassage en usage : utilisation courante\n", gch_spaces);
+      AppData.usage = E_CLAV_USAGE_NORMAL;
+
+      au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
+      AppData.eAppState = APP_BOUCLE_PRINCIPALE;
+      mef_clav = CLAV_PgmNetRetirerClavier();
+    }
+    usr_or_tec = !usr_or_tec;
+
   }
-  else if (bUltraCareMode == FALSE)
+  else if (AppData.eClavState == E_CLAV_ULTRA_MODE)
   {
-    // Programmation de niveau 1
-    mef_clav = clav_BtnPgmL1(mef_clav, &bUltraCareMode);
+    // Revenir en normal
+    mef_clav = E_CLAV_ETAT_EN_INITIALISATION;
+    CLAV_GererMode(E_KEY_MOD_5);
   }
   else
   {
-    // Programmation niveau 2
-    mef_clav = clav_BtnPgmL2(mef_clav, &bUltraCareMode);
+    // Allez en ultra care
+    mef_clav = E_CLAV_ULTRA_MODE;
+    CLAV_GererMode(E_KEY_MOD_6);
   }
+
 
 #if !NO_DEBUG_ON
   PBAR_DbgInside(stepper, gch_spaces, E_FN_OUT, AppData);
@@ -250,7 +275,6 @@ PRIVATE teClavState clav_BtnPgmL1(teClavState mef_clav, uint8 *care)
       vPrintf("%sPassage en usage : configuration systeme\n", gch_spaces);
       AppData.usage = E_CLAV_USAGE_CONFIG;
 
-      //au8Led_clav[C_CLAV_LED_INFO_1].mode = E_FLASH_RECHERCHE_RESEAU;
       mef_clav = CLAV_PgmNetMontrerClavier();
     }
     else

@@ -16,6 +16,8 @@ PUBLIC teClavState CLAV_PgmNetMontrerClavier(void)
 {
   teJenieStatusCode eStatus = E_JENIE_ERR_UNKNOWN;
   teClavState mef_clav = AppData.eClavState;
+//toto
+au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
 
 #if !NO_DEBUG_ON
   int stepper = 0;

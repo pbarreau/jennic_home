@@ -35,10 +35,10 @@ extern "C"
 #define C_MAX_DURE_PRESSION	200
 #define C_TIME_ULTRA		200
 
-#define C_PRESSION_T1		50	/// Limite activation bip
-#define C_PRESSION_T2		85	/// Limite Bcast Off
-#define C_PRESSION_T3		90	/// Limite Bcast On
-#define C_PRESSION_T4		120	/// Limite Save
+#define C_PRESSION_T1		50	/// Limite rotation mode
+#define C_PRESSION_T2		85	/// Limite Bcast net
+#define C_PRESSION_T3		100	/// Limite passage configuration
+#define C_PRESSION_T4		100	/// Limite Save
 #define C_PRESSION_T5		150	/// Limite Ultracare
 
 
@@ -113,6 +113,8 @@ typedef enum _keys {
   E_KEY_MOD_2,
   E_KEY_MOD_3,
   E_KEY_MOD_4,
+  E_KEY_MOD_5,
+  E_KEY_MOD_6,
   E_KEY_ETOILE,
   E_KEY_DIESE,
   E_KEYS_END
