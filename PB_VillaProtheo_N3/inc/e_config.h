@@ -35,8 +35,8 @@ extern "C"
 #define C_MAX_DURE_PRESSION	200
 #define C_TIME_ULTRA		200
 
-#define C_PRESSION_T1		30	/// Limite activation bip
-#define C_PRESSION_T2		60	/// Limite Bcast Off
+#define C_PRESSION_T1		50	/// Limite activation bip
+#define C_PRESSION_T2		85	/// Limite Bcast Off
 #define C_PRESSION_T3		90	/// Limite Bcast On
 #define C_PRESSION_T4		120	/// Limite Save
 #define C_PRESSION_T5		150	/// Limite Ultracare
@@ -44,12 +44,6 @@ extern "C"
 
 // --------------------------
 #ifdef CLAV_IS_VELLMAN
-
-extern PUBLIC bool_t bStartTimerIo_19;
-extern PUBLIC bool_t OneIt20;
-
-extern PUBLIC uint16 TimingIo_19;
-
 #define CLAV_NB_KEYS  10
 
 #define PBAR_CFG_NUMPAD_IN  (\
@@ -259,6 +253,15 @@ extern PUBLIC teClavState CLAV_UsrNetMsgInput(tsData *psData);
 /****************************************************************************/
 /***        Exported Variables                                            ***/
 /****************************************************************************/
+#ifdef CLAV_IS_VELLMAN
+#define CST_NB_MODES  4
+extern const PUBLIC etCLAV_keys R_Key_modes[CST_NB_MODES];
+extern PUBLIC bool_t bStartTimerIo_19;
+extern PUBLIC bool_t OneIt20;
+
+extern PUBLIC uint16 TimingIo_19;
+#endif
+
 extern PUBLIC tsClavData AppData;
 extern PUBLIC bpsFlash eeprom;
 

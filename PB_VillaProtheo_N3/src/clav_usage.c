@@ -106,6 +106,10 @@ PUBLIC teClavState CLAV_BoutonDeConfiguration(bool_t * bip_on)
   static bool_t bUltraCareMode = FALSE;
   teClavState mef_clav = E_CLAV_ETAT_UNDEF;
 
+  static uint8 mode_clavier = 1;
+  //etCLAV_mod cur_mod = E_CLAV_MODE_NOT_SET;
+  etCLAV_keys choix_mode;
+
 #if !NO_DEBUG_ON
   int stepper = 0;
 
@@ -114,6 +118,18 @@ PUBLIC teClavState CLAV_BoutonDeConfiguration(bool_t * bip_on)
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
 #endif
 
+#ifdef CLAV_IS_VELLMAN
+  if (timer_touche[AppData.ukey] <= C_PRESSION_T1)
+  {
+    // Selection rotatif du mode
+    choix_mode = R_Key_modes[mode_clavier];
+    CLAV_GererMode(choix_mode);
+    mode_clavier++;
+    mode_clavier = (mode_clavier) % (CST_NB_MODES);
+    vPrintf("Next Mode:%d\n", mode_clavier);
+    mef_clav = E_CLAV_ETAT_EN_ATTENTE;
+  }
+#else
   // Activation ou pas du Bip Clavier ?
   if (timer_touche[AppData.ukey] <= C_PRESSION_T1)
   {
@@ -128,36 +144,38 @@ PUBLIC teClavState CLAV_BoutonDeConfiguration(bool_t * bip_on)
     (*bip_on) = !(*bip_on);
     mef_clav = E_CLAV_ETAT_EN_ATTENTE;
   }
+#endif
   else if (timer_touche[AppData.ukey] <= C_PRESSION_T2)
   {
-    vPrintf("Broadcast Net Off\n");
-#ifdef CLAV_IS_VELLMAN
-    mNetOkTypeFlash = ~E_FLASH_OFF;
-#else
-    mNetOkTypeFlash = E_FLASH_OFF;
-#endif
-    au8Led_clav[C_CLAV_LED_INFO_1].mode =mNetOkTypeFlash;
-
-    bufEmission[0] = E_MSG_NET_LED_OFF;
     bufEmission[1] = 0;
     bufEmission[2] = 0;
+
+    if (mNetOkTypeFlash == E_FLASH_RESEAU_ACTIF)
+    {
+      vPrintf("Broadcast Net Off\n");
+#ifdef CLAV_IS_VELLMAN
+      mNetOkTypeFlash = ~E_FLASH_OFF;
+#else
+      mNetOkTypeFlash = E_FLASH_OFF;
+#endif
+
+      bufEmission[0] = E_MSG_NET_LED_OFF;
+    }
+    else
+    {
+      vPrintf("Broadcast Net On\n");
+      mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
+
+      bufEmission[0] = E_MSG_NET_LED_ON;
+    }
+    au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
 
     eJenie_SendData(0, bufEmission, 3,
     TXOPTION_SILENT | TXOPTION_BDCAST);
   }
   else if (timer_touche[AppData.ukey] <= C_PRESSION_T3)
   {
-    vPrintf("Broadcast Net On\n");
-    mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
-    au8Led_clav[C_CLAV_LED_INFO_1].mode =mNetOkTypeFlash;
-
-    bufEmission[0] = E_MSG_NET_LED_ON;
-    bufEmission[1] = 0;
-    bufEmission[2] = 0;
-
-    eJenie_SendData(0, bufEmission, 3,
-    TXOPTION_SILENT | TXOPTION_BDCAST);
-
+    vPrintf("Passage en mode programmation clavier\n");
   }
   else if (bUltraCareMode == FALSE)
   {

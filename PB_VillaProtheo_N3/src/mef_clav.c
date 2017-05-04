@@ -118,26 +118,26 @@ PUBLIC void CLAV_GererMode(etCLAV_keys mode)
   switch (mode)
   {
     case E_KEY_MOD_1:
-      au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_OFF;
-      au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_OFF;
+      au8Led_clav[C_CLAV_LED_INFO_2].mode = ~E_FLASH_OFF;
+      au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_OFF;
       modif_mode = E_CLAV_MODE_DEFAULT;
     break;
 
     case E_KEY_MOD_2:
       au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_ERREUR_DECTECTEE;
-      au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_OFF;
+      au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_OFF;
       modif_mode = E_CLAV_MODE_2;
     break;
 
     case E_KEY_MOD_3:
-      au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_OFF;
+      au8Led_clav[C_CLAV_LED_INFO_2].mode = ~E_FLASH_OFF;
       au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_ERREUR_DECTECTEE;
       modif_mode = E_CLAV_MODE_3;
     break;
 
     case E_KEY_MOD_4:
-      au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_ALWAYS;
-      au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_ALWAYS;
+      au8Led_clav[C_CLAV_LED_INFO_2].mode = ~E_FLASH_ALWAYS;
+      au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_ALWAYS;
       modif_mode = E_CLAV_MODE_4;
     break;
 

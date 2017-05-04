@@ -65,6 +65,7 @@ PRIVATE const etCLAV_keys key_code[] = { E_KEY_NUM_0, E_KEY_NUM_1, E_KEY_NUM_2,
     E_KEY_NUM_3, E_KEY_NUM_4, E_KEY_NUM_5, E_KEY_NUM_6, E_KEY_NUM_7,
     E_KEY_DIESE, E_KEY_ETOILE };
 PUBLIC uint16 timer_touche[sizeof(key_code) / sizeof(etCLAV_keys)] = { 0 };
+PUBLIC const etCLAV_keys R_Key_modes[CST_NB_MODES] = { E_KEY_MOD_1, E_KEY_MOD_2, E_KEY_MOD_3,E_KEY_MOD_4};
 
 #if !NO_DEBUG_ON
 PRIVATE const uint8 code_ascii[] = "ABCD1234#*";

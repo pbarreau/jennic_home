@@ -66,7 +66,7 @@ PUBLIC teClavState CLAV_UsrActionTouche(etCLAV_keys keys)
 
   etCLAV_mod eKeyMode = AppData.eClavmod;
   uint8 key_mode = eKeyMode - E_CLAV_MODE_DEFAULT;
-  uint8 key_code = (keys == E_KEY_ETOILE ? C_KEY_MEM_ALL : keys - E_KEY_NUM_1);
+  uint8 key_code = (keys == E_KEY_ETOILE ? C_KEY_MEM_ALL : keys - E_KEY_NUM_1); /// a corriger
 
   uint8 box = 0;
   uint8 useBox = 0;
