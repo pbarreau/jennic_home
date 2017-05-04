@@ -520,7 +520,7 @@ PRIVATE void CLAV_GestionIts(void)
       else
       {
         b_it_detect_front_descendant = FALSE;
-        AppData.eClavState = E_CLAV_ETAT_EN_ATTENTE;
+        AppData.eClavState = E_CLAV_ETAT_ANALYSER_TOUCHE;
       }
     }
     else
