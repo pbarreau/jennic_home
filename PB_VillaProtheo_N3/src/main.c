@@ -69,11 +69,13 @@ PUBLIC uint16 NEW_memo_delay_touche = 0;
 PRIVATE const uint16 ligne_colonne[] = { 0x1, 0x2, 0x4, 0x8, 0x10, 0x20, 0x40,
     0x80, 0x200, 0x100 };
 
-PRIVATE const etCLAV_keys key_code[] = { E_KEY_NUM_0, E_KEY_NUM_1, E_KEY_NUM_2,
+PUBLIC etCLAV_keys key_code[] = { E_KEY_NUM_0, E_KEY_NUM_1, E_KEY_NUM_2,
     E_KEY_NUM_3, E_KEY_NUM_4, E_KEY_NUM_5, E_KEY_NUM_6, E_KEY_NUM_7,
     E_KEY_NUM_DIESE, E_KEY_NUM_ETOILE };
 PUBLIC uint16 timer_touche[sizeof(key_code) / sizeof(etCLAV_keys)] = { 0 };
+
 PUBLIC const etCLAV_keys R_Key_modes[CST_NB_MODES] = { E_KEY_NUM_MOD_1,
+
     E_KEY_NUM_MOD_2, E_KEY_NUM_MOD_3, E_KEY_NUM_MOD_4 };
 
 #if !NO_DEBUG_ON
@@ -95,7 +97,7 @@ PRIVATE const etCLAV_keys key_code[] =
   E_KEY_NUM_ETOILE, E_KEY_NUM_2, E_KEY_NUM_5, E_KEY_NUM_8, E_KEY_NUM_0,
   E_KEY_NUM_3, E_KEY_NUM_6, E_KEY_NUM_9, E_KEY_NUM_DIESE, E_KEY_NUM_MOD_1,
   E_KEY_NUM_MOD_2, E_KEY_NUM_MOD_3, E_KEY_NUM_MOD_4};
-PUBLIC uint16 timer_touche[16] =
+PUBLIC uint16 timer_touche[sizeof(key_code) / sizeof(etCLAV_keys)] =
 { 0};
 
 #if !NO_DEBUG_ON
@@ -534,7 +536,7 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
 PRIVATE void NEW_CLAV_GestionIts(void)
 {
   etCLAV_keys la_touche = E_KEY_NON_DEFINI;
-  uint8 posCodeAscii = 0;
+  uint8 uId = 0;
 
   if(NEW_traiter_It == FALSE)
     return;
@@ -542,11 +544,17 @@ PRIVATE void NEW_CLAV_GestionIts(void)
   // desactiver les its clavier
   vAHI_DioInterruptEnable(0,PBAR_CFG_NUMPAD_IN);
 
-  la_touche = CLAV_AnalyseIts(&posCodeAscii);
+  la_touche = CLAV_AnalyseIts(&uId);
   if (la_touche != E_KEY_NON_DEFINI )
   {
-    vPrintf("Touche '%c' pendant '%d' ms, code dans pgm:%d\n",
-        code_ascii[posCodeAscii], NEW_memo_delay_touche, la_touche);
+    vPrintf("Touche '%c' pendant '%d' ms, code dans pgm:%d\n\n",
+        code_ascii[uId], NEW_memo_delay_touche, la_touche);
+
+    // Une touche est reconnue on peut demander a la traiter
+    AppData.eClavState = E_KS_TRAITER_TOUCHE;
+    AppData.eKeyPressed = la_touche;
+    timer_touche[uId] = NEW_memo_delay_touche;
+
   }
   // Rearmer detection It
   NEW_traiter_It = FALSE;
@@ -841,4 +849,20 @@ PRIVATE void InitAFroid(void)
   vPrintf("Taille Eeprom necessaire %d\n", sizeof(bpsFlash));
   vPrintf("Nb boites connues %x\n", eeprom.nbBoite);
 
+}
+
+PUBLIC int8 NEW_TrouvePositionTouche(etCLAV_keys laTouche)
+{
+  int8 val = -1;
+  uint8 pos = 0;
+
+  int len = sizeof(key_code) / sizeof(etCLAV_keys);
+
+  for (pos = 0; pos < len; pos++)
+  {
+    if (key_code[pos] == laTouche)
+      return pos;
+  }
+
+  return val;
 }

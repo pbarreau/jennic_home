@@ -16,17 +16,108 @@
 
 PUBLIC uint8 bufEmission[3] = { 0, 0, 0 };
 
+PRIVATE teClavState NEW_CLAV_GererToucheModeSuperUser(etCLAV_keys laTouche);
+PRIVATE teClavState NEW_CLAV_GererToucheModeSimpleUser(etCLAV_keys laTouche);
+PRIVATE teClavState NEW_CLAV_ChoisirNouveauRole(etCLAV_keys laTouche);
+
 PRIVATE teClavState clav_BtnPgmL1(teClavState mef_clav, uint8 *care);
 PRIVATE teClavState clav_BtnPgmL2(teClavState mef_clav, uint8 *care);
 PRIVATE void clav_EraseOrReset(etCLAV_keys keys);
+PRIVATE etCLAV_mod tabVisibleMode[] = { E_KM_1, E_KM_2, E_KM_3, E_KM_4 };
+PRIVATE etCLAV_keys tabModeKeys[] = { E_KEY_NUM_MOD_1, E_KEY_NUM_MOD_2,
+    E_KEY_NUM_MOD_3, E_KEY_NUM_MOD_4 };
 
 PUBLIC teClavState CLAV_GererTouche(etCLAV_keys keys)
 {
   teClavState mef_clav = AppData.eClavState;
+  etCLAV_role keyContext = AppData.usage;
 
-  vPrintf("etCLAV_keys:%d and mef_clav=%d\n",keys,mef_clav);
+  vPrintf("etCLAV_role:%d, etCLAV_keys:%d and mef_clav=%d\n", keyContext, keys,
+      mef_clav);
+
+  // Cette touche est dans quel contexte ?
+  if (keyContext == E_KR_TECHNICIEN)
+  {
+    mef_clav = NEW_CLAV_GererToucheModeSuperUser(keys);
+  }
+  else if (keyContext == E_KR_UTILISATEUR)
+  {
+    mef_clav = NEW_CLAV_GererToucheModeSimpleUser(keys);
+  }
+  else if (keyContext == E_KR_CHOISIR_ROLE)
+  {
+    mef_clav = NEW_CLAV_ChoisirNouveauRole(keys);
+  }
+  else
+  {
+    vPrintf("Key context error!!\n");
+  }
+  return mef_clav;
+}
+
+PRIVATE teClavState NEW_CLAV_ChoisirNouveauRole(etCLAV_keys laTouche)
+{
+  teClavState mef_clav = AppData.eClavState;
+  etCLAV_role cur_role = AppData.usage;
+
+  vPrintf("Utilisation courante:%d\n",cur_role);
+
+  if (laTouche == E_KEY_NUM_0)
+  {
+    cur_role = E_KR_UTILISATEUR;
+  }
+  else if (laTouche == E_KEY_NUM_1)
+  {
+    cur_role = E_KR_TECHNICIEN;
+  }
+
+  if (cur_role != E_KR_CHOISIR_ROLE)
+  {
+    AppData.usage = cur_role;
+    CLAV_GererMode(E_KEY_NUM_MOD_1);
+  }
+
   return E_KS_ATTENTE_TOUCHE;
 }
+
+PRIVATE teClavState NEW_CLAV_GererToucheModeSuperUser(etCLAV_keys laTouche)
+{
+  teClavState mef_clav = AppData.eClavState;
+
+  return E_KS_ATTENTE_TOUCHE;
+}
+
+PRIVATE teClavState NEW_CLAV_GererToucheModeSimpleUser(etCLAV_keys laTouche)
+{
+  teClavState mef_clav = AppData.eClavState;
+  static teClavState previousClavState = E_KS_ATTENTE_TOUCHE;
+  int8 uKeyPos = NEW_TrouvePositionTouche(laTouche);
+  static uint8 idMode = 0;
+
+  if (uKeyPos < 0)
+  {
+    vPrintf("Erreur Codage a corriger\n");
+    return mef_clav;
+  }
+
+  if ((laTouche == E_KEY_NUM_DIESE) && (timer_touche[uKeyPos] <= C_PRESSION_T1))
+  {
+    vPrintf("Passage en mode:%d", tabVisibleMode[idMode]);
+    CLAV_GererMode(tabModeKeys[idMode]);
+    idMode++;
+    idMode = idMode % (sizeof(tabVisibleMode) / sizeof(etCLAV_mod));
+  }
+
+  if ((laTouche == E_KEY_NUM_DIESE) && (timer_touche[uKeyPos] > C_PRESSION_T1))
+  {
+    AppData.usage = E_KR_CHOISIR_ROLE;
+    CLAV_GererMode(E_KEY_NUM_MOD_5);
+  }
+
+  CLAV_UsrActionTouche(laTouche);
+  return E_KS_ATTENTE_TOUCHE;
+}
+
 #if OLD_CLAV
 PUBLIC teClavState CLAV_GererTouche(etCLAV_keys keys)
 {
@@ -73,11 +164,11 @@ PUBLIC teClavState CLAV_GererTouche(etCLAV_keys keys)
       case E_KEY_MOD_2:
       case E_KEY_MOD_3:
       case E_KEY_MOD_4:
-        CLAV_GererMode(keys);
+      CLAV_GererMode(keys);
       break;
 
       case E_KEY_DIESE:
-        mef_clav = CLAV_BoutonDeConfiguration(&b_use_bip);
+      mef_clav = CLAV_BoutonDeConfiguration(&b_use_bip);
       break;
 
       default:
@@ -154,7 +245,8 @@ PUBLIC teClavState CLAV_BoutonDeConfiguration(bool_t * bip_on)
     mef_clav = E_KS_ATTENTE_TOUCHE;
   }
 #endif
-  else if ((timer_touche[AppData.ukey] <= C_PRESSION_T2) && (AppData.usage == E_KR_UTILISATEUR))
+  else if ((timer_touche[AppData.ukey] <= C_PRESSION_T2)
+      && (AppData.usage == E_KR_UTILISATEUR))
   {
     bufEmission[1] = 0;
     bufEmission[2] = 0;
@@ -223,7 +315,6 @@ PUBLIC teClavState CLAV_BoutonDeConfiguration(bool_t * bip_on)
     mef_clav = E_KS_ULTRA_MODE;
     CLAV_GererMode(E_KEY_NUM_MOD_6);
   }
-
 
 #if !NO_DEBUG_ON
   PBAR_DbgInside(stepper, gch_spaces, E_FN_OUT, AppData);

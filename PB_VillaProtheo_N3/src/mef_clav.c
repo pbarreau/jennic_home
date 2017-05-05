@@ -32,6 +32,7 @@ PUBLIC void CLAV_AnalyserEtat(teClavState mef_clavier)
 {
   uint16 max_time = 0;
   static bool_t oneshot = FALSE;
+  etCLAV_keys toucheAction = AppData.eKeyPressed;
 
 #ifdef WATCHDOG_ENABLED
   vAHI_WatchdogRestart();
@@ -69,8 +70,8 @@ PUBLIC void CLAV_AnalyserEtat(teClavState mef_clavier)
     break;
 
     case E_KS_TRAITER_IT:
-      if (AppData.eKeyPressed == E_KEY_NUM_DIESE
-          || AppData.eKeyPressed == E_KEY_NUM_ETOILE)
+      if (toucheAction == E_KEY_NUM_DIESE
+          || toucheAction == E_KEY_NUM_ETOILE)
       {
         max_time = C_TIME_ULTRA;
       }
@@ -87,9 +88,7 @@ PUBLIC void CLAV_AnalyserEtat(teClavState mef_clavier)
 
     case E_KS_TRAITER_TOUCHE:
     {
-
-      AppData.eClavState = CLAV_GererTouche(AppData.eKeyPressed);
-
+      AppData.eClavState = CLAV_GererTouche(toucheAction);
     }
     break;
 

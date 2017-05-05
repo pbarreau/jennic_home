@@ -113,8 +113,8 @@ typedef enum _keys {
   E_KEY_NUM_MOD_4,
   E_KEY_NUM_MOD_5,
   E_KEY_NUM_MOD_6,
-  E_KEY_NUM_ETOILE,
   E_KEY_NUM_DIESE,
+  E_KEY_NUM_ETOILE,
   E_KEYS_NUM_END
 } etCLAV_keys;
 extern PUBLIC char const * dbg_etCLAV_keys[];
@@ -133,6 +133,7 @@ typedef enum {
   E_KR_NON_DEFINI,
   E_KR_UTILISATEUR,
   E_KR_TECHNICIEN,
+  E_KR_CHOISIR_ROLE,
   E_KR_END
 } etCLAV_role; /// Keyboard role
 extern PUBLIC char const *dbg_etCLAV_role[];
@@ -208,6 +209,7 @@ typedef struct {
 /****************************************************************************/
 /***        Exported Functions                                            ***/
 /****************************************************************************/
+extern PUBLIC int8 NEW_TrouvePositionTouche(etCLAV_keys laTouche);
 // ----------------
 // mef_clav.c
 // ----------------
@@ -274,6 +276,7 @@ extern PUBLIC uint8 bufEmission[3];
 
 extern PUBLIC char gch_spaces[20];
 extern PUBLIC eLedInfo mNetOkTypeFlash;
+extern PUBLIC etCLAV_keys key_code[];
 
 #if defined __cplusplus
 }
