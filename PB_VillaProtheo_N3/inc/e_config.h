@@ -45,6 +45,7 @@ extern "C"
 // --------------------------
 #ifdef CLAV_IS_VELLMAN
 #define CLAV_NB_KEYS  10
+#define C_MIN_KEY_PRESS_TIME  10  // en ms
 
 #define PBAR_CFG_NUMPAD_IN  (\
     E_JPI_DIO11_INT |\
@@ -58,10 +59,7 @@ extern "C"
     E_JPI_DIO19_INT |\
     E_JPI_DIO20_INT )
 
-#define PBAR_CFG_NUMPAD_OUT (\
-    E_JPI_DIO8_INT|\
-    E_JPI_DIO9_INT|\
-    E_JPI_DIO10_INT)
+#define PBAR_CFG_NUMPAD_OUT 0
 
 #define TEMPS_IT_19 50
 //---------END OF VELLMAN DEF -------------
@@ -98,7 +96,7 @@ extern "C"
 /***        Type Definitions                                              ***/
 /****************************************************************************/
 typedef enum _keys {
-  E_NO_KEYS,
+  E_KEY_NON_DEFINI,
   E_KEY_NUM_1,
   E_KEY_NUM_2,
   E_KEY_NUM_3,
@@ -109,50 +107,49 @@ typedef enum _keys {
   E_KEY_NUM_8,
   E_KEY_NUM_9,
   E_KEY_NUM_0,
-  E_KEY_MOD_1,
-  E_KEY_MOD_2,
-  E_KEY_MOD_3,
-  E_KEY_MOD_4,
-  E_KEY_MOD_5,
-  E_KEY_MOD_6,
-  E_KEY_ETOILE,
-  E_KEY_DIESE,
-  E_KEYS_END
+  E_KEY_NUM_MOD_1,
+  E_KEY_NUM_MOD_2,
+  E_KEY_NUM_MOD_3,
+  E_KEY_NUM_MOD_4,
+  E_KEY_NUM_MOD_5,
+  E_KEY_NUM_MOD_6,
+  E_KEY_NUM_ETOILE,
+  E_KEY_NUM_DIESE,
+  E_KEYS_NUM_END
 } etCLAV_keys;
 extern PUBLIC char const * dbg_etCLAV_keys[];
 
 typedef enum _clav_mod {
-  E_CLAV_MODE_NOT_SET,
-  E_CLAV_MODE_DEFAULT,
-  E_CLAV_MODE_2,
-  E_CLAV_MODE_3,
-  E_CLAV_MODE_4,
-  E_CLAV_MODE_END
-} etCLAV_mod;
+  E_KM_NON_DEFINI,    // Keyboard mode non definit
+  E_KM_1,
+  E_KM_2,
+  E_KM_3,
+  E_KM_4,
+  E_KM_END
+} etCLAV_mod; // keyboard modes
 extern PUBLIC char const *dbg_etCLAV_mod[];
 
 typedef enum {
-  E_CLAV_USAGE_NON_DEFINI,
-  E_CLAV_USAGE_NORMAL,
-  E_CLAV_USAGE_CONFIG,
-  E_CLAV_USAGE_END
-} etCLAV_role;
+  E_KR_NON_DEFINI,
+  E_KR_UTILISATEUR,
+  E_KR_TECHNICIEN,
+  E_KR_END
+} etCLAV_role; /// Keyboard role
 extern PUBLIC char const *dbg_etCLAV_role[];
 
 typedef enum _clav_state {
-  E_CLAV_ETAT_EN_INITIALISATION,
-  E_CLAV_ETAT_EN_ATTENTE,
-  E_CLAV_ETAT_TRAITER_IT,
-  E_CLAV_ETAT_ANALYSER_TOUCHE,
-  E_CLAV_SERVICE_ON,
-  E_CLAV_SERVICE_OFF,
-  E_CLAV_ATTENDRE_BOITE,
-  E_CLAV_ATTENDRE_FIN_CONFIG_BOITE,
-  E_CLAV_EN_PROGR_AVEC_BOITE,
-  E_CLAV_ETAT_UNDEF,
-  E_CLAV_ULTRA_MODE,
-  E_CLAV_ETAT_END
-} teClavState;
+  E_KS_NON_DEFINI,      /// Mode de traitement du clavier non definit
+  E_KS_ATTENTE_TOUCHE,  /// Attente que l'utilisateur appuie sur une touche du clavier
+  E_KS_TRAITER_IT,      /// Determiner qu'elle touche appuyée
+  E_KS_TRAITER_TOUCHE,  /// Effectuer traitement de la touche
+  E_KS_SERVICE_ON,
+  E_KS_SERVICE_OFF,
+  E_KS_ATTENDRE_BOITE,
+  E_KS_ATTENDRE_FIN_CONFIG_BOITE,
+  E_KS_EN_PROGR_AVEC_BOITE,
+  E_KS_ULTRA_MODE,
+  E_KS_END
+} teClavState; /// Keyboard states
 extern PUBLIC char const *dbg_teClavState[];
 
 typedef struct {

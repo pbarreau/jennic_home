@@ -39,38 +39,38 @@ PUBLIC void CLAV_AnalyserEtat(teClavState mef_clavier)
 
   switch (mef_clavier)
   {
-    case E_CLAV_ETAT_EN_INITIALISATION:
+    case E_KS_NON_DEFINI:
       vPrintf("Passage clavier en attente touche\n");
-      AppData.eClavState = E_CLAV_ETAT_EN_ATTENTE;
-      AppData.eClavmod = E_CLAV_MODE_DEFAULT;
-      AppData.usage = E_CLAV_USAGE_NORMAL;
+      AppData.eClavState = E_KS_ATTENTE_TOUCHE;
+      AppData.eClavmod = E_KM_1;
+      AppData.usage = E_KR_UTILISATEUR;
     break;
 
-    case E_CLAV_ETAT_EN_ATTENTE:
+    case E_KS_ATTENTE_TOUCHE:
     break;
 
-    case E_CLAV_SERVICE_ON:
+    case E_KS_SERVICE_ON:
     break;
 
-    case E_CLAV_SERVICE_OFF:
+    case E_KS_SERVICE_OFF:
     break;
 
-    case E_CLAV_ULTRA_MODE:
+    case E_KS_ULTRA_MODE:
     break;
 
-    case E_CLAV_ATTENDRE_BOITE:
+    case E_KS_ATTENDRE_BOITE:
       au8Led_clav[C_CLAV_LED_INFO_1].mode = E_FLASH_RECHERCHE_RESEAU;
     break;
 
-    case E_CLAV_EN_PROGR_AVEC_BOITE:
+    case E_KS_EN_PROGR_AVEC_BOITE:
     break;
 
-    case E_CLAV_ATTENDRE_FIN_CONFIG_BOITE:
+    case E_KS_ATTENDRE_FIN_CONFIG_BOITE:
     break;
 
-    case E_CLAV_ETAT_TRAITER_IT:
-      if (AppData.eKeyPressed == E_KEY_DIESE
-          || AppData.eKeyPressed == E_KEY_ETOILE)
+    case E_KS_TRAITER_IT:
+      if (AppData.eKeyPressed == E_KEY_NUM_DIESE
+          || AppData.eKeyPressed == E_KEY_NUM_ETOILE)
       {
         max_time = C_TIME_ULTRA;
       }
@@ -85,7 +85,7 @@ PUBLIC void CLAV_AnalyserEtat(teClavState mef_clavier)
       }
     break;
 
-    case E_CLAV_ETAT_ANALYSER_TOUCHE:
+    case E_KS_TRAITER_TOUCHE:
     {
 
       AppData.eClavState = CLAV_GererTouche(AppData.eKeyPressed);
@@ -117,50 +117,50 @@ PUBLIC void CLAV_GererMode(etCLAV_keys mode)
 
   switch (mode)
   {
-    case E_KEY_MOD_1:
+    case E_KEY_NUM_MOD_1:
       au8Led_clav[C_CLAV_LED_INFO_2].mode = ~E_FLASH_OFF;
       au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_OFF;
-      modif_mode = E_CLAV_MODE_DEFAULT;
+      modif_mode = E_KM_1;
     break;
 
-    case E_KEY_MOD_2:
+    case E_KEY_NUM_MOD_2:
       au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_ERREUR_DECTECTEE;
       au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_OFF;
-      modif_mode = E_CLAV_MODE_2;
+      modif_mode = E_KM_2;
     break;
 
-    case E_KEY_MOD_3:
+    case E_KEY_NUM_MOD_3:
       au8Led_clav[C_CLAV_LED_INFO_2].mode = ~E_FLASH_OFF;
       au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_ERREUR_DECTECTEE;
-      modif_mode = E_CLAV_MODE_3;
+      modif_mode = E_KM_3;
     break;
 
-    case E_KEY_MOD_4:
+    case E_KEY_NUM_MOD_4:
       au8Led_clav[C_CLAV_LED_INFO_2].mode = ~E_FLASH_ALWAYS;
       au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_ALWAYS;
-      modif_mode = E_CLAV_MODE_4;
+      modif_mode = E_KM_4;
     break;
 
-    case E_KEY_MOD_5:
+    case E_KEY_NUM_MOD_5:
       au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_ERREUR_DECTECTEE;
       au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_ALWAYS;
-      modif_mode = E_CLAV_MODE_DEFAULT;
+      modif_mode = E_KM_1;
     break;
 
-    case E_KEY_MOD_6:
+    case E_KEY_NUM_MOD_6:
       au8Led_clav[C_CLAV_LED_INFO_2].mode = ~E_FLASH_ALWAYS;
       au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_ERREUR_DECTECTEE;
-      modif_mode = E_CLAV_ULTRA_MODE;
+      modif_mode = E_KS_ULTRA_MODE;
     break;
 
     default:
       au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_ERREUR_DECTECTEE;
       au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_ERREUR_DECTECTEE;
-      modif_mode = E_CLAV_MODE_NOT_SET;
+      modif_mode = E_KM_NON_DEFINI;
     break;
   }
 
-  if ((modif_mode != E_CLAV_MODE_DEFAULT)&& (AppData.eClavState != E_CLAV_ULTRA_MODE))
+  if ((modif_mode != E_KM_1)&& (AppData.eClavState != E_KS_ULTRA_MODE))
   {
     compter_duree_mode = 0;
     start_timer_of_mode = TRUE;
@@ -179,10 +179,10 @@ PUBLIC bool_t CLAV_TrouverAssociationToucheBoite(stToucheDef *touche,
 {
   bool_t eReturn = FALSE;
   uint8 key_code = (
-      (touche->la_touche == E_KEY_ETOILE) ?
+      (touche->la_touche == E_KEY_NUM_ETOILE) ?
           C_KEY_MEM_ALL : touche->la_touche - E_KEY_NUM_1);
   ;
-  uint8 key_mode = touche->le_mode - E_CLAV_MODE_DEFAULT;
+  uint8 key_mode = touche->le_mode - E_KM_1;
   uint8 nbBox = eeprom.netConf.ptr_boxList[key_mode][key_code];
   ;
   uint8 i = 0;

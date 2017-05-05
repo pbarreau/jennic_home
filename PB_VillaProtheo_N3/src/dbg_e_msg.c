@@ -43,10 +43,10 @@ PUBLIC void PBAR_DbgInside(int level, char * pSpaces, teDbgTrace eSens,
   char const *sens[] = { "IN:", "OUT:" };
   int i = 0;
 
-  static etCLAV_keys my_key = E_KEYS_END;
-  static etCLAV_mod my_mod = E_CLAV_MODE_END;
-  static etCLAV_role my_role = E_CLAV_USAGE_END;
-  static teNetState my_state = E_CLAV_ETAT_END;
+  static etCLAV_keys my_key = E_KEYS_NUM_END;
+  static etCLAV_mod my_mod = E_KM_END;
+  static etCLAV_role my_role = E_KR_END;
+  static teNetState my_state = E_KS_END;
 
   memset(&gch_spaces, 0x00, sizeof(gch_spaces));
   for (i = 0; (i <= level) && (i < 20); i++)
@@ -87,10 +87,10 @@ PUBLIC void PBAR_DbgInside(int level, char * pSpaces, teDbgTrace eSens,
 
   if ((level == 1) && (eSens == E_FN_OUT))
   {
-    my_key = E_KEYS_END;
-    my_mod = E_CLAV_MODE_END;
-    my_role = E_CLAV_USAGE_END;
-    my_state = E_CLAV_ETAT_END;
+    my_key = E_KEYS_NUM_END;
+    my_mod = E_KM_END;
+    my_role = E_KR_END;
+    my_state = E_KS_END;
   }
 
   if (eSens == E_FN_IN)
