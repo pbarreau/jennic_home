@@ -14,11 +14,16 @@
 
 #include "e_config.h"
 
+PUBLIC char const *menu_pgm[] = { "Net Led", "Bip clavier", "Liaison"
+};
+
 PUBLIC uint8 bufEmission[3] = { 0, 0, 0 };
 
 PRIVATE teClavState NEW_CLAV_GererToucheModeSuperUser(etCLAV_keys laTouche);
 PRIVATE teClavState NEW_CLAV_GererToucheModeSimpleUser(etCLAV_keys laTouche);
 PRIVATE teClavState NEW_CLAV_ChoisirNouveauRole(etCLAV_keys laTouche);
+PRIVATE void NEW_ManageNetworkLed(void);
+
 
 PRIVATE teClavState clav_BtnPgmL1(teClavState mef_clav, uint8 *care);
 PRIVATE teClavState clav_BtnPgmL2(teClavState mef_clav, uint8 *care);
@@ -60,15 +65,17 @@ PRIVATE teClavState NEW_CLAV_ChoisirNouveauRole(etCLAV_keys laTouche)
   teClavState mef_clav = AppData.eClavState;
   etCLAV_role cur_role = AppData.usage;
 
-  vPrintf("Utilisation courante:%d\n",cur_role);
+  vPrintf("Utilisation courante:%d\n", cur_role);
 
   if (laTouche == E_KEY_NUM_0)
   {
     cur_role = E_KR_UTILISATEUR;
+    au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
   }
   else if (laTouche == E_KEY_NUM_1)
   {
     cur_role = E_KR_TECHNICIEN;
+    au8Led_clav[C_CLAV_LED_INFO_1].mode = E_FLASH_EN_ATTENTE_TOUCHE_BC;
   }
 
   if (cur_role != E_KR_CHOISIR_ROLE)
@@ -83,22 +90,83 @@ PRIVATE teClavState NEW_CLAV_ChoisirNouveauRole(etCLAV_keys laTouche)
 PRIVATE teClavState NEW_CLAV_GererToucheModeSuperUser(etCLAV_keys laTouche)
 {
   teClavState mef_clav = AppData.eClavState;
+  uint8 uKeyPos = AppData.ukey;
+
+  static uint8 idMode = 0;
+  static uint8 val_flash = 0;
+  int len = (sizeof(menu_pgm) / sizeof(char **));
+
+  if ((laTouche == E_KEY_NUM_DIESE) && (timer_touche[uKeyPos] <= C_PRESSION_T1))
+  {
+    //NEW_ManageNetworkLed();
+    vPrintf("Len = %d ", len);
+    vPrintf("Menu '%s' flash:'%x'\n", menu_pgm[idMode], val_flash);
+    au8Led_clav[C_CLAV_LED_INFO_2].mode = val_flash;
+    au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_OFF;
+
+    //CLAV_GererMode(tabModeKeys[idMode]);
+    idMode++;
+    idMode = idMode % len;
+
+    val_flash++;
+    val_flash = val_flash % 256;
+  }
 
   return E_KS_ATTENTE_TOUCHE;
 }
 
+PRIVATE void NEW_ManageNetworkLed(void)
+{
+  bufEmission[1] = 0;
+  bufEmission[2] = 0;
+
+  if (mNetOkTypeFlash == E_FLASH_RESEAU_ACTIF)
+  {
+    vPrintf("Broadcast Net Off\n");
+#ifdef CLAV_IS_VELLMAN
+    mNetOkTypeFlash = ~E_FLASH_OFF;
+#else
+    mNetOkTypeFlash = E_FLASH_OFF;
+#endif
+
+    bufEmission[0] = E_MSG_NET_LED_OFF;
+    au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
+    au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_EN_ATTENTE_TOUCHE_BC;
+    au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_OFF;
+
+  }
+  else
+  {
+    vPrintf("Broadcast Net On\n");
+    mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
+
+    bufEmission[0] = E_MSG_NET_LED_ON;
+    au8Led_clav[C_CLAV_LED_INFO_1].mode = E_FLASH_EN_ATTENTE_TOUCHE_BC;
+    au8Led_clav[C_CLAV_LED_INFO_2].mode = ~E_FLASH_OFF;
+    au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_OFF;
+
+  }
+  //au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
+
+  eJenie_SendData(0, bufEmission, 3,
+  TXOPTION_SILENT | TXOPTION_BDCAST);
+}
 PRIVATE teClavState NEW_CLAV_GererToucheModeSimpleUser(etCLAV_keys laTouche)
 {
   teClavState mef_clav = AppData.eClavState;
-  static teClavState previousClavState = E_KS_ATTENTE_TOUCHE;
-  int8 uKeyPos = NEW_TrouvePositionTouche(laTouche);
+  uint8 uKeyPos = AppData.ukey;
+
+  //static teClavState previousClavState = E_KS_ATTENTE_TOUCHE;
+  //int8 uKeyPos = NEW_TrouvePositionTouche(laTouche);
   static uint8 idMode = 0;
 
+#if 0
   if (uKeyPos < 0)
   {
     vPrintf("Erreur Codage a corriger\n");
     return mef_clav;
   }
+#endif
 
   if ((laTouche == E_KEY_NUM_DIESE) && (timer_touche[uKeyPos] <= C_PRESSION_T1))
   {

@@ -553,6 +553,7 @@ PRIVATE void NEW_CLAV_GestionIts(void)
     // Une touche est reconnue on peut demander a la traiter
     AppData.eClavState = E_KS_TRAITER_TOUCHE;
     AppData.eKeyPressed = la_touche;
+    AppData.ukey = uId;
     timer_touche[uId] = NEW_memo_delay_touche;
 
   }
