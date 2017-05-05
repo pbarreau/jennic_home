@@ -36,6 +36,8 @@ PUBLIC int PBAR_DbgTrace(teDbgTrace eSens, char *fn, void *val_enum,
     teDbgModulEnum enumType)
 {
   static uint8 level = 0;
+
+ #if 0
   char const *sens[] = { "->", "<-" };
   char spaces[21] = { 0 };
   char enumMsg[40] = { 0 };
@@ -87,7 +89,7 @@ PUBLIC int PBAR_DbgTrace(teDbgTrace eSens, char *fn, void *val_enum,
       strcpy(enumMsg, "DBG enum ERROR !!\n");
   }
   vPrintf("%s)\n", enumMsg);
-
+#endif
   return (level);
 }
 #endif // #if !NO_DEBUG_ON

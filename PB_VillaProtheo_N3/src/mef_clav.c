@@ -144,13 +144,13 @@ PUBLIC void CLAV_GererMode(etCLAV_keys mode)
     case E_KEY_MOD_5:
       au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_ERREUR_DECTECTEE;
       au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_ALWAYS;
-      modif_mode = E_CLAV_MODE_4;
+      modif_mode = E_CLAV_MODE_DEFAULT;
     break;
 
     case E_KEY_MOD_6:
       au8Led_clav[C_CLAV_LED_INFO_2].mode = ~E_FLASH_ALWAYS;
       au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_ERREUR_DECTECTEE;
-      modif_mode = E_CLAV_MODE_4;
+      modif_mode = E_CLAV_ULTRA_MODE;
     break;
 
     default:
@@ -160,7 +160,7 @@ PUBLIC void CLAV_GererMode(etCLAV_keys mode)
     break;
   }
 
-  if (modif_mode != E_CLAV_MODE_DEFAULT)
+  if ((modif_mode != E_CLAV_MODE_DEFAULT)&& (AppData.eClavState != E_CLAV_ULTRA_MODE))
   {
     compter_duree_mode = 0;
     start_timer_of_mode = TRUE;

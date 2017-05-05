@@ -202,12 +202,15 @@ PUBLIC teClavState CLAV_BoutonDeConfiguration(bool_t * bip_on)
   else if (AppData.eClavState == E_CLAV_ULTRA_MODE)
   {
     // Revenir en normal
+    vPrintf("Sortie en ultra mode\n");
     mef_clav = E_CLAV_ETAT_EN_INITIALISATION;
     CLAV_GererMode(E_KEY_MOD_5);
   }
   else
   {
     // Allez en ultra care
+    vPrintf("Passage en ultra mode\n");
+    AppData.eClavState == E_CLAV_ULTRA_MODE;
     mef_clav = E_CLAV_ULTRA_MODE;
     CLAV_GererMode(E_KEY_MOD_6);
   }
