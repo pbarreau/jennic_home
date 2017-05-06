@@ -31,7 +31,7 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap);
 PRIVATE void CLAV_GestionIts(void);
 PRIVATE void NEW_CLAV_GestionIts(void);
 
-PRIVATE etCLAV_keys CLAV_AnalyseIts(uint8 *position);
+PUBLIC etCLAV_keys CLAV_AnalyseIts(uint8 *position);
 
 /****************************************************************************/
 /***        Exported Variables                                            ***/
@@ -57,10 +57,9 @@ PRIVATE bool_t anti_rebond_it = FALSE;
 PRIVATE bool_t b_it_detect_front_descendant = FALSE;
 //PRIVATE uint16 tempo_rebond = 0;
 PRIVATE bool_t b_it_detecte = FALSE;
-PRIVATE bool_t NEW_traiter_It = FALSE;
+PUBLIC bool_t NEW_traiter_It = FALSE;
 
 PRIVATE bool_t b_start_press_count = FALSE;
-PRIVATE bool_t b_NEW_start_press_count = FALSE;
 PUBLIC uint16 timer_appuie_touche = 0;
 PUBLIC uint16 NEW_timer_appuie_touche = 0;
 PUBLIC uint16 NEW_memo_delay_touche = 0;
@@ -79,7 +78,7 @@ PUBLIC const etCLAV_keys R_Key_modes[CST_NB_MODES] = { E_KEY_NUM_MOD_1,
     E_KEY_NUM_MOD_2, E_KEY_NUM_MOD_3, E_KEY_NUM_MOD_4 };
 
 #if !NO_DEBUG_ON
-PRIVATE const uint8 code_ascii[] = "ABCD1234#*";
+PUBLIC const uint8 code_ascii[] = "ABCD1234#*";
 #endif
 
 #else
@@ -336,22 +335,6 @@ PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId, uint32 u32ItemBitmap)
     {
       IHM_ClignoteLed();
 
-      if (b_NEW_start_press_count)
-      {
-        NEW_timer_appuie_touche++;
-      }
-
-      if (b_start_press_count)
-      {
-        timer_appuie_touche++;
-      }
-
-      if (start_timer_of_mode == TRUE)
-      {
-        compter_duree_mode++;
-      }
-
-      NEW_CLAV_GestionIts();
 
 #ifndef CLAV_IS_VELLMAN
       if (b_activer_bip == TRUE)
@@ -364,49 +347,6 @@ PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId, uint32 u32ItemBitmap)
         }
       }
 #endif
-#if 0
-      if (anti_rebond_it)
-      {
-        tempo_enb_it++;
-        if (tempo_enb_it >= C_TEMPS_ANTI_REBOND)
-        {
-          tempo_enb_it = 0;
-          anti_rebond_it = FALSE;
-          CLAV_GestionIts();
-        }
-
-      }
-
-#endif
-      //----------------------
-      // touche mode appuyee
-#if 0
-      if(OneIt20)
-      {
-
-        it20tick++;
-        if(it20tick==30)
-        {
-          it20tick = 0;
-
-          // Lire etat clavier
-          if(!IsBitSet(PBAR_ScanKey(),9))
-          {
-            vAHI_DioInterruptEdge(E_JPI_DIO20_INT,0);
-            TimingIo_20 = 0;
-            bStartTimerIo_20 = TRUE;
-          }
-          else
-          {
-            vAHI_DioInterruptEdge(0,E_JPI_DIO20_INT);
-            bStartTimerIo_20 = FALSE;
-          }
-          OneIt20 = FALSE;
-          eKeyTouched = E_KEY_NUM_DIESE;
-        }
-      }
-#endif
-
     }
     break;
 
@@ -479,50 +419,27 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
         //if(!it_en_cours)it_en_cours=4;
 #endif
       {
-        if (b_NEW_start_press_count == FALSE && (NEW_traiter_It == FALSE))
+        if (b_NEW_start_press_count == FALSE)
         {
+          NEW_timer_appuie_touche = 0;
           b_NEW_start_press_count = TRUE;
-          memo_its_down = u32ItemBitmap;
 
           // Detection passage down -> up (front montant)
           vAHI_DioInterruptEdge(PBAR_CFG_NUMPAD_IN, 0);
+          memo_its_down = u32ItemBitmap;
         }
         else
         {
-          b_NEW_start_press_count = FALSE;
-          memo_its_up = u32ItemBitmap;
+          //bloquer les its
+          vAHI_DioInterruptEnable(0,PBAR_CFG_NUMPAD_IN);
+
           NEW_memo_delay_touche = NEW_timer_appuie_touche;
-          NEW_timer_appuie_touche = 0;
-          NEW_traiter_It = TRUE;
 
-          // Detection passage down -> up (front descendant)
-          vAHI_DioInterruptEdge(0, PBAR_CFG_NUMPAD_IN);
+          b_NEW_start_press_count = FALSE;
+
+          // Informer a gerer
+          AppData.eClavState = E_KS_TRAITER_IT;
         }
-#if 0
-        if ((anti_rebond_it == FALSE) && (b_recherche_touche_en_cours == FALSE))
-        {
-          anti_rebond_it = TRUE;
-
-          vPrintf("\nApparition It front : ");
-
-          if (b_it_detect_front_descendant == FALSE)
-          {
-            b_it_detect_front_descendant = TRUE;
-            vPrintf("descendant\n");
-
-            // Memorisation de l'it
-            memo_its_down = u32ItemBitmap;
-          }
-          else
-          {
-            b_it_detect_front_descendant = FALSE;
-            vPrintf("montant\n");
-
-            // Memorisation de l'it
-            memo_its_up = u32ItemBitmap;
-          }
-        }
-#endif
       }
       break;
 
@@ -541,6 +458,9 @@ PRIVATE void NEW_CLAV_GestionIts(void)
   if(NEW_traiter_It == FALSE)
     return;
 
+  AppData.eClavState = E_KS_TRAITER_IT;
+
+#if 0
   // desactiver les its clavier
   vAHI_DioInterruptEnable(0,PBAR_CFG_NUMPAD_IN);
 
@@ -559,15 +479,12 @@ PRIVATE void NEW_CLAV_GestionIts(void)
   }
   // Rearmer detection It
   NEW_traiter_It = FALSE;
-
-  // Activation pull up sur entrees
-  //vAHI_DioSetPullup(PBAR_CFG_NUMPAD_IN, PBAR_CFG_NUMPAD_OUT);
-
   // Preparation Detection Front descendant sur entrees
   vAHI_DioInterruptEdge(0, PBAR_CFG_NUMPAD_IN);
+
   // Autoriser its clavier
   vAHI_DioInterruptEnable(PBAR_CFG_NUMPAD_IN, 0);
-
+#endif
 }
 
 PRIVATE void CLAV_GestionIts(void)
@@ -644,17 +561,17 @@ PRIVATE void CLAV_GestionIts(void)
 }
 
 #ifdef CLAV_IS_VELLMAN
-PRIVATE etCLAV_keys CLAV_AnalyseIts(uint8 *position)
+PUBLIC etCLAV_keys CLAV_AnalyseIts(uint8 *position)
 {
   etCLAV_keys ret_val = E_KEY_NON_DEFINI;
   uint32 val3 = 0UL;
-  uint16 byte2 = 0;
+  uint16 byte2 = NEW_memo_delay_touche/100;
   int i = 0;
 
   // Pression suffisante ?
-  if( NEW_memo_delay_touche < C_MIN_KEY_PRESS_TIME)
+  if( byte2 < C_MIN_KEY_PRESS_TIME)
   {
-    vPrintf("Appuie trop court:'%d' ms\n",NEW_memo_delay_touche);
+    vPrintf("Appuie trop court:'%d' ms\n",byte2);
     return ret_val;
   }
 
@@ -676,7 +593,7 @@ PRIVATE etCLAV_keys CLAV_AnalyseIts(uint8 *position)
   return ret_val;
 }
 #else
-PRIVATE etCLAV_keys CLAV_AnalyseIts(uint8 *position)
+PUBLIC etCLAV_keys CLAV_AnalyseIts(uint8 *position)
 {
   uint8 byte = 0;
   uint8 tentative = 0;

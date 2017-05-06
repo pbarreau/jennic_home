@@ -14,16 +14,18 @@
 
 #include "e_config.h"
 
-PUBLIC char const *menu_pgm[] = { "Net Led", "Bip clavier", "Liaison"
-};
+PUBLIC char const *menu_pgm[] = { "Net Led", "Bip clavier", "Liaison" };
+PRIVATE eLedInfo MenuFlashValue[] = { E_FLASH_MENU_LED_NET,
+    E_FLASH_MENU_BIP_CLAVIER, E_FLASH_MENU_LIAISON };
 
 PUBLIC uint8 bufEmission[3] = { 0, 0, 0 };
+PUBLIC bool_t b_EteindreNet = FALSE;
 
 PRIVATE teClavState NEW_CLAV_GererToucheModeSuperUser(etCLAV_keys laTouche);
 PRIVATE teClavState NEW_CLAV_GererToucheModeSimpleUser(etCLAV_keys laTouche);
 PRIVATE teClavState NEW_CLAV_ChoisirNouveauRole(etCLAV_keys laTouche);
-PRIVATE void NEW_ManageNetworkLed(void);
-
+PRIVATE void NEW_ManageNetworkLed(etCLAV_keys laTouche);
+PRIVATE void NEW_CLAV_MenuSuperUSer(eLedInfo flashingType, etCLAV_keys laTouche);
 
 PRIVATE teClavState clav_BtnPgmL1(teClavState mef_clav, uint8 *care);
 PRIVATE teClavState clav_BtnPgmL2(teClavState mef_clav, uint8 *care);
@@ -62,7 +64,6 @@ PUBLIC teClavState CLAV_GererTouche(etCLAV_keys keys)
 
 PRIVATE teClavState NEW_CLAV_ChoisirNouveauRole(etCLAV_keys laTouche)
 {
-  teClavState mef_clav = AppData.eClavState;
   etCLAV_role cur_role = AppData.usage;
 
   vPrintf("Utilisation courante:%d\n", cur_role);
@@ -89,75 +90,110 @@ PRIVATE teClavState NEW_CLAV_ChoisirNouveauRole(etCLAV_keys laTouche)
 
 PRIVATE teClavState NEW_CLAV_GererToucheModeSuperUser(etCLAV_keys laTouche)
 {
-  teClavState mef_clav = AppData.eClavState;
   uint8 uKeyPos = AppData.ukey;
 
   static uint8 idMode = 0;
-  static uint8 val_flash = 0;
+  static eLedInfo cur_menu = E_FLASH_MENU_LED_NET;
+  uint8 val_flash = (uint8) MenuFlashValue[idMode];
   int len = (sizeof(menu_pgm) / sizeof(char **));
 
   if ((laTouche == E_KEY_NUM_DIESE) && (timer_touche[uKeyPos] <= C_PRESSION_T1))
   {
-    //NEW_ManageNetworkLed();
     vPrintf("Len = %d ", len);
     vPrintf("Menu '%s' flash:'%x'\n", menu_pgm[idMode], val_flash);
     au8Led_clav[C_CLAV_LED_INFO_2].mode = val_flash;
     au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_OFF;
 
-    //CLAV_GererMode(tabModeKeys[idMode]);
+    cur_menu = MenuFlashValue[idMode];
     idMode++;
     idMode = idMode % len;
-
-    val_flash++;
-    val_flash = val_flash % 256;
   }
+
+  NEW_CLAV_MenuSuperUSer(cur_menu, laTouche);
 
   return E_KS_ATTENTE_TOUCHE;
 }
 
-PRIVATE void NEW_ManageNetworkLed(void)
+PRIVATE void NEW_CLAV_MenuSuperUSer(eLedInfo flashingType, etCLAV_keys laTouche)
 {
+  switch (flashingType)
+  {
+    case E_FLASH_MENU_LED_NET:
+    {
+      NEW_ManageNetworkLed(laTouche);
+    }
+    break;
+
+    case E_FLASH_MENU_BIP_CLAVIER:
+    {
+
+    }
+    break;
+    case E_FLASH_MENU_LIAISON:
+    {
+
+    }
+    break;
+    default:
+    {
+      vPrintf("PGM Menu Error!!\n");
+    }
+    break;
+  }
+}
+
+PRIVATE void NEW_ManageNetworkLed(etCLAV_keys laTouche)
+{
+  bufEmission[0] = 0;
   bufEmission[1] = 0;
   bufEmission[2] = 0;
 
-  if (mNetOkTypeFlash == E_FLASH_RESEAU_ACTIF)
+  switch (laTouche)
   {
-    vPrintf("Broadcast Net Off\n");
+    case E_KEY_NUM_0:
+    {
+      vPrintf("Broadcast Net Off\n");
 #ifdef CLAV_IS_VELLMAN
-    mNetOkTypeFlash = ~E_FLASH_OFF;
+      mNetOkTypeFlash = ~E_FLASH_OFF;
 #else
-    mNetOkTypeFlash = E_FLASH_OFF;
+      mNetOkTypeFlash = E_FLASH_OFF;
 #endif
 
-    bufEmission[0] = E_MSG_NET_LED_OFF;
-    au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
-    au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_EN_ATTENTE_TOUCHE_BC;
-    au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_OFF;
+      bufEmission[0] = E_MSG_NET_LED_OFF;
+      b_EteindreNet = TRUE; // Pour le faire quand on va quitter le mode programmation
+    }
+    break;
 
+    case E_KEY_NUM_1:
+    {
+
+    }
+    break;
+    case E_KEY_NUM_2:
+    {
+      vPrintf("Broadcast Net On\n");
+      mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
+
+      bufEmission[0] = E_MSG_NET_LED_ON;
+      b_EteindreNet = FALSE; // Pour le faire quand on va quitter le mode programmation
+    }
+    break;
+    default:
+    {
+
+    }
+    break;
   }
-  else
+
+  if (bufEmission[0])
   {
-    vPrintf("Broadcast Net On\n");
-    mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
-
-    bufEmission[0] = E_MSG_NET_LED_ON;
-    au8Led_clav[C_CLAV_LED_INFO_1].mode = E_FLASH_EN_ATTENTE_TOUCHE_BC;
-    au8Led_clav[C_CLAV_LED_INFO_2].mode = ~E_FLASH_OFF;
-    au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_OFF;
-
+    eJenie_SendData(0, bufEmission, 3,
+    TXOPTION_SILENT | TXOPTION_BDCAST);
   }
-  //au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
-
-  eJenie_SendData(0, bufEmission, 3,
-  TXOPTION_SILENT | TXOPTION_BDCAST);
 }
 PRIVATE teClavState NEW_CLAV_GererToucheModeSimpleUser(etCLAV_keys laTouche)
 {
-  teClavState mef_clav = AppData.eClavState;
   uint8 uKeyPos = AppData.ukey;
-
-  //static teClavState previousClavState = E_KS_ATTENTE_TOUCHE;
-  //int8 uKeyPos = NEW_TrouvePositionTouche(laTouche);
   static uint8 idMode = 0;
 
 #if 0

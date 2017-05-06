@@ -23,6 +23,8 @@
 #include "e_config.h"
 
 //PRIVATE void CLAV_GererMultiple();
+PUBLIC bool_t b_NEW_start_press_count = FALSE;
+
 //---------------------------------------------------
 
 PUBLIC bool_t b_activer_bip = FALSE;
@@ -30,13 +32,19 @@ PUBLIC bool_t b_activer_bip = FALSE;
 //---------------------------
 PUBLIC void CLAV_AnalyserEtat(teClavState mef_clavier)
 {
-  uint16 max_time = 0;
+  etCLAV_keys la_touche = E_KEY_NON_DEFINI;
+  uint8 uId = 0;
   static bool_t oneshot = FALSE;
   etCLAV_keys toucheAction = AppData.eKeyPressed;
 
 #ifdef WATCHDOG_ENABLED
   vAHI_WatchdogRestart();
 #endif
+
+  if (b_NEW_start_press_count)
+  {
+    NEW_timer_appuie_touche++;
+  }
 
   switch (mef_clavier)
   {
@@ -69,26 +77,45 @@ PUBLIC void CLAV_AnalyserEtat(teClavState mef_clavier)
     case E_KS_ATTENDRE_FIN_CONFIG_BOITE:
     break;
 
+    case E_KS_ARMER_IT:
+    {
+      // Rearmer detection It
+      // Preparation Detection Front descendant sur entrees
+      vAHI_DioInterruptEdge(0, PBAR_CFG_NUMPAD_IN);
+
+      // Autoriser its clavier
+      vAHI_DioInterruptEnable(PBAR_CFG_NUMPAD_IN, 0);
+      AppData.eClavState = E_KS_ATTENTE_TOUCHE;
+    }
+    break;
+
     case E_KS_TRAITER_IT:
-      if (toucheAction == E_KEY_NUM_DIESE
-          || toucheAction == E_KEY_NUM_ETOILE)
+    {
+
+      la_touche = CLAV_AnalyseIts(&uId);
+      if (la_touche != E_KEY_NON_DEFINI)
       {
-        max_time = C_TIME_ULTRA;
+        vPrintf("Touche '%c' pendant '%d' ms, code dans pgm:%d\n\n",
+            code_ascii[uId], NEW_memo_delay_touche / 100, la_touche);
+
+        AppData.eKeyPressed = la_touche;
+        AppData.ukey = uId;
+        timer_touche[uId] = NEW_memo_delay_touche / 100;
+
+        // Une touche est reconnue on peut demander a la traiter
+        AppData.eClavState = E_KS_TRAITER_TOUCHE;
       }
       else
       {
-        max_time = C_MAX_DURE_PRESSION;
+        AppData.eClavState = E_KS_ARMER_IT;
       }
-      // Verif que l'appuie sur le clavier est franc
-      if (timer_appuie_touche >= max_time)
-      {
-        CLAV_ResetLecture();
-      }
+    }
     break;
 
     case E_KS_TRAITER_TOUCHE:
     {
-      AppData.eClavState = CLAV_GererTouche(toucheAction);
+      CLAV_GererTouche(toucheAction);
+      AppData.eClavState = E_KS_ARMER_IT;
     }
     break;
 
@@ -159,7 +186,7 @@ PUBLIC void CLAV_GererMode(etCLAV_keys mode)
     break;
   }
 
-  if ((modif_mode != E_KM_1)&& (AppData.eClavState != E_KS_ULTRA_MODE))
+  if ((modif_mode != E_KM_1) && (AppData.eClavState != E_KS_ULTRA_MODE))
   {
     compter_duree_mode = 0;
     start_timer_of_mode = TRUE;
@@ -179,7 +206,8 @@ PUBLIC bool_t CLAV_TrouverAssociationToucheBoite(stToucheDef *touche,
   bool_t eReturn = FALSE;
   uint8 key_code = (
       (touche->la_touche == E_KEY_NUM_ETOILE) ?
-          C_KEY_MEM_ALL : touche->la_touche - E_KEY_NUM_1);
+      C_KEY_MEM_ALL :
+                                                touche->la_touche - E_KEY_NUM_1);
   ;
   uint8 key_mode = touche->le_mode - E_KM_1;
   uint8 nbBox = eeprom.netConf.ptr_boxList[key_mode][key_code];

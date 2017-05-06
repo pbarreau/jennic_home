@@ -35,7 +35,7 @@ extern "C"
 #define C_MAX_DURE_PRESSION	200
 #define C_TIME_ULTRA		200
 
-#define C_PRESSION_T1		50	/// Limite rotation mode
+#define C_PRESSION_T1		85	/// Limite rotation mode
 #define C_PRESSION_T2		85	/// Limite Bcast net
 #define C_PRESSION_T3		100	/// Limite passage configuration
 #define C_PRESSION_T4		100	/// Limite Save
@@ -45,7 +45,7 @@ extern "C"
 // --------------------------
 #ifdef CLAV_IS_VELLMAN
 #define CLAV_NB_KEYS  10
-#define C_MIN_KEY_PRESS_TIME  10  // en ms
+#define C_MIN_KEY_PRESS_TIME  5  // en ms
 
 #define PBAR_CFG_NUMPAD_IN  (\
     E_JPI_DIO11_INT |\
@@ -141,6 +141,7 @@ extern PUBLIC char const *dbg_etCLAV_role[];
 typedef enum _clav_state {
   E_KS_NON_DEFINI,      /// Mode de traitement du clavier non definit
   E_KS_ATTENTE_TOUCHE,  /// Attente que l'utilisateur appuie sur une touche du clavier
+  E_KS_ARMER_IT,        /// Preparation lecture clavier
   E_KS_TRAITER_IT,      /// Determiner qu'elle touche appuyée
   E_KS_TRAITER_TOUCHE,  /// Effectuer traitement de la touche
   E_KS_SERVICE_ON,
@@ -250,6 +251,8 @@ extern PUBLIC teClavState CLAV_PgmActionTouche(etCLAV_keys keys);
 // -----------------
 extern PUBLIC teClavState CLAV_UsrActionTouche(etCLAV_keys keys);
 extern PUBLIC teClavState CLAV_UsrNetMsgInput(tsData *psData);
+extern PUBLIC etCLAV_keys CLAV_AnalyseIts(uint8 *position);
+
 
 /****************************************************************************/
 /***        Exported Variables                                            ***/
@@ -277,6 +280,12 @@ extern PUBLIC uint8 bufEmission[3];
 extern PUBLIC char gch_spaces[20];
 extern PUBLIC eLedInfo mNetOkTypeFlash;
 extern PUBLIC etCLAV_keys key_code[];
+extern PUBLIC bool_t b_EteindreNet;
+extern PUBLIC bool_t NEW_traiter_It;
+extern PUBLIC const uint8 code_ascii[];
+extern PUBLIC bool_t b_NEW_start_press_count;
+extern PUBLIC uint16 NEW_memo_delay_touche;
+extern PUBLIC uint16 NEW_timer_appuie_touche;
 
 #if defined __cplusplus
 }
