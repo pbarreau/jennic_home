@@ -61,6 +61,7 @@ extern PUBLIC PBAR_E_KeyMode LabasMod;
 extern PUBLIC uint8 ledId;
 extern PUBLIC uint8 config;
 extern PUBLIC ebpLedInfo mNetOkTypeFlash;
+extern PUBLIC uint8 sel_led;
 
 // Public fonctions
 extern PUBLIC void PBAR_LireBtnPgm(void);

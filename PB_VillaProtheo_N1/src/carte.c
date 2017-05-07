@@ -10,6 +10,10 @@
 #include "led.h"
 #include "bit.h"
 
+//En attente de changement programmation
+//Affecter valeur output
+Message clavier non compris
+
 #include "c_config.h"
 #include "i2c_9555.h"
 /****************************************************************************/
@@ -40,6 +44,7 @@ PUBLIC PBAR_E_KeyMode LabasMod = E_CLAV_MODE_NOT_SET;
 
 PUBLIC uint8 ledId = 0;
 PUBLIC uint8 config = 0;
+PUBLIC uint8 sel_led = 0;
 
 PUBLIC void PBAR_LireBtnPgm(void)
 {
@@ -69,7 +74,6 @@ PRIVATE void PBAR_LireBtnPgm_TstOutput(void)
 PRIVATE void PBAR_LireBtnPgm_NormalUsage(void)
 {
   uint8 boxConf = 0;
-  static bool showNet = TRUE;
 
   // Bouton Pgm appuye ??
   if ((u8JPI_PowerStatus() & 0x10) == 0 && ePgmMode == E_CLAV_MODE_NOT_SET)
@@ -242,7 +246,7 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
   bool_t bReturnConfig = FALSE;
   uint8 saveLed = 0;
   uint32 Maconf = 0;
-  static int sel_led = 0;
+  //static uint8 sel_led = 0;
 
   // Bouton Pgm appuye ??
   if ((u8JPI_PowerStatus() & 0x10) == 0)

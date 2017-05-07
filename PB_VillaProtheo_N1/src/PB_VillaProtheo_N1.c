@@ -423,8 +423,11 @@ PUBLIC void vJenie_CbMain(void)
     {
 
       vPrintf(" Config actuelle:%x\n", config);
+
       // Mettre les sorties au niveau de config
       vPRT_DioSetOutput(config << PBAR_DEBUT_IO, (~config) << PBAR_DEBUT_IO);
+      // Nouveau depart
+      sel_led = config;
 
       vPrintf(" En attente de changement programmation\n");
       au8Led[0].mode = E_FLASH_BP_EN_CONFIGURATION_SORTIES;
