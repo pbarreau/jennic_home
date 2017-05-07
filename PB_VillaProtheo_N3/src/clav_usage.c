@@ -194,7 +194,7 @@ PRIVATE void NEW_ManageNetworkLed(etCLAV_keys laTouche)
 PRIVATE teClavState NEW_CLAV_GererToucheModeSimpleUser(etCLAV_keys laTouche)
 {
   uint8 uKeyPos = AppData.ukey;
-  static uint8 idMode = 0;
+  static uint8 idMode = 1; // enrelation avec le mode affiche par les leds
 
 #if 0
   if (uKeyPos < 0)

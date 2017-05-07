@@ -84,7 +84,7 @@ PUBLIC void CLAV_AnalyserEtat(teClavState mef_clavier)
       vAHI_DioInterruptEdge(0, PBAR_CFG_NUMPAD_IN);
 
       // Autoriser its clavier
-      vAHI_DioInterruptEnable(PBAR_CFG_NUMPAD_IN, 0);
+      //vAHI_DioInterruptEnable(PBAR_CFG_NUMPAD_IN, 0);
       AppData.eClavState = E_KS_ATTENTE_TOUCHE;
     }
     break;
@@ -96,7 +96,7 @@ PUBLIC void CLAV_AnalyserEtat(teClavState mef_clavier)
       if (la_touche != E_KEY_NON_DEFINI)
       {
         vPrintf("Touche '%c' pendant '%d' ms, code dans pgm:%d\n\n",
-            code_ascii[uId], NEW_memo_delay_touche / 100, la_touche);
+            code_ascii[uId], NEW_memo_delay_touche, la_touche);
 
         AppData.eKeyPressed = la_touche;
         AppData.ukey = uId;
