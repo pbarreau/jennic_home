@@ -154,9 +154,22 @@ typedef enum _clav_state {
 } teClavState; /// Keyboard states
 extern PUBLIC char const *dbg_teClavState[];
 
+typedef enum _clav_NetState {
+  E_KS_NET_NON_DEFINI,
+  E_KS_NET_CONF_START,
+  E_KS_NET_WAIT_CLIENT,
+  E_KS_NET_CLIENT_IN,
+  E_KS_NET_CONF_EN_COURS,
+  E_KS_NET_CONF_END, // Config correctement terminee
+  E_KS_NET_CONF_BRK, // Configuration reseau interrompu
+  E_KS_NET_CLAV_ON,
+  E_KS_NET_END
+}teClavNetStates;
+
 typedef struct {
   teNetState eAppState;
   teClavState eClavState;
+  teClavNetStates eNetState;
   tePcState ePcState;
   teClavState ePrevClav;
   etCLAV_keys eKeyPressed;

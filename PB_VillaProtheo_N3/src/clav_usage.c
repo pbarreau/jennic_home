@@ -25,7 +25,7 @@ PRIVATE teClavState NEW_CLAV_GererToucheModeSuperUser(etCLAV_keys laTouche);
 PRIVATE teClavState NEW_CLAV_GererToucheModeSimpleUser(etCLAV_keys laTouche);
 PRIVATE teClavState NEW_CLAV_ChoisirNouveauRole(etCLAV_keys laTouche);
 PRIVATE void NEW_ManageNetworkLed(etCLAV_keys laTouche);
-PRIVATE void NEW_CLAV_MenuSuperUSer(eLedInfo flashingType, etCLAV_keys laTouche);
+PRIVATE teClavState NEW_CLAV_MenuSuperUSer(eLedInfo flashingType, etCLAV_keys laTouche);
 
 PRIVATE teClavState clav_BtnPgmL1(teClavState mef_clav, uint8 *care);
 PRIVATE teClavState clav_BtnPgmL2(teClavState mef_clav, uint8 *care);
@@ -53,6 +53,7 @@ PUBLIC teClavState CLAV_GererTouche(etCLAV_keys keys)
   }
   else if (keyContext == E_KR_CHOISIR_ROLE)
   {
+    vPrintf("Choix 1 ou 2\n");
     mef_clav = NEW_CLAV_ChoisirNouveauRole(keys);
   }
   else
@@ -90,6 +91,7 @@ PRIVATE teClavState NEW_CLAV_ChoisirNouveauRole(etCLAV_keys laTouche)
 
 PRIVATE teClavState NEW_CLAV_GererToucheModeSuperUser(etCLAV_keys laTouche)
 {
+  teClavState mef_clav = AppData.eClavState;
   uint8 uKeyPos = AppData.ukey;
 
   static uint8 idMode = 0;
@@ -107,15 +109,25 @@ PRIVATE teClavState NEW_CLAV_GererToucheModeSuperUser(etCLAV_keys laTouche)
     cur_menu = MenuFlashValue[idMode];
     idMode++;
     idMode = idMode % len;
+
   }
 
-  NEW_CLAV_MenuSuperUSer(cur_menu, laTouche);
+  if ((laTouche == E_KEY_NUM_DIESE) && (timer_touche[uKeyPos] > C_PRESSION_T1))
+  {
+    AppData.usage = E_KR_CHOISIR_ROLE;
+    CLAV_GererMode(E_KEY_NUM_MOD_5);
+  }
 
-  return E_KS_ATTENTE_TOUCHE;
+  mef_clav = NEW_CLAV_MenuSuperUSer(cur_menu, laTouche);
+  //      CLAV_PgmActionTouche(laTouche);
+
+  return mef_clav;
 }
 
-PRIVATE void NEW_CLAV_MenuSuperUSer(eLedInfo flashingType, etCLAV_keys laTouche)
+PRIVATE teClavState NEW_CLAV_MenuSuperUSer(eLedInfo flashingType, etCLAV_keys laTouche)
 {
+  teClavState mef_clav = AppData.eClavState;
+
   switch (flashingType)
   {
     case E_FLASH_MENU_LED_NET:
@@ -131,7 +143,14 @@ PRIVATE void NEW_CLAV_MenuSuperUSer(eLedInfo flashingType, etCLAV_keys laTouche)
     break;
     case E_FLASH_MENU_LIAISON:
     {
+      if (laTouche == E_KEY_NUM_0)
+      {
+        au8Led_clav[C_CLAV_LED_INFO_1].mode = E_FLASH_MENU_LIAISON;
+        au8Led_clav[C_CLAV_LED_INFO_2].mode = ~E_FLASH_OFF;
+        au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_OFF;
 
+        mef_clav = CLAV_PgmNetMontrerClavier();
+      }
     }
     break;
     default:
@@ -140,6 +159,7 @@ PRIVATE void NEW_CLAV_MenuSuperUSer(eLedInfo flashingType, etCLAV_keys laTouche)
     }
     break;
   }
+  return mef_clav;
 }
 
 PRIVATE void NEW_ManageNetworkLed(etCLAV_keys laTouche)
@@ -164,12 +184,12 @@ PRIVATE void NEW_ManageNetworkLed(etCLAV_keys laTouche)
     }
     break;
 
-    case E_KEY_NUM_1:
+    case E_KEY_NUM_2:
     {
 
     }
     break;
-    case E_KEY_NUM_2:
+    case E_KEY_NUM_1:
     {
       vPrintf("Broadcast Net On\n");
       mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
@@ -210,6 +230,7 @@ PRIVATE teClavState NEW_CLAV_GererToucheModeSimpleUser(etCLAV_keys laTouche)
     CLAV_GererMode(tabModeKeys[idMode]);
     idMode++;
     idMode = idMode % (sizeof(tabVisibleMode) / sizeof(etCLAV_mod));
+
   }
 
   if ((laTouche == E_KEY_NUM_DIESE) && (timer_touche[uKeyPos] > C_PRESSION_T1))

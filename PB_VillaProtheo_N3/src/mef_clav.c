@@ -56,6 +56,32 @@ PUBLIC void CLAV_AnalyserEtat(teClavState mef_clavier)
     break;
 
     case E_KS_ATTENTE_TOUCHE:
+    {
+
+      switch (AppData.eNetState)
+      {
+        case E_KS_NET_CONF_START:
+        break;
+        case E_KS_NET_WAIT_CLIENT:
+          au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_RECHERCHE_RESEAU;
+        break;
+        case E_KS_NET_CONF_END:
+        break;
+
+        case E_KS_NET_NON_DEFINI:
+        case E_KS_NET_CLIENT_IN:
+        case E_KS_NET_CONF_EN_COURS:
+        case E_KS_NET_CONF_BRK:
+        case E_KS_NET_CLAV_ON:
+        case E_KS_NET_END:
+        break;
+
+        default:
+          vPrintf("CASE NET NON PREVU\n");
+        break;
+
+      }
+    }
     break;
 
     case E_KS_SERVICE_ON:
@@ -133,6 +159,8 @@ PUBLIC void CLAV_GererMode(etCLAV_keys mode)
 {
   //teClavState mef_clav = AppData.eClavState;
   etCLAV_mod modif_mode = AppData.eClavmod;
+  eLedInfo flash_val;
+
 #if !NO_DEBUG_ON
   int stepper = 0;
 
@@ -141,41 +169,53 @@ PUBLIC void CLAV_GererMode(etCLAV_keys mode)
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
 #endif
 
+  switch (AppData.usage)
+  {
+    case E_KR_UTILISATEUR:
+      flash_val = ~E_FLASH_OFF;
+    break;
+    case E_KR_TECHNICIEN:
+      flash_val = ~E_FLASH_ALWAYS;
+    break;
+    case E_KR_CHOISIR_ROLE:
+      flash_val = E_FLASH_ERREUR_DECTECTEE;
+    break;
+    default:
+      flash_val = E_FLASH_RECHERCHE_RESEAU;
+    break;
+  }
+  au8Led_clav[C_CLAV_LED_INFO_2].mode = flash_val;
+
   switch (mode)
   {
     case E_KEY_NUM_MOD_1:
-      au8Led_clav[C_CLAV_LED_INFO_2].mode = ~E_FLASH_OFF;
       au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_OFF;
       modif_mode = E_KM_1;
     break;
 
     case E_KEY_NUM_MOD_2:
-      au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_ERREUR_DECTECTEE;
-      au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_OFF;
+      au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_MENU_LED_NET;
       modif_mode = E_KM_2;
     break;
 
     case E_KEY_NUM_MOD_3:
-      au8Led_clav[C_CLAV_LED_INFO_2].mode = ~E_FLASH_OFF;
-      au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_ERREUR_DECTECTEE;
+      au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_MENU_BIP_CLAVIER;
       modif_mode = E_KM_3;
     break;
 
     case E_KEY_NUM_MOD_4:
-      au8Led_clav[C_CLAV_LED_INFO_2].mode = ~E_FLASH_ALWAYS;
-      au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_ALWAYS;
+      au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_MENU_LIAISON;
       modif_mode = E_KM_4;
     break;
 
     case E_KEY_NUM_MOD_5:
-      au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_ERREUR_DECTECTEE;
-      au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_ALWAYS;
+      au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_ERREUR_DECTECTEE;
       modif_mode = E_KM_1;
     break;
 
     case E_KEY_NUM_MOD_6:
       au8Led_clav[C_CLAV_LED_INFO_2].mode = ~E_FLASH_ALWAYS;
-      au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_ERREUR_DECTECTEE;
+      au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_RESET_POSSIBLE;
       modif_mode = E_KS_ULTRA_MODE;
     break;
 

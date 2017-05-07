@@ -250,22 +250,21 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
 
     case E_JENIE_REG_SVC_RSP:
     {
-      if (AppData.eClavState == E_KS_SERVICE_ON)
+      if (AppData.eNetState == E_KS_NET_CONF_START)
       {
         vPrintf(" Le service est bien enregistre chez le pere\n\n");
         vPrintf("En attente de demande d'une boite\n\n");
-        AppData.eClavState = E_KS_ATTENDRE_BOITE;
+        AppData.eNetState = E_KS_NET_WAIT_CLIENT;
       }
-      else if (AppData.eClavState == E_KS_SERVICE_OFF)
+      else if (AppData.eNetState == E_KS_NET_CONF_END)
       {
         vPrintf(" Le service est bien Retire chez le pere\n\n");
         vPrintf("En attente de commandes utilisateur\n\n");
-        AppData.eClavState = E_KS_ATTENTE_TOUCHE;
+        AppData.eNetState = E_KS_NET_CLAV_ON;
       }
       else
       {
-        vPrintf("ERR:E_JENIE_REG_SVC_RSP -> %s",
-            dbg_teClavState[AppData.eClavState]);
+        vPrintf("ERREUR RESEAU CLAVIER\n");
       }
 
     }
@@ -765,7 +764,7 @@ PUBLIC etCLAV_keys CLAV_AnalyseIts(uint8 *position)
   // Lecture resultat
   val3 = memo_its_down & 0x001FF800;
   byte2 = (uint16) (val3 >> 11);
-  vPrintf("memo_its_down=%x, Val3=%x, info2;%x\n", memo_its_down, val3, byte2);
+  //vPrintf("memo_its_down=%x, Val3=%x, info2;%x\n", memo_its_down, val3, byte2);
 
   for (i = 0; i < CLAV_NB_KEYS; i++)
   {

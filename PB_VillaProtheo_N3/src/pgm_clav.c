@@ -16,8 +16,9 @@ PUBLIC teClavState CLAV_PgmNetMontrerClavier(void)
 {
   teJenieStatusCode eStatus = E_JENIE_ERR_UNKNOWN;
   teClavState mef_clav = AppData.eClavState;
+  teClavNetStates mef_net = AppData.eNetState;
 //toto
-au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
+au8Led_clav[C_CLAV_LED_INFO_1].mode = E_FLASH_MENU_LIAISON;
 
 #if !NO_DEBUG_ON
   int stepper = 0;
@@ -36,17 +37,17 @@ au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
   {
     case E_JENIE_SUCCESS:
       vPrintf("%s Ce module est routeur : OK\n", gch_spaces);
-      mef_clav = E_KS_ATTENDRE_BOITE;
+      mef_net = E_KS_NET_WAIT_CLIENT;
     break;
 
     case E_JENIE_DEFERRED:
       vPrintf("%sCe module est end device transfert au pere\n", gch_spaces);
-      mef_clav = E_KS_SERVICE_ON;
+      mef_net = E_KS_NET_CONF_START;
     break;
 
     default:
       vPrintf("%s!!Activation service clavier a revoir\n", gch_spaces);
-      mef_clav = E_KS_NON_DEFINI;
+      mef_net = E_KS_NET_NON_DEFINI;
       AppData.eAppState = APP_BOUCLE_PRINCIPALE;
     break;
   }
@@ -57,6 +58,7 @@ au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
       (void *) (AppData.eAppState), E_DBG_TYPE_NET_STATE);
 #endif
 
+  AppData.eNetState = mef_net;
   return mef_clav;
 }
 
@@ -108,6 +110,7 @@ PUBLIC teClavState CLAV_PgmNetRetirerClavier(void)
 PUBLIC teClavState CLAV_PgmNetMsgInput(tsData *psData)
 {
   teClavState mef_clav = E_KS_NON_DEFINI;
+  teClavNetStates mef_net = AppData.eNetState;
   uint8 mode = 0;
   uint8 clav = 0;
   uint8 conf = 0;
@@ -122,7 +125,7 @@ PUBLIC teClavState CLAV_PgmNetMsgInput(tsData *psData)
 
   if ((psData->u16Length) == 1)
   {
-    if (AppData.eClavState == E_KS_ATTENDRE_BOITE)
+    if (mef_net == E_KS_NET_WAIT_CLIENT)
     {
           vPrintf("%sune boite se fait connaitre\n", gch_spaces);
           mef_clav = pgm_GererBoiteEntrante(psData);
@@ -140,7 +143,7 @@ PUBLIC teClavState CLAV_PgmNetMsgInput(tsData *psData)
       {
         vPrintf("%sMsg Fin config boite %d\n\n", gch_spaces, AppData.u8BoxId);
         pgm_CreerConfigAll(AppData.u8BoxId);
-        mef_clav = E_KS_ATTENDRE_BOITE;
+        mef_net = E_KS_NET_WAIT_CLIENT;
         AppData.eAppState = APP_BOUCLE_PRINCIPALE;
       }
       break;
@@ -156,7 +159,7 @@ PUBLIC teClavState CLAV_PgmNetMsgInput(tsData *psData)
             AppData.u8BoxId, mode, clav, conf);
 
         eeprom.netConf.boxData[mode][clav][AppData.u8BoxId] = conf;
-        mef_clav = E_KS_ATTENDRE_FIN_CONFIG_BOITE;
+        mef_net = E_KS_NET_CONF_EN_COURS;
       }
       break;
 
@@ -303,9 +306,9 @@ PRIVATE teClavState pgm_GererBoiteEntrante(tsData *psData)
     }
     vPrintf("%s   Selectionner un mode et une touche\n\n", gch_spaces);
 
-    au8Led_clav[C_CLAV_LED_INFO_1].mode = 0x7;
+    au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_EN_ATTENTE_TOUCHE_BC;
 
-    mef_clav = E_KS_EN_PROGR_AVEC_BOITE;
+    AppData.eNetState = E_KS_NET_CLIENT_IN;
     AppData.u8BoxId = box_number;
 
     AppData.eAppState = APP_BOUCLE_PRINCIPALE;
@@ -318,6 +321,8 @@ PRIVATE teClavState pgm_GererBoiteEntrante(tsData *psData)
     // Retour au mode normal
     vPrintf("%sRetour en usage : utilisation courante\n", gch_spaces);
     mef_clav = CLAV_GererTouche(AppData.eKeyPressed);
+    AppData.eNetState = E_KS_NET_CONF_BRK;
+
 
     // TODO : Envoyer msg a la box id (en erreur) pour qu'elle ne reste pas en attente de touche clavier
   }
