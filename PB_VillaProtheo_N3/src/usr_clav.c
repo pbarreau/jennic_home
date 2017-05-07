@@ -18,16 +18,15 @@ PUBLIC bool_t OneIt20 = FALSE;
 
 PUBLIC uint16 TimingIo_19 = 0;
 
-
-PUBLIC teClavState CLAV_UsrNetMsgInput(tsData *psData)
+PUBLIC etRunningNet CLAV_UsrNetMsgInput(tsData *psData)
 {
-  teClavState mef_clav = E_KS_NON_DEFINI;
-  PBAR_TypeMsg le_message = E_MSG_NOT_SET;
+  etRunningNet mef_net = E_KS_NET_MSG_IN;
+  etDefWifiMsg le_message = E_MSG_NOT_SET;
   vPrintf("Message Reseau a destination de clavier recut\n");
 
   if (psData->u16Length == 3)
   {
-    le_message = (PBAR_TypeMsg) (psData->pau8Data[psData->u16Length - 3]);
+    le_message = (etDefWifiMsg) (psData->pau8Data[psData->u16Length - 3]);
 
     switch (le_message)
     {
@@ -35,7 +34,7 @@ PUBLIC teClavState CLAV_UsrNetMsgInput(tsData *psData)
       {
         vPrintf("Demande reseau de couper led Net\n");
         mNetOkTypeFlash = E_FLASH_OFF;
-        au8Led_clav[C_CLAV_LED_INFO_1].mode =mNetOkTypeFlash;
+        au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
       }
       break;
 
@@ -43,7 +42,7 @@ PUBLIC teClavState CLAV_UsrNetMsgInput(tsData *psData)
       {
         vPrintf("Demande reseau de montrer led Net\n");
         mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
-        au8Led_clav[C_CLAV_LED_INFO_1].mode =mNetOkTypeFlash;
+        au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
       }
       break;
 
@@ -56,18 +55,17 @@ PUBLIC teClavState CLAV_UsrNetMsgInput(tsData *psData)
     }
   }
 
-  return mef_clav;
+  return mef_net;
 }
 
-PUBLIC teClavState CLAV_UsrActionTouche(etCLAV_keys keys)
+PUBLIC etRunningStp CLAV_UsrActionTouche(etInUsingkey keys)
 {
   static bool_t SetAllOff = FALSE;
-  teClavState mef_clav = E_KS_NON_DEFINI;
+  etRunningStp mef_clav = E_KS_STP_NON_DEFINI;
 
-  etCLAV_mod eKeyMode = AppData.eClavmod;
-  uint8 key_mode = eKeyMode - E_KM_1;
-  uint8 key_code = (keys == E_KEY_NUM_ETOILE ? C_KEY_MEM_ALL : keys - E_KEY_NUM_1); /// a corriger
-
+  etRunningKbd eKeyMode = AppData.eClavmod;
+  uint8 key_mode = eKeyMode - E_KS_KBD_VIRTUAL_1;
+  uint8 key_code = keys - E_KEY_NUM_1;
   uint8 box = 0;
   uint8 useBox = 0;
 
@@ -76,7 +74,7 @@ PUBLIC teClavState CLAV_UsrActionTouche(etCLAV_keys keys)
       dbg_etCLAV_mod[eKeyMode]);
 
   // A ton une demande valide
-  if ((eKeyMode > E_KM_NON_DEFINI) && (eKeyMode < E_KM_END)
+  if ((eKeyMode > E_KS_KBD_NON_DEFINI) && (eKeyMode < E_KS_KBD_END)
       && (keys < E_KEYS_NUM_END))
   {
     // sur clavier 4x4 regarder 1-9,0 et *
@@ -195,7 +193,7 @@ PUBLIC teClavState CLAV_UsrActionTouche(etCLAV_keys keys)
     SetAllOff = !SetAllOff; // Global
   }
 
-  mef_clav = E_KS_ATTENTE_TOUCHE;
+  mef_clav = E_KS_STP_ATTENTE_TOUCHE;
   return mef_clav;
 }
 
@@ -216,13 +214,13 @@ PRIVATE keyball(void)
   {
     // recuperer la config du clavier et la stocker
     // dans la touche ALL
-    valThisBox |= eeprom.netConf.boxData[eModeOnConf-E_KM_1][i][IncomingBoxId];
+    valThisBox |= eeprom.netConf.boxData[eModeOnConf-E_KS_KBD_VIRTUAL_1][i][IncomingBoxId];
     vPrintf(" box:%d key:%d, val:%x\n",useBox,i,valThisBox);
   }
 
   // sauvegarder cette valeur dans la touche ALL de la boite en cours
   // On sauve la touche all
-  eeprom.netConf.boxData[eModeOnConf-E_KM_1][C_MAX_KEYS][IncomingBoxId] = valThisBox;
+  eeprom.netConf.boxData[eModeOnConf-E_KS_KBD_VIRTUAL_1][C_MAX_KEYS][IncomingBoxId] = valThisBox;
 
   // Dire que Touche ALL position ptr++ a une Boite configuree
   VerifierExistanceBoite(eModeOnConf,E_KPD_ALL,IncomingBoxId);

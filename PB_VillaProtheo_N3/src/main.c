@@ -32,7 +32,7 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap);
 PRIVATE void CLAV_GestionIts(void);
 PRIVATE void NEW_CLAV_GestionIts(void);
 
-PUBLIC etCLAV_keys CLAV_AnalyseIts(uint8 *position);
+PUBLIC etInUsingkey CLAV_AnalyseIts(uint8 *position);
 
 /****************************************************************************/
 /***        Exported Variables                                            ***/
@@ -44,6 +44,11 @@ PUBLIC bool_t start_timer_of_mode = FALSE;
 PUBLIC uint16 compter_duree_mode = 0;
 PUBLIC eLedInfo mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
 
+
+PUBLIC etRunningStp (*MenuPossible[2][3])(stParam *param) =
+{
+  { pFn1_1,pFn1_2,pFn1_3},
+  { pFn2_1,pFn2_2,pFn2_3} };
 /****************************************************************************/
 /***        Local Variables                                               ***/
 /****************************************************************************/
@@ -65,18 +70,19 @@ PUBLIC uint16 timer_appuie_touche = 0;
 PUBLIC uint16 NEW_timer_appuie_touche = 0;
 PUBLIC uint16 NEW_memo_delay_touche = 0;
 
-PRIVATE b_it_20_down_start = TRUE;
+PRIVATE bool_t b_it_20_down_start = TRUE;
 #ifdef CLAV_IS_VELLMAN
 PRIVATE const uint16 ligne_colonne[] = { 0x1, 0x2, 0x4, 0x8, 0x10, 0x20, 0x40,
     0x80, 0x200, 0x100 };
 
-PUBLIC etCLAV_keys key_code[] = { E_KEY_NUM_0, E_KEY_NUM_1, E_KEY_NUM_2,
+PUBLIC etInUsingkey key_code[] = { E_KEY_NUM_0, E_KEY_NUM_1, E_KEY_NUM_2,
     E_KEY_NUM_3, E_KEY_NUM_4, E_KEY_NUM_5, E_KEY_NUM_6, E_KEY_NUM_7,
     E_KEY_NUM_DIESE, E_KEY_NUM_ETOILE };
-PUBLIC uint16 timer_touche[sizeof(key_code) / sizeof(etCLAV_keys)] = { 0 };
 
-PUBLIC const etCLAV_keys R_Key_modes[CST_NB_MODES] = { E_KEY_NUM_MOD_1,
+//PUBLIC uint16 timer_touche[sizeof(key_code) / sizeof(etInUsingkey)] = { 0 };
+PUBLIC uint16 timer_touche[E_KEYS_NUM_END] = { 0 };
 
+PUBLIC const etInUsingkey R_Key_modes[CST_NB_MODES] = { E_KEY_NUM_MOD_1,
 E_KEY_NUM_MOD_2, E_KEY_NUM_MOD_3, E_KEY_NUM_MOD_4 };
 
 #if !NO_DEBUG_ON
@@ -93,12 +99,12 @@ PRIVATE const uint8 ligne_colonne[] =
   0xEE, 0xED, 0xEB, 0xE7, 0xDE, 0xDD, 0xDB, 0xD7, 0xBE, 0xBD, 0xBB, 0xB7, 0x7E,
   0x7D, 0x7B, 0x77
 };
-PRIVATE const etCLAV_keys key_code[] =
+PRIVATE const etInUsingkey key_code[] =
 { E_KEY_NUM_1, E_KEY_NUM_4, E_KEY_NUM_7,
   E_KEY_NUM_ETOILE, E_KEY_NUM_2, E_KEY_NUM_5, E_KEY_NUM_8, E_KEY_NUM_0,
   E_KEY_NUM_3, E_KEY_NUM_6, E_KEY_NUM_9, E_KEY_NUM_DIESE, E_KEY_NUM_MOD_1,
   E_KEY_NUM_MOD_2, E_KEY_NUM_MOD_3, E_KEY_NUM_MOD_4};
-PUBLIC uint16 timer_touche[sizeof(key_code) / sizeof(etCLAV_keys)] =
+PUBLIC uint16 timer_touche[sizeof(key_code) / sizeof(etInUsingkey)] =
 { 0};
 
 #if !NO_DEBUG_ON
@@ -155,7 +161,7 @@ PUBLIC void vJenie_CbInit(bool_t bWarmStart)
   else
   {
     vPrintf("Recherche reseau!\n");
-    AppData.eAppState = APP_RECHERCHE_RESEAU;
+    AppData.eAppState = E_PGL_RECHERCHE_RESEAU;
     // Montrer la led d'activite reseau
     au8Led_clav[C_CLAV_LED_INFO_1].mode = E_FLASH_RECHERCHE_RESEAU;
     au8Led_clav[C_CLAV_LED_INFO_1].actif = TRUE;
@@ -178,6 +184,13 @@ PUBLIC void vJenie_CbInit(bool_t bWarmStart)
 
 PUBLIC void vJenie_CbMain(void)
 {
+  teRunningPgl newPgmLevel = AppData.eAppState;
+  static etRunningStp stpVal = E_KS_STP_NON_DEFINI;
+  static etRunningRol rolVal = E_KS_ROL_NON_DEFINI;
+  static etRunningKbd kbdVal = E_KS_KBD_NON_DEFINI;
+  static etInUsingkey keyVal = E_KEY_NON_DEFINI;
+  static etRunningNet netVal = E_KS_NET_NON_DEFINI;
+
   /* regular watchdog reset */
 #ifdef WATCHDOG_ENABLED
   vAHI_WatchdogRestart();
@@ -185,11 +198,11 @@ PUBLIC void vJenie_CbMain(void)
 
   switch (AppData.eAppState)
   {
-    case APP_RECHERCHE_RESEAU:
+    case E_PGL_RECHERCHE_RESEAU:
       ; // Rien attendre
     break;
 
-    case APP_RESEAU_ETABLI:
+    case E_PGL_RESEAU_ETABLI:
       vPrintf("Connection Reseau etablit\n");
       // Montrer par flash que l'on est connecte
       au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
@@ -198,11 +211,11 @@ PUBLIC void vJenie_CbMain(void)
       vAHI_DioInterruptEnable(PBAR_CFG_NUMPAD_IN, 0);
 
       // etape suivante
-      AppData.eAppState = APP_BOUCLE_PRINCIPALE;
+      AppData.eAppState = E_PGL_BOUCLE_PRINCIPALE;
 
     break;
 
-    case APP_BOUCLE_PRINCIPALE:
+    case E_PGL_BOUCLE_PRINCIPALE:
       // Test pour voir si connection a un pc
       if (liaison_clavier == E_CONNECTED_TO_PC)
       {
@@ -217,7 +230,12 @@ PUBLIC void vJenie_CbMain(void)
           compter_duree_mode = 0;
           CLAV_GererMode(E_KEY_NUM_MOD_1);
         }
+
         CLAV_AnalyserEtat(AppData.eClavState);
+#if 0
+        AppData.eAppState = NEW_AnalyseBoitierDeCommande(&stpVal, &rolVal,
+            &kbdVal, &keyVal, &netVal);
+#endif
       }
     break;
 
@@ -240,7 +258,7 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
   {
     case E_JENIE_NETWORK_UP:
     {
-      AppData.eAppState = APP_RESEAU_ETABLI;
+      AppData.eAppState = E_PGL_RESEAU_ETABLI;
     }
     break;
 
@@ -292,7 +310,7 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
       vPrintf("Net Data in\n");
       switch (AppData.eAppState)
       {
-        case APP_BOUCLE_PRINCIPALE:
+        case E_PGL_BOUCLE_PRINCIPALE:
         {
           CLAV_NetMsgInput(psData);
         }
@@ -454,7 +472,7 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
               b_NEW_start_press_count = FALSE;
               vPrintf("2:# it:%d\n", NEW_memo_delay_touche);
               // Informer a gerer
-              AppData.eClavState = E_KS_TRAITER_IT;
+              AppData.eClavState = E_KS_STP_TRAITER_IT;
 
             }
 
@@ -519,7 +537,7 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
           b_NEW_start_press_count = FALSE;
 
           // Informer a gerer
-          AppData.eClavState = E_KS_TRAITER_IT;
+          AppData.eClavState = E_KS_STP_TRAITER_IT;
         }
         break;
       }
@@ -623,7 +641,7 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
           b_NEW_start_press_count = FALSE;
 
           // Informer a gerer
-          AppData.eClavState = E_KS_TRAITER_IT;
+          AppData.eClavState = E_KS_STP_TRAITER_IT;
         }
       }
       break;
@@ -638,13 +656,13 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
 
 PRIVATE void NEW_CLAV_GestionIts(void)
 {
-  etCLAV_keys la_touche = E_KEY_NON_DEFINI;
+  etInUsingkey la_touche = E_KEY_NON_DEFINI;
   uint8 uId = 0;
 
   if (NEW_traiter_It == FALSE)
     return;
 
-  AppData.eClavState = E_KS_TRAITER_IT;
+  AppData.eClavState = E_KS_STP_TRAITER_IT;
 
 #if 0
   // desactiver les its clavier
@@ -657,7 +675,7 @@ PRIVATE void NEW_CLAV_GestionIts(void)
         code_ascii[uId], NEW_memo_delay_touche, la_touche);
 
     // Une touche est reconnue on peut demander a la traiter
-    AppData.eClavState = E_KS_TRAITER_TOUCHE;
+    AppData.eClavState = E_KS_STP_TRAITER_TOUCHE;
     AppData.eKeyPressed = la_touche;
     AppData.ukey = uId;
     timer_touche[uId] = NEW_memo_delay_touche;
@@ -675,7 +693,7 @@ PRIVATE void NEW_CLAV_GestionIts(void)
 
 PRIVATE void CLAV_GestionIts(void)
 {
-  etCLAV_keys la_touche = E_KEY_NON_DEFINI;
+  etInUsingkey la_touche = E_KEY_NON_DEFINI;
   uint8 posCodeAscii = 0;
 
   if (b_it_detect_front_descendant == TRUE)
@@ -694,7 +712,7 @@ PRIVATE void CLAV_GestionIts(void)
         vPrintf("Debut mesure du temps d'appuie\n");
         b_start_press_count = TRUE;
 
-        AppData.eClavState = E_KS_TRAITER_IT;
+        AppData.eClavState = E_KS_STP_TRAITER_IT;
 
         // Detection passage down -> up (front montant)
         vAHI_DioInterruptEdge(PBAR_CFG_NUMPAD_IN, 0);
@@ -702,14 +720,14 @@ PRIVATE void CLAV_GestionIts(void)
       else
       {
         b_it_detect_front_descendant = FALSE;
-        AppData.eClavState = E_KS_TRAITER_TOUCHE;
+        AppData.eClavState = E_KS_STP_TRAITER_TOUCHE;
       }
     }
     else
     {
       vPrintf("la_touche == E_NO_KEYS\n");
       b_it_detect_front_descendant = FALSE;
-      AppData.eClavState = E_KS_ATTENTE_TOUCHE;
+      AppData.eClavState = E_KS_STP_ATTENTE_TOUCHE;
     }
   }
   else
@@ -728,7 +746,7 @@ PRIVATE void CLAV_GestionIts(void)
 
       // Un appui puis un relachement on ete detectee et minutee
       //on effectue une action
-      AppData.eClavState = E_KS_TRAITER_TOUCHE;
+      AppData.eClavState = E_KS_STP_TRAITER_TOUCHE;
     }
     else
     {
@@ -737,7 +755,7 @@ PRIVATE void CLAV_GestionIts(void)
       // Ignorer la touche
       AppData.eKeyPressed = E_KEY_NON_DEFINI;
       AppData.ukey = 0;
-      AppData.eClavState = E_KS_ATTENTE_TOUCHE;
+      AppData.eClavState = E_KS_STP_ATTENTE_TOUCHE;
 
     }
     timer_appuie_touche = 0;
@@ -747,9 +765,9 @@ PRIVATE void CLAV_GestionIts(void)
 }
 
 #ifdef CLAV_IS_VELLMAN
-PUBLIC etCLAV_keys CLAV_AnalyseIts(uint8 *position)
+PUBLIC etInUsingkey CLAV_AnalyseIts(uint8 *position)
 {
-  etCLAV_keys ret_val = E_KEY_NON_DEFINI;
+  etInUsingkey ret_val = E_KEY_NON_DEFINI;
   uint32 val3 = 0UL;
   uint16 byte2 = NEW_memo_delay_touche;
   int i = 0;
@@ -779,7 +797,7 @@ PUBLIC etCLAV_keys CLAV_AnalyseIts(uint8 *position)
   return ret_val;
 }
 #else
-PUBLIC etCLAV_keys CLAV_AnalyseIts(uint8 *position)
+PUBLIC etInUsingkey CLAV_AnalyseIts(uint8 *position)
 {
   uint8 byte = 0;
   uint8 tentative = 0;
@@ -787,7 +805,7 @@ PUBLIC etCLAV_keys CLAV_AnalyseIts(uint8 *position)
   uint8 depart = 0;
   uint32 val = 0;
   bool_t trouve = FALSE;
-  etCLAV_keys ret_val = E_KEY_NON_DEFINI;
+  etInUsingkey ret_val = E_KEY_NON_DEFINI;
 
   vPrintf(" Traitement it:");
 
@@ -911,7 +929,7 @@ PUBLIC void CLAV_ResetLecture(void)
   timer_appuie_touche = 0;
   AppData.ukey = 0;
   AppData.eKeyPressed = E_KEY_NON_DEFINI;
-  AppData.eClavState = E_KS_ATTENTE_TOUCHE;
+  AppData.eClavState = E_KS_STP_ATTENTE_TOUCHE;
 
 }
 
@@ -955,12 +973,12 @@ PRIVATE void InitAFroid(void)
 
 }
 
-PUBLIC int8 NEW_TrouvePositionTouche(etCLAV_keys laTouche)
+PUBLIC int8 NEW_TrouvePositionTouche(etInUsingkey laTouche)
 {
   int8 val = -1;
   uint8 pos = 0;
 
-  int len = sizeof(key_code) / sizeof(etCLAV_keys);
+  int len = sizeof(key_code) / sizeof(etInUsingkey);
 
   for (pos = 0; pos < len; pos++)
   {

@@ -41,7 +41,6 @@ extern "C"
 #define C_PRESSION_T4		100	/// Limite Save
 #define C_PRESSION_T5		150	/// Limite Ultracare
 
-
 // --------------------------
 #ifdef CLAV_IS_VELLMAN
 #define CLAV_NB_KEYS  10
@@ -116,42 +115,42 @@ typedef enum _keys {
   E_KEY_NUM_DIESE,
   E_KEY_NUM_ETOILE,
   E_KEYS_NUM_END
-} etCLAV_keys;
+} etInUsingkey;
 extern PUBLIC char const * dbg_etCLAV_keys[];
 
 typedef enum _clav_mod {
-  E_KM_NON_DEFINI,    // Keyboard mode non definit
-  E_KM_1,
-  E_KM_2,
-  E_KM_3,
-  E_KM_4,
-  E_KM_END
-} etCLAV_mod; // keyboard modes
+  E_KS_KBD_NON_DEFINI,    // Keyboard mode non definit
+  E_KS_KBD_VIRTUAL_1,
+  E_KS_KBD_VIRTUAL_2,
+  E_KS_KBD_VIRTUAL_3,
+  E_KS_KBD_VIRTUAL_4,
+  E_KS_KBD_END
+} etRunningKbd; // keyboard modes
 extern PUBLIC char const *dbg_etCLAV_mod[];
 
 typedef enum {
-  E_KR_NON_DEFINI,
-  E_KR_UTILISATEUR,
-  E_KR_TECHNICIEN,
-  E_KR_CHOISIR_ROLE,
-  E_KR_END
-} etCLAV_role; /// Keyboard role
+  E_KS_ROL_NON_DEFINI,
+  E_KS_ROL_UTILISATEUR,
+  E_KS_ROL_TECHNICIEN,
+  E_KS_ROL_CHOISIR,
+  E_KS_ROL_END
+} etRunningRol; /// Keyboard role
 extern PUBLIC char const *dbg_etCLAV_role[];
 
 typedef enum _clav_state {
-  E_KS_NON_DEFINI,      /// Mode de traitement du clavier non definit
-  E_KS_ATTENTE_TOUCHE,  /// Attente que l'utilisateur appuie sur une touche du clavier
-  E_KS_ARMER_IT,        /// Preparation lecture clavier
-  E_KS_TRAITER_IT,      /// Determiner qu'elle touche appuyée
-  E_KS_TRAITER_TOUCHE,  /// Effectuer traitement de la touche
-  E_KS_SERVICE_ON,
-  E_KS_SERVICE_OFF,
-  E_KS_ATTENDRE_BOITE,
-  E_KS_ATTENDRE_FIN_CONFIG_BOITE,
-  E_KS_EN_PROGR_AVEC_BOITE,
-  E_KS_ULTRA_MODE,
-  E_KS_END
-} teClavState; /// Keyboard states
+  E_KS_STP_NON_DEFINI,      /// Mode de traitement du clavier non definit
+  E_KS_STP_ATTENTE_TOUCHE, /// Attente que l'utilisateur appuie sur une touche du clavier
+  E_KS_STP_ARMER_IT,        /// Preparation lecture clavier
+  E_KS_STP_TRAITER_IT,      /// Determiner qu'elle touche appuyée
+  E_KS_STP_TRAITER_TOUCHE,  /// Effectuer traitement de la touche
+  E_KS_STP_SERVICE_ON,
+  E_KS_STP_SERVICE_OFF,
+  E_KS_STP_ATTENDRE_BOITE,
+  E_KS_STP_ATTENDRE_FIN_CONFIG_BOITE,
+  E_KS_STP_EN_PROGR_AVEC_BOITE,
+  E_KS_STP_ULTRA_MODE,
+  E_KS_STP_END
+} etRunningStp; /// Keyboard states
 extern PUBLIC char const *dbg_teClavState[];
 
 typedef enum _clav_NetState {
@@ -163,45 +162,60 @@ typedef enum _clav_NetState {
   E_KS_NET_CONF_END, // Config correctement terminee
   E_KS_NET_CONF_BRK, // Configuration reseau interrompu
   E_KS_NET_CLAV_ON,
+  E_KS_NET_MSG_IN,
+  E_KS_NET_ERROR,
   E_KS_NET_END
-}teClavNetStates;
+} etRunningNet;
+extern PUBLIC char const *dbg_teRunningNet[];
 
 typedef struct {
-  teNetState eAppState;
-  teClavState eClavState;
-  teClavNetStates eNetState;
+  teRunningPgl eAppState;
+  etRunningStp eClavState;
+  etRunningNet eNetState;
+  etDefWifiMsg eWifiMsg;
   tePcState ePcState;
-  teClavState ePrevClav;
-  etCLAV_keys eKeyPressed;
-  etCLAV_role usage;
-  etCLAV_mod eClavmod;
+  etRunningStp ePrevClav;
+  etInUsingkey eKeyPressed;
+  etRunningRol usage;
+  etRunningKbd eClavmod;
   uint8 ukey;
   uint8 u8BoxId;
   uint64 u64ServiceAddress;
 } tsClavData;
+
+typedef struct {
+  teRunningPgl pglVal;
+  etRunningStp stpVal;
+  etRunningRol rolVal;
+  etRunningKbd kbdVal;
+  etInUsingkey keyVal;
+  etRunningNet netVal;
+  etDefWifiMsg msgVal;
+} stParam;
+
 #if !NO_DEBUG_ON
 extern PUBLIC void PBAR_DbgInside(int level, char * pSpaces, teDbgTrace eSens,
     tsClavData val);
 #endif
 
 typedef struct _touche {
-  etCLAV_keys la_touche;
-  etCLAV_mod le_mode;
+  etInUsingkey la_touche;
+  etRunningKbd le_mode;
 } stToucheDef;
 
 typedef struct {
   // Tableau de Config des Box
   // selon touche et mode
-  uint8 boxData[C_MAX_MODES][C_MAX_KEYS + 1][C_MAX_BOXES];
+  uint8 boxData[(E_KS_KBD_END - 1)][(E_KEYS_NUM_END - 1)][C_MAX_BOXES];
 
   // Tableau Pointeur liste
   // box configuree pour une touche selon mode
-  uint8 boxList[C_MAX_MODES][C_MAX_KEYS + 1][C_MAX_BOXES + 1];
+  uint8 boxList[(E_KS_KBD_END - 1)][(E_KEYS_NUM_END - 1)][C_MAX_BOXES];
 
   // Tableau indiquant
   // le premier emplacement disponible
   // dans ptr_boxes pour une touche selon un mode
-  uint8 ptr_boxList[C_MAX_MODES][C_MAX_KEYS + 1];
+  uint8 ptr_boxList[(E_KS_KBD_END - 1)][(E_KEYS_NUM_END - 1)];
 
 } bpsConfReseau;
 
@@ -223,17 +237,22 @@ typedef struct {
 /****************************************************************************/
 /***        Exported Functions                                            ***/
 /****************************************************************************/
-extern PUBLIC int8 NEW_TrouvePositionTouche(etCLAV_keys laTouche);
+extern PUBLIC int8 NEW_TrouvePositionTouche(etInUsingkey laTouche);
+
+extern PUBLIC teRunningPgl NEW_AnalyseBoitierDeCommande(etRunningStp *stpVal,
+    etRunningRol*rolVal, etRunningKbd*kbdVal, etInUsingkey *keyVal,
+    etRunningNet*netVal);
+
 // ----------------
 // mef_clav.c
 // ----------------
-extern PUBLIC void CLAV_AnalyserEtat(teClavState mef_clavier);
+extern PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier);
 extern PUBLIC void CLAV_ResetLecture(void);
-extern PUBLIC void CLAV_GererMode(etCLAV_keys mode);
+extern PUBLIC void CLAV_GererMode(etInUsingkey mode);
 
 #if fn1
-extern PUBLIC bool_t CLAV_TrouverAssociationToucheBoite(etCLAV_mod eMode,
-    etCLAV_keys eKey,uint8 BoxId);
+extern PUBLIC bool_t CLAV_TrouverAssociationToucheBoite(etRunningKbd eMode,
+    etInUsingkey eKey,uint8 BoxId);
 #else
 extern bool_t CLAV_TrouverAssociationToucheBoite(stToucheDef *touche,
     uint8 BoxId, uint8 *position);
@@ -247,32 +266,31 @@ extern PUBLIC void CLAV_AnalyserPc(tePcState mef_pc);
 // ----------------
 // clav_usage.c
 // ----------------
-extern PUBLIC teClavState CLAV_BoutonDeConfiguration(bool_t * bip_on);
+extern PUBLIC etRunningStp CLAV_BoutonDeConfiguration(bool_t * bip_on);
 extern PUBLIC void CLAV_NetMsgInput(tsData *psData);
-extern PUBLIC teClavState CLAV_GererTouche(etCLAV_keys keys);
+extern PUBLIC etRunningStp CLAV_GererTouche(etInUsingkey keys);
 
 // -----------------
 // pgm_clav.c
 // -----------------
-extern PUBLIC teClavState CLAV_PgmNetMontrerClavier(void);
-extern PUBLIC teClavState CLAV_PgmNetRetirerClavier(void);
-extern PUBLIC teClavState CLAV_PgmNetMsgInput(tsData *psData);
-extern PUBLIC teClavState CLAV_PgmActionTouche(etCLAV_keys keys);
+extern PUBLIC etRunningStp CLAV_PgmNetMontrerClavier(void);
+extern PUBLIC etRunningNet CLAV_PgmNetRetirerClavier(void);
+extern PUBLIC etRunningNet CLAV_PgmNetMsgInput(tsData *psData);
+extern PUBLIC etRunningStp CLAV_PgmActionTouche(etInUsingkey keys);
 
 // -----------------
 // usr_clav.c
 // -----------------
-extern PUBLIC teClavState CLAV_UsrActionTouche(etCLAV_keys keys);
-extern PUBLIC teClavState CLAV_UsrNetMsgInput(tsData *psData);
-extern PUBLIC etCLAV_keys CLAV_AnalyseIts(uint8 *position);
-
+extern PUBLIC etRunningStp CLAV_UsrActionTouche(etInUsingkey keys);
+extern PUBLIC etRunningNet CLAV_UsrNetMsgInput(tsData *psData);
+extern PUBLIC etInUsingkey CLAV_AnalyseIts(uint8 *position);
 
 /****************************************************************************/
 /***        Exported Variables                                            ***/
 /****************************************************************************/
 #ifdef CLAV_IS_VELLMAN
 #define CST_NB_MODES  4
-extern const PUBLIC etCLAV_keys R_Key_modes[CST_NB_MODES];
+extern const PUBLIC etInUsingkey R_Key_modes[CST_NB_MODES];
 extern PUBLIC bool_t bStartTimerIo_19;
 extern PUBLIC bool_t OneIt20;
 
@@ -292,13 +310,22 @@ extern PUBLIC uint8 bufEmission[3];
 
 extern PUBLIC char gch_spaces[20];
 extern PUBLIC eLedInfo mNetOkTypeFlash;
-extern PUBLIC etCLAV_keys key_code[];
+extern PUBLIC etInUsingkey key_code[];
 extern PUBLIC bool_t b_EteindreNet;
 extern PUBLIC bool_t NEW_traiter_It;
 extern PUBLIC const uint8 code_ascii[];
 extern PUBLIC bool_t b_NEW_start_press_count;
 extern PUBLIC uint16 NEW_memo_delay_touche;
 extern PUBLIC uint16 NEW_timer_appuie_touche;
+
+extern PUBLIC etRunningStp (*MenuPossible[2][3])(stParam *param);
+extern PUBLIC etRunningStp pFn1_1(stParam *param);
+extern PUBLIC etRunningStp pFn1_2(stParam *param);
+extern PUBLIC etRunningStp pFn1_3(stParam *param);
+
+extern PUBLIC etRunningStp pFn2_1(stParam *param);
+extern PUBLIC etRunningStp pFn2_2(stParam *param);
+extern PUBLIC etRunningStp pFn2_3(stParam *param);
 
 #if defined __cplusplus
 }

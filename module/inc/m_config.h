@@ -84,16 +84,16 @@ extern PUBLIC int PBAR_DbgTrace(teDbgTrace eSens, char *fn, void * val_enum,
 #endif
 
 typedef enum {
-  APP_INITIALISATION,
-  APP_RECHERCHE_RESEAU,
-  APP_RESEAU_ETABLI,
-  APP_CONNECTION_RESEAU,
-  APP_PERTE_RESEAU,
-  APP_ATTENTE_ENREGISTREMENT_AU_PERE,
-  APP_BOUCLE_PRINCIPALE,
-  APP_DEFINITION_END
-} teNetState;
-extern PUBLIC char const *dbg_teNetState[];
+  E_PGL_INITIALISATION,
+  E_PGL_RECHERCHE_RESEAU,
+  E_PGL_RESEAU_ETABLI,
+  E_PGL_CONNECTION_RESEAU,
+  E_PGL_PERTE_RESEAU,
+  E_PGL_ATTENTE_ENREGISTREMENT_AU_PERE,
+  E_PGL_BOUCLE_PRINCIPALE,
+  E_PGL_DEFINITION_END
+} teRunningPgl; // Program Level
+extern PUBLIC char const *dbg_teRunningPgl[];
 extern PUBLIC char const *dbg_teEventType[];
 
 typedef enum {
@@ -107,13 +107,13 @@ typedef enum {
   E_MSG_NET_LED_OFF,
   E_MSG_NET_LED_ON,
   E_MSG_DEFINITION_END
-} PBAR_TypeMsg;
+} etDefWifiMsg;
 extern PUBLIC char const *dbg_PBAR_TypeMsg[];
 
 /****************************************************************************/
 /***        Exported Functions                                            ***/
 /****************************************************************************/
-extern PUBLIC void bp_CommunMsgReseau(teNetState *eState,
+extern PUBLIC void bp_CommunMsgReseau(teRunningPgl *eState,
     teEventType eEventType, void *pvEventPrim);
 
 /****************************************************************************/
