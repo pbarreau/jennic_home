@@ -312,7 +312,7 @@ extern PUBLIC uint16 timer_touche[E_KEYS_NUM_END];
 extern PUBLIC uint8 bufEmission[3];
 
 extern PUBLIC char gch_spaces[20];
-extern PUBLIC eLedInfo mNetOkTypeFlash;
+extern PUBLIC etFlashMsg mNetOkTypeFlash;
 extern PUBLIC etInUsingkey key_code[];
 extern PUBLIC bool_t b_EteindreNet;
 extern PUBLIC bool_t NEW_traiter_It;

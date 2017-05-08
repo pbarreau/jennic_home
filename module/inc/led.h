@@ -35,11 +35,12 @@ typedef enum {
   E_FLASH_BP_EN_CONFIGURATION_SORTIES = 0x20,
   E_FLASH_ALWAYS = 0xFF,
   E_FLASH_FIN = 0xFF
-} eLedInfo;
+} etFlashMsg;
+extern PUBLIC char const *dbg_etFlashMsg[];
 
 typedef struct {
   bool_t actif;	/// Flag indiquant s'il faut utiliser la led
-  eLedInfo mode;	/// Type de Flash, Fixe, Eteinte, ..
+  etFlashMsg mode;	/// Type de Flash, Fixe, Eteinte, ..
   uint8 pio;	/// Pio ou est branché la led
 } sLed;
 

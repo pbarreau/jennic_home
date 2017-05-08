@@ -15,9 +15,11 @@
 #include "e_config.h"
 
 PUBLIC char const *menu_pgm[] = { "Net Led", "Bip clavier", "Liaison", "Admin" };
-PRIVATE eLedInfo MenuFlashValue[] =
+PRIVATE etFlashMsg MenuFlashValue[] =
     { E_FLASH_MENU_LED_NET, E_FLASH_MENU_BIP_CLAVIER, E_FLASH_MENU_LIAISON,
         E_FLASH_ERASE_RESET_POSSIBLE };
+
+PRIVATE uint8 idMenu = 0;
 
 PUBLIC uint8 bufEmission[3] = { 0, 0, 0 };
 PUBLIC bool_t b_EteindreNet = FALSE;
@@ -26,14 +28,13 @@ PRIVATE etRunningStp NEW_CLAV_GererToucheModeSuperUser(etInUsingkey laTouche);
 PRIVATE etRunningStp NEW_CLAV_GererToucheModeSimpleUser(etInUsingkey laTouche);
 PRIVATE etRunningStp NEW_CLAV_ChoisirNouveauRole(etInUsingkey laTouche);
 PRIVATE void NEW_ManageNetworkLed(etInUsingkey laTouche);
-PRIVATE etRunningStp NEW_CLAV_MenuSuperUSer(eLedInfo flashingType,
+PRIVATE etRunningStp NEW_CLAV_MenuSuperUSer(etFlashMsg flashingType,
     etInUsingkey laTouche);
 
 PRIVATE etRunningKbd tabVisibleMode[] = { E_KS_KBD_VIRTUAL_1,
     E_KS_KBD_VIRTUAL_2, E_KS_KBD_VIRTUAL_3, E_KS_KBD_VIRTUAL_4 };
 PRIVATE etInUsingkey tabModeKeys[] = { E_KEY_NUM_MOD_1, E_KEY_NUM_MOD_2,
     E_KEY_NUM_MOD_3, E_KEY_NUM_MOD_4 };
-
 
 PUBLIC etRunningStp CLAV_GererTouche(etInUsingkey keys)
 {
@@ -48,6 +49,7 @@ PUBLIC etRunningStp CLAV_GererTouche(etInUsingkey keys)
   {
     case E_KS_ROL_TECHNICIEN:
     {
+      // Remettre au menu de depart
       stpVal = NEW_CLAV_GererToucheModeSuperUser(keys);
     }
     break;
@@ -84,6 +86,8 @@ PRIVATE etRunningStp NEW_CLAV_ChoisirNouveauRole(etInUsingkey laTouche)
   if (laTouche == E_KEY_NUM_0)
   {
     cur_role = E_KS_ROL_UTILISATEUR;
+    AppData.net = E_KS_NET_NON_DEFINI;
+    AppData.eWifi = E_MSG_NOT_SET;
     au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
 
     // Retirer clavier service
@@ -92,9 +96,8 @@ PRIVATE etRunningStp NEW_CLAV_ChoisirNouveauRole(etInUsingkey laTouche)
   else if (laTouche == E_KEY_NUM_1)
   {
     cur_role = E_KS_ROL_TECHNICIEN;
+    idMenu = 0;
     au8Led_clav[C_CLAV_LED_INFO_1].mode = E_FLASH_EN_ATTENTE_TOUCHE_BC;
-
-    //CLAV_PgmNetMontrerClavier();
   }
 
   if (cur_role != E_KS_ROL_CHOISIR)
@@ -110,38 +113,38 @@ PRIVATE etRunningStp NEW_CLAV_ChoisirNouveauRole(etInUsingkey laTouche)
 PRIVATE etRunningStp NEW_CLAV_GererToucheModeSuperUser(etInUsingkey laTouche)
 {
   etRunningStp mef_clav = AppData.stp;
+  static etFlashMsg flashingType = E_FLASH_MENU_LED_NET;
 
-  static uint8 idMode = 0;
-  static eLedInfo cur_menu = E_FLASH_MENU_LED_NET;
-  uint8 val_flash = (uint8) MenuFlashValue[idMode];
+  uint8 val_flash = (uint8) MenuFlashValue[idMenu];
   int len = (sizeof(menu_pgm) / sizeof(char **));
 
-  if ((laTouche == E_KEY_NUM_DIESE)
-      && (timer_touche[E_KEY_NUM_DIESE - 1] <= C_PRESSION_T1))
+  if ((laTouche == E_KEY_NUM_DIESE))
   {
-    vPrintf("Len = %d ", len);
-    vPrintf("Menu '%s' flash:'%x'\n", menu_pgm[idMode], val_flash);
-    au8Led_clav[C_CLAV_LED_INFO_2].mode = val_flash;
-    au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_OFF;
+    if (timer_touche[E_KEY_NUM_DIESE - 1] <= C_PRESSION_T1)
 
-    cur_menu = MenuFlashValue[idMode];
-    idMode++;
-    idMode = idMode % len;
+    {
+      vPrintf("Menu '%s' flash:'%x'\n", menu_pgm[idMenu], val_flash);
+      au8Led_clav[C_CLAV_LED_INFO_2].mode = val_flash;
+      au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_OFF;
+      flashingType = MenuFlashValue[idMenu];
+      idMenu++;
+      idMenu = idMenu % len;
 
-  }
+    }
 
-  if ((laTouche == E_KEY_NUM_DIESE)
-      && (timer_touche[E_KEY_NUM_DIESE - 1] > C_PRESSION_T1))
-  {
-    AppData.rol = E_KS_ROL_CHOISIR;
-    CLAV_GererMode(E_KEY_NUM_MOD_5);
+    if (timer_touche[E_KEY_NUM_DIESE - 1] > C_PRESSION_T1)
+    {
+      AppData.rol = E_KS_ROL_CHOISIR;
+      CLAV_GererMode(E_KEY_NUM_MOD_5);
+    }
+
   }
 
   switch (AppData.net)
   {
     case E_KS_NET_NON_DEFINI:
     {
-      mef_clav = NEW_CLAV_MenuSuperUSer(cur_menu, laTouche);
+      mef_clav = NEW_CLAV_MenuSuperUSer(flashingType, laTouche);
     }
     break;
 
@@ -181,7 +184,7 @@ PRIVATE etRunningStp NEW_CLAV_GererToucheModeSuperUser(etInUsingkey laTouche)
   return mef_clav;
 }
 
-PRIVATE etRunningStp NEW_CLAV_MenuSuperUSer(eLedInfo flashingType,
+PRIVATE etRunningStp NEW_CLAV_MenuSuperUSer(etFlashMsg flashingType,
     etInUsingkey laTouche)
 {
   etRunningStp mef_clav = AppData.stp;
@@ -204,7 +207,6 @@ PRIVATE etRunningStp NEW_CLAV_MenuSuperUSer(eLedInfo flashingType,
       if (laTouche == E_KEY_NUM_0)
       {
         AppData.net = E_KS_NET_CONF_START;
-        CLAV_PgmNetMontrerClavier();
         mef_clav = CLAV_PgmNetMontrerClavier();
       }
     }
@@ -243,6 +245,10 @@ PRIVATE etRunningStp NEW_CLAV_MenuSuperUSer(eLedInfo flashingType,
           // reset de la structure des donnees eprom
           memset(&eeprom, 0x00, sizeof(eeprom));
         }
+
+        // Se mettre comme a un nouveau depart
+        AppData.net = E_KS_NET_NON_DEFINI;
+        AppData.eWifi = E_MSG_NOT_SET;
       }
 
     }
@@ -350,8 +356,8 @@ PUBLIC void CLAV_NetMsgInput(tsData *psData)
 #if !NO_DEBUG_ON
   int stepper = 0;
 
-  stepper = PBAR_DbgTrace(E_FN_IN, "CLAV_NetMsgInput",
-      (void *) (AppData.pgl), E_DBG_TYPE_NET_STATE);
+  stepper = PBAR_DbgTrace(E_FN_IN, "CLAV_NetMsgInput", (void *) (AppData.pgl),
+      E_DBG_TYPE_NET_STATE);
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
 #endif
 

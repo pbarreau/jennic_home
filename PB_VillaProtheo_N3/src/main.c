@@ -41,7 +41,7 @@ PUBLIC stParam maConfig;
 
 PUBLIC bool_t start_timer_of_mode = FALSE;
 PUBLIC uint16 compter_duree_mode = 0;
-PUBLIC eLedInfo mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
+PUBLIC etFlashMsg mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
 
 PUBLIC etRunningStp (*MenuPossible[2][3])(stParam *param) =
 {
@@ -308,8 +308,7 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
 
         default:
         {
-          vPrintf("ERR:E_JENIE_DATA, AppData.eAppState -> %d\n",
-              AppData.pgl);
+          vPrintf("ERR:E_JENIE_DATA, AppData.eAppState -> %d\n", AppData.pgl);
         }
         break;
       }
@@ -460,6 +459,16 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
       case E_JPI_DIO17_INT:
       case E_JPI_DIO18_INT: // touche 8
       case E_JPI_DIO19_INT: // touche '*'
+#else
+      case E_AHI_DIO12_INT:
+      //if(!it_en_cours)it_en_cours=1;
+      case E_AHI_DIO13_INT:
+      //if(!it_en_cours)it_en_cours=2;
+      case E_AHI_DIO14_INT:
+      //if(!it_en_cours)it_en_cours=3;
+      case E_AHI_DIO15_INT:
+      //if(!it_en_cours)it_en_cours=4;
+#endif
       {
         if (b_NEW_start_press_count == FALSE)
         {
@@ -484,7 +493,6 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
         }
         break;
       }
-#endif
 
       default:
         vPrintf("It non prevue:%x\n", u32ItemBitmap);
