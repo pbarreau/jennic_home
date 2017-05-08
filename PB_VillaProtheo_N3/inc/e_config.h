@@ -262,6 +262,7 @@ extern bool_t CLAV_TrouverAssociationToucheBoite(stToucheDef *touche,
 // mef_pc.c
 // ----------------
 extern PUBLIC void CLAV_AnalyserPc(tePcState mef_pc);
+extern PUBLIC void MyStepDebug(void);
 
 // ----------------
 // clav_usage.c
@@ -299,13 +300,14 @@ extern PUBLIC uint16 TimingIo_19;
 
 extern PUBLIC tsClavData AppData;
 extern PUBLIC bpsFlash eeprom;
+extern PUBLIC stParam maConfig;
 
 extern PUBLIC bool_t start_timer_of_mode;
 extern PUBLIC uint16 compter_duree_mode;
 
 extern PUBLIC uint16 timer_appuie_touche;
 extern PUBLIC bool_t b_activer_bip;
-extern PUBLIC uint16 timer_touche[];
+extern PUBLIC uint16 timer_touche[E_KEYS_NUM_END];
 extern PUBLIC uint8 bufEmission[3];
 
 extern PUBLIC char gch_spaces[20];

@@ -36,16 +36,10 @@ PRIVATE etRunningKbd tabVisibleMode[] = { E_KS_KBD_VIRTUAL_1,
 PRIVATE etInUsingkey tabModeKeys[] = { E_KEY_NUM_MOD_1, E_KEY_NUM_MOD_2,
     E_KEY_NUM_MOD_3, E_KEY_NUM_MOD_4 };
 
+#if 0
 PUBLIC etRunningStp CLAV_GererTouche(etInUsingkey keys)
 {
   static int menuLevel = 0;
-
-  stParam maConfig;
-
-  maConfig.stpVal = E_KS_STP_NON_DEFINI;
-  maConfig.rolVal = E_KS_ROL_NON_DEFINI;
-  maConfig.kbdVal = E_KS_KBD_NON_DEFINI;
-  maConfig.netVal = E_KS_NET_NON_DEFINI;
 
   etRunningStp stpVal = maConfig.stpVal;
   etRunningRol rolVal = maConfig.rolVal;
@@ -59,17 +53,40 @@ PUBLIC etRunningStp CLAV_GererTouche(etInUsingkey keys)
   vPrintf("Net:%s\n", dbg_teRunningNet[netVal]);
 
   if ((keys == E_KEY_NUM_DIESE)
-      && (timer_touche[E_KEY_NUM_DIESE] <= C_PRESSION_T1))
+      && (timer_touche[E_KEY_NUM_DIESE - 1] <= C_PRESSION_T1))
   {
-    menuLevel++;
-    menuLevel = menuLevel % 3;
+    switch (maConfig.rolVal)
+    {
+      case E_KS_ROL_UTILISATEUR:
+      {
+        CLAV_GererMode(tabModeKeys[(maConfig.kbdVal - E_KS_KBD_VIRTUAL_1) + 1]);
+        maConfig.kbdVal= AppData.eClavmod;
+      }
+      break;
+      case E_KS_ROL_TECHNICIEN:
+      {
+
+      }
+      break;
+      case E_KS_ROL_CHOISIR:
+      {
+
+      }
+      break;
+      default:
+      {
+        maConfig.rolVal = E_KS_ROL_UTILISATEUR;
+      }
+    }
   }
 
   if ((keys == E_KEY_NUM_DIESE)
-      && (timer_touche[E_KEY_NUM_DIESE] > C_PRESSION_T1))
+      && (timer_touche[E_KEY_NUM_DIESE - 1] > C_PRESSION_T1))
   {
+    menuLevel = 0;
     maConfig.rolVal++;
     maConfig.rolVal = maConfig.rolVal % 2;
+    vPrintf("Rol=%d\n", maConfig.rolVal);
   }
 
   stpVal = (*MenuPossible[maConfig.rolVal][menuLevel])(&maConfig);
@@ -77,7 +94,8 @@ PUBLIC etRunningStp CLAV_GererTouche(etInUsingkey keys)
   //return E_KS_STP_ATTENTE_TOUCHE;
 
 }
-#if 0
+#endif
+
 PUBLIC etRunningStp CLAV_GererTouche(etInUsingkey keys)
 {
   etRunningStp stpVal = AppData.eClavState;
@@ -106,10 +124,10 @@ PUBLIC etRunningStp CLAV_GererTouche(etInUsingkey keys)
   else
   {
     vPrintf("Key context error!!\n");
+    AppData.usage = E_KS_ROL_UTILISATEUR;
   }
-  return stpVal;
+  return E_KS_STP_ATTENTE_TOUCHE;
 }
-#endif
 
 PRIVATE etRunningStp NEW_CLAV_ChoisirNouveauRole(etInUsingkey laTouche)
 {
@@ -147,7 +165,8 @@ PRIVATE etRunningStp NEW_CLAV_GererToucheModeSuperUser(etInUsingkey laTouche)
   uint8 val_flash = (uint8) MenuFlashValue[idMode];
   int len = (sizeof(menu_pgm) / sizeof(char **));
 
-  if ((laTouche == E_KEY_NUM_DIESE) && (timer_touche[uKeyPos] <= C_PRESSION_T1))
+  if ((laTouche == E_KEY_NUM_DIESE)
+      && (timer_touche[E_KEY_NUM_DIESE - 1] <= C_PRESSION_T1))
   {
     vPrintf("Len = %d ", len);
     vPrintf("Menu '%s' flash:'%x'\n", menu_pgm[idMode], val_flash);
@@ -160,14 +179,40 @@ PRIVATE etRunningStp NEW_CLAV_GererToucheModeSuperUser(etInUsingkey laTouche)
 
   }
 
-  if ((laTouche == E_KEY_NUM_DIESE) && (timer_touche[uKeyPos] > C_PRESSION_T1))
+  if ((laTouche == E_KEY_NUM_DIESE)
+      && (timer_touche[E_KEY_NUM_DIESE - 1] > C_PRESSION_T1))
   {
     AppData.usage = E_KS_ROL_CHOISIR;
     CLAV_GererMode(E_KEY_NUM_MOD_5);
   }
 
-  mef_clav = NEW_CLAV_MenuSuperUSer(cur_menu, laTouche);
-  //      CLAV_PgmActionTouche(laTouche);
+  switch(AppData.eNetState)
+  {
+    case E_KS_NET_NON_DEFINI:
+    {
+      mef_clav = NEW_CLAV_MenuSuperUSer(cur_menu, laTouche);
+    }
+    break;
+
+    case E_KS_NET_CLIENT_IN:
+    {
+      vPrintf("cas 2\n");
+      mef_clav = CLAV_PgmActionTouche(laTouche);
+    }
+    break;
+
+    case E_KS_NET_WAIT_CLIENT:
+    {
+      vPrintf("cas 3\n");
+      mef_clav = CLAV_PgmActionTouche(laTouche);
+    }
+    break;
+
+    default:
+    {
+      vPrintf("Erreur sur net state:%d\n",AppData.eNetState);
+    }
+  }
 
   return mef_clav;
 }
@@ -273,7 +318,8 @@ PRIVATE etRunningStp NEW_CLAV_GererToucheModeSimpleUser(etInUsingkey laTouche)
   }
 #endif
 
-  if ((laTouche == E_KEY_NUM_DIESE) && (timer_touche[uKeyPos] <= C_PRESSION_T1))
+  if ((laTouche == E_KEY_NUM_DIESE)
+      && (timer_touche[E_KEY_NUM_DIESE - 1] <= C_PRESSION_T1))
   {
     vPrintf("Passage en mode:%d", tabVisibleMode[idMode]);
     CLAV_GererMode(tabModeKeys[idMode]);
@@ -282,7 +328,8 @@ PRIVATE etRunningStp NEW_CLAV_GererToucheModeSimpleUser(etInUsingkey laTouche)
 
   }
 
-  if ((laTouche == E_KEY_NUM_DIESE) && (timer_touche[uKeyPos] > C_PRESSION_T1))
+  if ((laTouche == E_KEY_NUM_DIESE)
+      && (timer_touche[E_KEY_NUM_DIESE - 1] > C_PRESSION_T1))
   {
     AppData.usage = E_KS_ROL_CHOISIR;
     CLAV_GererMode(E_KEY_NUM_MOD_5);
@@ -501,6 +548,7 @@ PUBLIC etRunningStp CLAV_BoutonDeConfiguration(bool_t * bip_on)
 PUBLIC void CLAV_NetMsgInput(tsData *psData)
 {
   etRunningStp mef_clav = AppData.eClavState;
+  etRunningNet mef_net = E_KS_NET_NON_DEFINI;
 
 #if !NO_DEBUG_ON
   int stepper = 0;
@@ -512,11 +560,11 @@ PUBLIC void CLAV_NetMsgInput(tsData *psData)
 
   if (AppData.usage == E_KS_ROL_TECHNICIEN)
   {
-    mef_clav = CLAV_PgmNetMsgInput(psData);
+    mef_net = CLAV_PgmNetMsgInput(psData);
   }
   else if (AppData.usage == E_KS_ROL_UTILISATEUR)
   {
-    mef_clav = CLAV_UsrNetMsgInput(psData);
+    mef_net = CLAV_UsrNetMsgInput(psData);
   }
   else
   {
@@ -529,6 +577,8 @@ PUBLIC void CLAV_NetMsgInput(tsData *psData)
       E_DBG_TYPE_NET_STATE);
 #endif
 
+  AppData.eNetState = mef_net;
+  maConfig.netVal = mef_net;
   AppData.eClavState = mef_clav;
 }
 
@@ -745,7 +795,6 @@ PUBLIC etRunningStp pFn1_2(stParam *param)
     vPrintf("pFn1_2\n");
   }
 
-
   return E_KS_STP_ATTENTE_TOUCHE; //retVal;
 }
 PUBLIC etRunningStp pFn1_3(stParam *param)
@@ -757,8 +806,8 @@ PUBLIC etRunningStp pFn1_3(stParam *param)
   {
     onShot = FALSE;
     vPrintf("pFn1_3\n");
+    //param->netVal = E_KS_NET_CLIENT_IN;
   }
-
 
   return E_KS_STP_ATTENTE_TOUCHE; //retVal;
 }
@@ -774,7 +823,6 @@ PUBLIC etRunningStp pFn2_1(stParam *param)
     vPrintf("pFn2_1\n");
   }
 
-
   return E_KS_STP_ATTENTE_TOUCHE; //retVal;
 }
 PUBLIC etRunningStp pFn2_2(stParam *param)
@@ -788,7 +836,6 @@ PUBLIC etRunningStp pFn2_2(stParam *param)
     vPrintf("pFn2_2\n");
   }
 
-
   return E_KS_STP_ATTENTE_TOUCHE; //retVal;
 }
 PUBLIC etRunningStp pFn2_3(stParam *param)
@@ -801,7 +848,6 @@ PUBLIC etRunningStp pFn2_3(stParam *param)
     onShot = FALSE;
     vPrintf("pFn2_3\n");
   }
-
 
   return E_KS_STP_ATTENTE_TOUCHE; //retVal;
 }

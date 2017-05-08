@@ -90,6 +90,8 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
   etInUsingkey la_touche = E_KEY_NON_DEFINI;
   uint8 uId = 0;
   static bool_t oneshot = FALSE;
+  static bool_t oneshot_2 = TRUE;
+  static bool_t oneshot_3 = TRUE;
   etInUsingkey toucheAction = AppData.eKeyPressed;
   etDefWifiMsg wifi_msg = E_MSG_NOT_SET;
 
@@ -109,6 +111,12 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
       AppData.eClavState = E_KS_STP_ATTENTE_TOUCHE;
       AppData.eClavmod = E_KS_KBD_VIRTUAL_1;
       AppData.usage = E_KS_ROL_UTILISATEUR;
+
+      maConfig.rolVal = E_KS_ROL_UTILISATEUR;
+      maConfig.kbdVal = E_KS_KBD_VIRTUAL_1;
+      maConfig.keyVal = E_KEY_NON_DEFINI;
+      maConfig.stpVal = E_KS_STP_ATTENTE_TOUCHE;
+      maConfig.netVal = E_KS_NET_NON_DEFINI;
     break;
 
     case E_KS_STP_ATTENTE_TOUCHE:
@@ -118,9 +126,11 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
       {
         case E_KS_NET_CONF_START:
         break;
+
         case E_KS_NET_WAIT_CLIENT:
           au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_RECHERCHE_RESEAU;
         break;
+
         case E_KS_NET_CONF_END:
         break;
 
@@ -137,13 +147,22 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
         case E_KS_NET_CONF_EN_COURS:
         {
           wifi_msg = AppData.eWifiMsg;
+
           switch (wifi_msg)
           {
             case E_MSG_CFG_LIENS:
             {
-              vPrintf("Reception d'une config de liens\n");
+              if (oneshot_3)
+              {
+                oneshot_3 = FALSE;
+
+                vPrintf("Reception d'une config de liens\n");
+
+              }
+              // la config est deja memorisee
             }
             break;
+
             default:
             {
               vPrintf("Wifi Message error :'%d'", wifi_msg);
@@ -159,7 +178,11 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
         break;
 
         default:
-          vPrintf("CASE NET NON PREVU\n");
+          if (oneshot_2)
+          {
+            oneshot_2 = FALSE;
+            vPrintf("CASE NET NON PREVU %d\n", AppData.eNetState);
+          }
         break;
 
       }
@@ -203,12 +226,13 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
       la_touche = CLAV_AnalyseIts(&uId);
       if (la_touche != E_KEY_NON_DEFINI)
       {
+        timer_touche[la_touche - 1] = NEW_memo_delay_touche / 100;
         vPrintf("Touche '%c' pendant '%d' ms, code dans pgm:%d\n\n",
-            code_ascii[uId], NEW_memo_delay_touche, la_touche);
+            code_ascii[uId], timer_touche[la_touche - 1], la_touche);
 
         AppData.eKeyPressed = la_touche;
-        AppData.ukey = uId;
-        timer_touche[uId] = NEW_memo_delay_touche / 100;
+        //AppData.ukey = uId;
+        //timer_touche[la_touche] = NEW_memo_delay_touche / 100;
 
         // Une touche est reconnue on peut demander a la traiter
         AppData.eClavState = E_KS_STP_TRAITER_TOUCHE;

@@ -108,7 +108,7 @@ typedef enum {
   E_MSG_NET_LED_ON,
   E_MSG_DEFINITION_END
 } etDefWifiMsg;
-extern PUBLIC char const *dbg_PBAR_TypeMsg[];
+extern PUBLIC char const *dbg_etDefWifiMsg[];
 
 /****************************************************************************/
 /***        Exported Functions                                            ***/

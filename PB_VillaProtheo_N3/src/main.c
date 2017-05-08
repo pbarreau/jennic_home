@@ -39,6 +39,7 @@ PUBLIC etInUsingkey CLAV_AnalyseIts(uint8 *position);
 /****************************************************************************/
 PUBLIC tsClavData AppData;
 PUBLIC bpsFlash eeprom;
+PUBLIC stParam maConfig;
 
 PUBLIC bool_t start_timer_of_mode = FALSE;
 PUBLIC uint16 compter_duree_mode = 0;
@@ -956,6 +957,10 @@ PRIVATE void InitAFroid(void)
 
   // Reflet memoire eeprom
   memset(&eeprom, 0, sizeof(bpsFlash));
+
+  // Test Parametres
+  memset(&maConfig, 0, sizeof(stParam));
+
 
   if (!bAHI_FullFlashRead(FLASH_START, sizeof(bpsFlash), (uint8 *) &eeprom))
   {

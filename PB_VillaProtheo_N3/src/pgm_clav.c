@@ -122,6 +122,87 @@ PUBLIC etRunningNet CLAV_PgmNetMsgInput(tsData *psData)
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
 #endif
 
+  AppData.eWifiMsg = (etDefWifiMsg) (psData->pau8Data[0]);
+  switch (psData->pau8Data[0])
+  {
+    case E_MSG_RSP_ID_BOX:
+    {
+      vPrintf("%sune boite se fait connaitre\n", gch_spaces);
+      mef_net = pgm_GererBoiteEntrante(psData);
+    }
+    break;
+    case E_MSG_CFG_BOX_END:
+    {
+      vPrintf("%sMsg Fin config boite %d\n\n", gch_spaces, AppData.u8BoxId);
+      pgm_CreerConfigAll(AppData.u8BoxId);
+      mef_net = E_KS_NET_WAIT_CLIENT;
+      AppData.eAppState = E_PGL_BOUCLE_PRINCIPALE;
+    }
+    break;
+
+    case E_MSG_CFG_LIENS:
+    {
+      mode = psData->pau8Data[psData->u16Length - 2] >> 4 & 0x0F;
+      clav = psData->pau8Data[psData->u16Length - 2] & 0x0F;
+      conf = psData->pau8Data[psData->u16Length - 1];
+
+      vPrintf("%sReception config liens\n", gch_spaces);
+      vPrintf("%s Box:%d, Mode:%d, clav:%d, conf:%x\n\n", gch_spaces,
+          AppData.u8BoxId, mode, clav, conf);
+
+      eeprom.netConf.boxData[mode][clav][AppData.u8BoxId] = conf;
+      mef_net = E_KS_NET_CONF_EN_COURS;
+    }
+    break;
+
+    case E_MSG_NET_LED_OFF:
+    {
+      vPrintf("Demande reseau de couper led Net\n");
+      mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
+      au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
+    }
+    break;
+
+    case E_MSG_NET_LED_ON:
+    {
+      vPrintf("Demande reseau de montrer led Net\n");
+      mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
+      au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
+    }
+    break;
+
+    default:
+    {
+      vPrintf("%sFIN CFG Msg de la boite non compris\n", gch_spaces);
+    }
+    break;
+
+  }
+
+#if !NO_DEBUG_ON
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
+  PBAR_DbgTrace(E_FN_OUT, "CLAV_PgmNetMsgInput", (void *) (AppData.eAppState),
+      E_DBG_TYPE_NET_STATE);
+#endif
+  return mef_net;
+}
+
+#if 0
+PUBLIC etRunningNet CLAV_PgmNetMsgInput(tsData *psData)
+{
+  etRunningNet mef_net = AppData.eNetState;
+  uint8 mode = 0;
+  uint8 clav = 0;
+  uint8 conf = 0;
+
+#if !NO_DEBUG_ON
+  int stepper = 0;
+
+  stepper = PBAR_DbgTrace(E_FN_IN, "CLAV_PgmNetMsgInput",
+      (void *) (AppData.eAppState), E_DBG_TYPE_NET_STATE);
+  PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
+#endif
+
   if ((psData->u16Length) == 1)
   {
     if (mef_net == E_KS_NET_WAIT_CLIENT)
@@ -201,6 +282,8 @@ PUBLIC etRunningNet CLAV_PgmNetMsgInput(tsData *psData)
 #endif
   return mef_net;
 }
+
+#endif
 
 PUBLIC etRunningStp CLAV_PgmActionTouche(etInUsingkey keys)
 {
@@ -311,6 +394,10 @@ PRIVATE etRunningNet pgm_GererBoiteEntrante(tsData *psData)
     AppData.u8BoxId = box_number;
 
     AppData.eAppState = E_PGL_BOUCLE_PRINCIPALE;
+
+    //----------------
+    MyStepDebug();
+    //----------------
   }
   else
   {
@@ -380,7 +467,7 @@ PRIVATE void pgm_CreerConfigAll(uint8 box_id)
 
   // sauvegarder cette valeur dans la touche ALL de la boite en cours
   // On sauve la touche all
-  eeprom.netConf.boxData[key_mode][(E_KEY_NUM_ETOILE-1)][box_id] = valThisBox;
+  eeprom.netConf.boxData[key_mode][(E_KEY_NUM_ETOILE - 1)][box_id] = valThisBox;
 
   // Dire que Touche ALL position ptr++ a une Boite configuree
   // La touche ALL est la derniere de toute les touche autorisee
@@ -389,8 +476,8 @@ PRIVATE void pgm_CreerConfigAll(uint8 box_id)
   if (CLAV_TrouverAssociationToucheBoite(&touche, box_id, &position) == FALSE)
   {
     vPrintf("   Sauvegarde touche 'ALL' Terminee!\n");
-    eeprom.netConf.boxList[key_mode][(E_KEY_NUM_ETOILE-1)][position] = box_id;
-    eeprom.netConf.ptr_boxList[key_mode][(E_KEY_NUM_ETOILE-1)]++;
+    eeprom.netConf.boxList[key_mode][(E_KEY_NUM_ETOILE - 1)][position] = box_id;
+    eeprom.netConf.ptr_boxList[key_mode][(E_KEY_NUM_ETOILE - 1)]++;
   }
 
   // sauvegarder la config dans la flash !!!

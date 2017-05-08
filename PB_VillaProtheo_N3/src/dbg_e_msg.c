@@ -15,7 +15,7 @@
 #if !NO_DEBUG_ON
 PUBLIC char gch_spaces[20] = { 0 }; /// Global buffer definition for debug alignement
 
-extern PUBLIC char const *dbg_teRunningNet[] = { "E_KS_NET_NON_DEFINI",
+PUBLIC char const *dbg_teRunningNet[] = { "E_KS_NET_NON_DEFINI",
     "E_KS_NET_CONF_START", "E_KS_NET_WAIT_CLIENT", "E_KS_NET_CLIENT_IN",
     "E_KS_NET_CONF_EN_COURS", "E_KS_NET_CONF_END", "E_KS_NET_CONF_BRK",
     "E_KS_NET_CLAV_ON", "E_KS_NET_MSG_IN", "E_KS_NET_ERROR", "E_KS_NET_END" };
@@ -101,4 +101,20 @@ PUBLIC void PBAR_DbgInside(int level, char * pSpaces, teDbgTrace eSens,
     vPrintf("\n");
 }
 
+PUBLIC void MyStepDebug(void)
+{
+  teRunningPgl pglVal = AppData.eAppState;
+  etRunningStp stpVal = AppData.eClavState;
+  etRunningRol rolVal = AppData.usage;
+  etRunningKbd kbdVal = AppData.eClavmod;
+  etRunningNet netVal = AppData.eNetState;
+  etDefWifiMsg wifVal = AppData.eWifiMsg;
+
+  vPrintf("Pgl:%s\n", dbg_teRunningPgl[pglVal]);
+  vPrintf("Rol:%s\t\tKbd:%s\n", dbg_etCLAV_role[rolVal], dbg_etCLAV_mod[kbdVal]);
+  vPrintf("Stp:%s\tKey:%s\n", dbg_teClavState[stpVal], dbg_etCLAV_keys[kbdVal]);
+  vPrintf("Net:%s\t\tWifi:%s\n", dbg_teRunningNet[netVal],
+      dbg_etDefWifiMsg[wifVal]);
+
+}
 #endif // #if !NO_DEBUG_ON
