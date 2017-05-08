@@ -51,18 +51,27 @@ PUBLIC etRunningStp CLAV_GererTouche(etInUsingkey keys)
     {
       // Remettre au menu de depart
       stpVal = NEW_CLAV_GererToucheModeSuperUser(keys);
+
+      vPrintf("Teck apres\n");
+      MyStepDebug();
+
     }
     break;
 
     case E_KS_ROL_UTILISATEUR:
     {
       stpVal = NEW_CLAV_GererToucheModeSimpleUser(keys);
+      vPrintf("usr apres\n");
+      MyStepDebug();
     }
     break;
 
     case E_KS_ROL_CHOISIR:
     {
       stpVal = NEW_CLAV_ChoisirNouveauRole(keys);
+      vPrintf("Choix apres\n");
+      MyStepDebug();
+
     }
     break;
 
@@ -117,19 +126,29 @@ PRIVATE etRunningStp NEW_CLAV_GererToucheModeSuperUser(etInUsingkey laTouche)
 
   uint8 val_flash = (uint8) MenuFlashValue[idMenu];
   int len = (sizeof(menu_pgm) / sizeof(char **));
+  static uint8 idMode = 1;
 
   if ((laTouche == E_KEY_NUM_DIESE))
   {
     if (timer_touche[E_KEY_NUM_DIESE - 1] <= C_PRESSION_T1)
 
     {
-      vPrintf("Menu '%s' flash:'%x'\n", menu_pgm[idMenu], val_flash);
-      au8Led_clav[C_CLAV_LED_INFO_2].mode = val_flash;
-      au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_OFF;
-      flashingType = MenuFlashValue[idMenu];
-      idMenu++;
-      idMenu = idMenu % len;
-
+      if (AppData.net == E_KS_NET_WAIT_CLIENT)
+      {
+        vPrintf("Test Choix clavier virtuel\n");
+        CLAV_GererMode(tabModeKeys[idMode]);
+        idMode++;
+        idMode = idMode % (sizeof(tabVisibleMode) / sizeof(etRunningKbd));
+      }
+      else
+      {
+        vPrintf("Menu '%s' flash:'%x'\n", menu_pgm[idMenu], val_flash);
+        au8Led_clav[C_CLAV_LED_INFO_2].mode = val_flash;
+        au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_OFF;
+        flashingType = MenuFlashValue[idMenu];
+        idMenu++;
+        idMenu = idMenu % len;
+      }
     }
 
     if (timer_touche[E_KEY_NUM_DIESE - 1] > C_PRESSION_T1)

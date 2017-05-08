@@ -86,10 +86,6 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
   etInUsingkey la_touche = E_KEY_NON_DEFINI;
   uint8 uId = 0;
   static bool_t oneshot = FALSE;
-  static bool_t oneshot_2 = TRUE;
-  static bool_t oneshot_3 = TRUE;
-  static bool_t oneshot_4 = TRUE;
-  static bool_t oneshot_5 = TRUE;
   etInUsingkey toucheAction = AppData.key;
   etDefWifiMsg wifi_msg = E_MSG_NOT_SET;
 

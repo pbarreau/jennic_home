@@ -397,9 +397,6 @@ PRIVATE etRunningNet pgm_GererBoiteEntrante(tsData *psData)
 
     AppData.pgl = E_PGL_BOUCLE_PRINCIPALE;
 
-    //----------------
-    MyStepDebug();
-    //----------------
   }
   else
   {
@@ -418,6 +415,10 @@ PRIVATE etRunningNet pgm_GererBoiteEntrante(tsData *psData)
   PBAR_DbgTrace(E_FN_OUT, "pgm_GererBoiteEntrante",
       (void *) (AppData.pgl), E_DBG_TYPE_NET_STATE);
 #endif
+
+  //----------------
+  MyStepDebug();
+  //----------------
 
   return mef_net;
 }
