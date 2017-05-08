@@ -12,7 +12,7 @@
 #define	C_CLAV_NB_IHM_LED	3
 #define	CST_LED_PERIOD		8
 
-#define	C_CLAV_LED_INFO_1	0
+#define	C_CLAV_LED_INFO_1	0 // Led Reseau
 #define	C_CLAV_LED_INFO_2	1
 #define	C_CLAV_LED_INFO_3	2
 

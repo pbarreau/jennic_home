@@ -61,129 +61,105 @@ PUBLIC etRunningNet CLAV_UsrNetMsgInput(tsData *psData)
 PUBLIC etRunningStp CLAV_UsrActionTouche(etInUsingkey keys)
 {
   static bool_t SetAllOff = FALSE;
-  etRunningStp mef_clav = E_KS_STP_NON_DEFINI;
+  etRunningStp mef_clav = E_KS_STP_ATTENTE_TOUCHE;
 
-  etRunningKbd eKeyMode = AppData.eClavmod;
-  uint8 key_mode = eKeyMode - E_KS_KBD_VIRTUAL_1;
+  etRunningKbd eKbdVirtualId = AppData.eClavmod;
+  uint8 vitual_kbd_id = eKbdVirtualId - E_KS_KBD_VIRTUAL_1;
   uint8 key_code = keys - E_KEY_NUM_1;
   uint8 box = 0;
   uint8 useBox = 0;
 
   vPrintf("\nIN:CLAV_UsrActionTouche MEF:%s\n", dbg_teClavState[mef_clav]);
   vPrintf(" Traiter touche:%s, mode:%s\n", dbg_etCLAV_keys[keys],
-      dbg_etCLAV_mod[eKeyMode]);
+      dbg_etCLAV_mod[eKbdVirtualId]);
 
-  // A ton une demande valide
-  if ((eKeyMode > E_KS_KBD_NON_DEFINI) && (eKeyMode < E_KS_KBD_END)
-      && (keys < E_KEYS_NUM_END))
+  // Ne pas chercher a allumer quand ce sont des touches speciales
+  if ((((keys > E_KEY_NON_DEFINI) && (keys < E_KEY_NUM_MOD_1))
+      || (keys == E_KEY_NUM_ETOILE)) == FALSE)
   {
-    // sur clavier 4x4 regarder 1-9,0 et *
-    // Regarder le tableau ptr_destination
-    // Max boucle == C_MAX_BOXES
-    for (box = 0; box < C_MAX_BOXES + 1; box++)
+    return mef_clav;
+  }
+
+  for (box = 0; box < C_MAX_BOXES + 1; box++)
+  {
+    useBox = eeprom.netConf.boxList[vitual_kbd_id][key_code][box];
+    vPrintf(" virualKbd=%d,keycode=%d,boxuse=%d,v=%d\n", vitual_kbd_id,
+        key_code, box, useBox);
+    if (eeprom.netConf.boxList[vitual_kbd_id][key_code][box] == 0x00)
     {
-      useBox = eeprom.netConf.boxList[key_mode][key_code][box];
-      vPrintf(" keymode=%d,keycode=%d,boxuse=%d,v=%d\n", key_mode, key_code,
-          box, useBox);
-      if (eeprom.netConf.boxList[key_mode][key_code][box] == 0x00)
-      {
-        //suivant de box = box
-        // sortir de la boucle
-        vPrintf("  Arret recherche id box niveau:%d\n\n", box);
-        break;
-      }
-      else
-      {
-        // il y a une boite configuree
-        vPrintf("  Use box %d (m:%s, k:%s, ptr:%d)\n", useBox,
-            dbg_etCLAV_mod[eKeyMode], dbg_etCLAV_keys[keys], box);
+      //suivant de box = box
+      // sortir de la boucle
+      vPrintf("  Arret recherche id box niveau:%d\n\n", box);
+      break;
+    }
+    else
+    {
+      // il y a une boite configuree
+      vPrintf("  Use box %d (m:%s, k:%s, ptr:%d)\n", useBox,
+          dbg_etCLAV_mod[eKbdVirtualId], dbg_etCLAV_keys[keys], box);
 
-        vPrintf("  bit:%x\n",
-            eeprom.netConf.boxData[key_mode][key_code][useBox]);
+      vPrintf("  bit:%x\n",
+          eeprom.netConf.boxData[vitual_kbd_id][key_code][useBox]);
 
-        if (eeprom.netConf.boxData[key_mode][key_code][useBox])
+      if (eeprom.netConf.boxData[vitual_kbd_id][key_code][useBox])
+      {
+        vPrintf("  Io [%x] avec boite %d\n",
+            eeprom.netConf.boxData[vitual_kbd_id][key_code][useBox], useBox);
+        // Oui alors a t on en memoire l'@ de cette boite
+        if (eeprom.BoxAddr[useBox])
         {
-          vPrintf("  Io [%x] avec boite %d\n",
-              eeprom.netConf.boxData[key_mode][key_code][useBox], useBox);
-          // Oui alors a t on en memoire l'@ de cette boite
-          if (eeprom.BoxAddr[useBox])
+          // Oui on a une addresse connue
+          AppData.u64ServiceAddress = eeprom.BoxAddr[useBox];
+
+          // Le temps d'appui sur la touche determine le on ou le off
+          // ON (court), OFF (Long)
+          if (keys != E_KEY_NUM_ETOILE)
           {
-            // Oui on a une addresse connue
-            AppData.u64ServiceAddress = eeprom.BoxAddr[useBox];
+            //Demande sous forme de bascule
+            bufEmission[0] = E_MSG_DATA_SELECT;
 
-            // Le temps d'appui sur la touche determine le on ou le off
-            // ON (court), OFF (Long)
-            if (keys != E_KEY_NUM_ETOILE)
+            if (timer_touche[AppData.ukey] <= C_PRESSION_T1)
             {
-              //Demande sous forme de bascule
-              bufEmission[0] = E_MSG_DATA_SELECT;
-
-              if (timer_touche[AppData.ukey] <= C_PRESSION_T1)
-              {
-                bufEmission[2] = 0xFF;
-              }
-              else
-              {
-                bufEmission[2] = 0x00;
-              }
+              bufEmission[2] = 0xFF;
             }
             else
             {
-              // Demande Globale imposee
-              bufEmission[0] = E_MSG_DATA_ALL;
-
-              if (SetAllOff == TRUE)
-              {
-                // On doit tout eteindre
-                bufEmission[2] = 0x00;
-              }
-              else
-              {
-                // On doit tout allumer
-                bufEmission[2] = 0xFF;
-              }
+              bufEmission[2] = 0x00;
             }
-#if 0
-            // envoyer le message a cette boite
-            if(keys != E_KEY_NUM_ETOILE)
-            {
-              //Demande sous forme de bascule
-              bufEmission[0]=E_MSG_DATA_SELECT;
-              bufEmission[2]=0x00;
-            }
-            else
-            {
-              // Demande Globale imposee
-              bufEmission[0]=E_MSG_DATA_ALL;
-
-              if(SetAllOff == TRUE)
-              {
-                // On doit tout eteindre
-                bufEmission[2]=0x00;
-              }
-              else
-              {
-                // On doit tout allumer
-                bufEmission[2]=0xFF;
-              }
-            }
-#endif
-            bufEmission[1] = eeprom.netConf.boxData[key_mode][key_code][useBox];
-
-            vPrintf("  --> MSG (%x,%x,%x) a [%x:%x]\n", bufEmission[0],
-                bufEmission[1], bufEmission[2],
-                (uint32) (AppData.u64ServiceAddress >> 32),
-                (uint32) (AppData.u64ServiceAddress & 0xFFFFFFFF));
-
-            eJenie_SendData(AppData.u64ServiceAddress, bufEmission, 3,
-            TXOPTION_SILENT);
           }
           else
           {
-            vPrintf("Erreur dans la memorisation des @ boites\n");
+            // Demande Globale imposee
+            bufEmission[0] = E_MSG_DATA_ALL;
+
+            if (SetAllOff == TRUE)
+            {
+              // On doit tout eteindre
+              bufEmission[2] = 0x00;
+            }
+            else
+            {
+              // On doit tout allumer
+              bufEmission[2] = 0xFF;
+            }
           }
 
+          bufEmission[1] =
+              eeprom.netConf.boxData[vitual_kbd_id][key_code][useBox];
+
+          vPrintf("  --> MSG (%x,%x,%x) a [%x:%x]\n", bufEmission[0],
+              bufEmission[1], bufEmission[2],
+              (uint32) (AppData.u64ServiceAddress >> 32),
+              (uint32) (AppData.u64ServiceAddress & 0xFFFFFFFF));
+
+          eJenie_SendData(AppData.u64ServiceAddress, bufEmission, 3,
+          TXOPTION_SILENT);
         }
+        else
+        {
+          vPrintf("Erreur dans la memorisation des @ boites\n");
+        }
+
       }
     }
   }

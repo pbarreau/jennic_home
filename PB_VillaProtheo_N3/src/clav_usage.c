@@ -14,9 +14,10 @@
 
 #include "e_config.h"
 
-PUBLIC char const *menu_pgm[] = { "Net Led", "Bip clavier", "Liaison" };
-PRIVATE eLedInfo MenuFlashValue[] = { E_FLASH_MENU_LED_NET,
-    E_FLASH_MENU_BIP_CLAVIER, E_FLASH_MENU_LIAISON };
+PUBLIC char const *menu_pgm[] = { "Net Led", "Bip clavier", "Liaison", "Admin" };
+PRIVATE eLedInfo MenuFlashValue[] =
+    { E_FLASH_MENU_LED_NET, E_FLASH_MENU_BIP_CLAVIER, E_FLASH_MENU_LIAISON,
+        E_FLASH_ERASE_RESET_POSSIBLE };
 
 PUBLIC uint8 bufEmission[3] = { 0, 0, 0 };
 PUBLIC bool_t b_EteindreNet = FALSE;
@@ -103,9 +104,8 @@ PUBLIC etRunningStp CLAV_GererTouche(etInUsingkey keys)
   etRunningKbd kbdVal = AppData.eClavmod;
   etRunningNet netVal = AppData.eNetState;
 
-  vPrintf("Rol:%s, Kbd:%s\n", dbg_etCLAV_role[rolVal], dbg_etCLAV_mod[kbdVal]);
-  vPrintf("Stp:%s, Key:%s\n", dbg_teClavState[stpVal], dbg_etCLAV_keys[kbdVal]);
-  vPrintf("Net:%s\n", dbg_teRunningNet[netVal]);
+  vPrintf("CLAV_GererTouche\n");
+  MyStepDebug();
 
   // Cette touche est dans quel contexte ?
   if (rolVal == E_KS_ROL_TECHNICIEN)
@@ -114,11 +114,11 @@ PUBLIC etRunningStp CLAV_GererTouche(etInUsingkey keys)
   }
   else if (rolVal == E_KS_ROL_UTILISATEUR)
   {
+    //AppData.eNetState = E_KS_NET_CONF_END;
     stpVal = NEW_CLAV_GererToucheModeSimpleUser(keys);
   }
   else if (rolVal == E_KS_ROL_CHOISIR)
   {
-    vPrintf("Choix 1 ou 2\n");
     stpVal = NEW_CLAV_ChoisirNouveauRole(keys);
   }
   else
@@ -133,23 +133,29 @@ PRIVATE etRunningStp NEW_CLAV_ChoisirNouveauRole(etInUsingkey laTouche)
 {
   etRunningRol cur_role = AppData.usage;
 
-  vPrintf("Utilisation courante:%d\n", cur_role);
+  vPrintf("Usage actuel:%s\n", dbg_etCLAV_role[cur_role]);
 
   if (laTouche == E_KEY_NUM_0)
   {
     cur_role = E_KS_ROL_UTILISATEUR;
     au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
+
+    // Retirer clavier service
+    CLAV_PgmNetRetirerClavier();
   }
   else if (laTouche == E_KEY_NUM_1)
   {
     cur_role = E_KS_ROL_TECHNICIEN;
     au8Led_clav[C_CLAV_LED_INFO_1].mode = E_FLASH_EN_ATTENTE_TOUCHE_BC;
+
+    //CLAV_PgmNetMontrerClavier();
   }
 
   if (cur_role != E_KS_ROL_CHOISIR)
   {
     AppData.usage = cur_role;
-    CLAV_GererMode(E_KEY_NUM_MOD_1);
+    vPrintf("Usage nouveau:%s\n", dbg_etCLAV_role[cur_role]);
+    CLAV_GererMode(E_KEY_NUM_MOD_1); // Bug
   }
 
   return E_KS_STP_ATTENTE_TOUCHE;
@@ -158,7 +164,6 @@ PRIVATE etRunningStp NEW_CLAV_ChoisirNouveauRole(etInUsingkey laTouche)
 PRIVATE etRunningStp NEW_CLAV_GererToucheModeSuperUser(etInUsingkey laTouche)
 {
   etRunningStp mef_clav = AppData.eClavState;
-  uint8 uKeyPos = AppData.ukey;
 
   static uint8 idMode = 0;
   static eLedInfo cur_menu = E_FLASH_MENU_LED_NET;
@@ -186,7 +191,7 @@ PRIVATE etRunningStp NEW_CLAV_GererToucheModeSuperUser(etInUsingkey laTouche)
     CLAV_GererMode(E_KEY_NUM_MOD_5);
   }
 
-  switch(AppData.eNetState)
+  switch (AppData.eNetState)
   {
     case E_KS_NET_NON_DEFINI:
     {
@@ -208,9 +213,22 @@ PRIVATE etRunningStp NEW_CLAV_GererToucheModeSuperUser(etInUsingkey laTouche)
     }
     break;
 
+    case E_KS_NET_CONF_END:
+    {
+      vPrintf("cas 4\n");
+    }
+    break;
+
+    case E_KS_NET_CONF_EN_COURS:
+    {
+      vPrintf("cas 5\n");
+      mef_clav = CLAV_PgmActionTouche(laTouche);
+    }
+    break;
+
     default:
     {
-      vPrintf("Erreur sur net state:%d\n",AppData.eNetState);
+      vPrintf("Erreur sur net state:%d\n", AppData.eNetState);
     }
   }
 
@@ -239,12 +257,48 @@ PRIVATE etRunningStp NEW_CLAV_MenuSuperUSer(eLedInfo flashingType,
     {
       if (laTouche == E_KEY_NUM_0)
       {
-        au8Led_clav[C_CLAV_LED_INFO_1].mode = E_FLASH_MENU_LIAISON;
-        au8Led_clav[C_CLAV_LED_INFO_2].mode = ~E_FLASH_OFF;
-        au8Led_clav[C_CLAV_LED_INFO_3].mode = ~E_FLASH_OFF;
-
+        AppData.eNetState = E_KS_NET_CONF_START;
+        CLAV_PgmNetMontrerClavier();
         mef_clav = CLAV_PgmNetMontrerClavier();
       }
+    }
+    break;
+
+    case E_FLASH_ERASE_RESET_POSSIBLE:
+    {
+      if (laTouche == E_KEY_NUM_0)
+      {
+        vPrintf("\n\n%sReset du module demande\n", gch_spaces);
+        // Vidage buffer UART
+        while ((u8JPI_UartReadLineStatus(E_JPI_UART_0)
+            & (E_JPI_UART_LS_THRE | E_JPI_UART_LS_TEMT))
+            != (E_JPI_UART_LS_THRE | E_JPI_UART_LS_TEMT))
+          ;
+
+        // effectuer un reset du jennic
+        vAHI_SwReset();
+      }
+
+      if (laTouche == E_KEY_NUM_1)
+      {
+        vPrintf("%sDemande effacement de config clavier !\n", gch_spaces);
+
+        if (eeprom.nbBoite == 0xFF || eeprom.nbBoite == 0x00)
+        {
+          vPrintf("%s La Flash n'a aucune config a effacer\n", gch_spaces);
+        }
+        else
+        {
+          vPrintf("%s Effacement de la config en memoire Flash\n", gch_spaces);
+          if (!bAHI_FlashEraseSector(7))
+          {
+            vPrintf("Pb lors effacement Secteur\n");
+          }
+          // reset de la structure des donnees eprom
+          memset(&eeprom, 0x00, sizeof(eeprom));
+        }
+      }
+
     }
     break;
     default:
@@ -307,35 +361,31 @@ PRIVATE void NEW_ManageNetworkLed(etInUsingkey laTouche)
 }
 PRIVATE etRunningStp NEW_CLAV_GererToucheModeSimpleUser(etInUsingkey laTouche)
 {
-  uint8 uKeyPos = AppData.ukey;
   static uint8 idMode = 1; // enrelation avec le mode affiche par les leds
 
-#if 0
-  if (uKeyPos < 0)
+  if (laTouche == E_KEY_NUM_DIESE)
   {
-    vPrintf("Erreur Codage a corriger\n");
-    return mef_clav;
-  }
-#endif
+    // Pression courte
+    if (timer_touche[E_KEY_NUM_DIESE - 1] <= C_PRESSION_T1)
+    {
+      vPrintf("Clavier virtuel '%d'\n", tabVisibleMode[idMode]);
+      CLAV_GererMode(tabModeKeys[idMode]);
+      idMode++;
+      idMode = idMode % (sizeof(tabVisibleMode) / sizeof(etRunningKbd));
+    }
 
-  if ((laTouche == E_KEY_NUM_DIESE)
-      && (timer_touche[E_KEY_NUM_DIESE - 1] <= C_PRESSION_T1))
+    //Pression plus longue
+    if (timer_touche[E_KEY_NUM_DIESE - 1] > C_PRESSION_T1)
+    {
+      vPrintf("Selection role clavier\n", tabVisibleMode[idMode]);
+      AppData.usage = E_KS_ROL_CHOISIR;
+      CLAV_GererMode(E_KEY_NUM_MOD_5);
+    }
+  }
+  else
   {
-    vPrintf("Passage en mode:%d", tabVisibleMode[idMode]);
-    CLAV_GererMode(tabModeKeys[idMode]);
-    idMode++;
-    idMode = idMode % (sizeof(tabVisibleMode) / sizeof(etRunningKbd));
-
+    CLAV_UsrActionTouche(laTouche);
   }
-
-  if ((laTouche == E_KEY_NUM_DIESE)
-      && (timer_touche[E_KEY_NUM_DIESE - 1] > C_PRESSION_T1))
-  {
-    AppData.usage = E_KS_ROL_CHOISIR;
-    CLAV_GererMode(E_KEY_NUM_MOD_5);
-  }
-
-  CLAV_UsrActionTouche(laTouche);
   return E_KS_STP_ATTENTE_TOUCHE;
 }
 

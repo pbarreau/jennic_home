@@ -283,7 +283,7 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
       }
       else
       {
-        vPrintf("ERREUR RESEAU CLAVIER\n");
+        vPrintf("ERREUR RESEAU CLAVIER %d\n", AppData.eNetState);
       }
 
     }

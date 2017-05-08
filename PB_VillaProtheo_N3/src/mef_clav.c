@@ -92,6 +92,8 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
   static bool_t oneshot = FALSE;
   static bool_t oneshot_2 = TRUE;
   static bool_t oneshot_3 = TRUE;
+  static bool_t oneshot_4 = TRUE;
+  static bool_t oneshot_5 = TRUE;
   etInUsingkey toucheAction = AppData.eKeyPressed;
   etDefWifiMsg wifi_msg = E_MSG_NOT_SET;
 
@@ -103,6 +105,8 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
   {
     NEW_timer_appuie_touche++;
   }
+
+  wifi_msg = AppData.eWifiMsg;
 
   switch (mef_clavier)
   {
@@ -125,13 +129,33 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
       switch (AppData.eNetState)
       {
         case E_KS_NET_CONF_START:
+          AppData.eNetState = E_KS_NET_CONF_EN_COURS;
         break;
 
         case E_KS_NET_WAIT_CLIENT:
-          au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_RECHERCHE_RESEAU;
+          //au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_RECHERCHE_BC;
+          switch (wifi_msg)
+          {
+            case E_MSG_RSP_ID_BOX:
+            {
+              AppData.eNetState = E_KS_NET_CONF_START;
+            }
+            break;
+
+            default:
+            {
+              if (oneshot_5)
+              {
+                oneshot_5 = FALSE;
+                vPrintf("Wifi 1 Message error :'%d'", wifi_msg);
+              }
+            }
+            break;
+          }
         break;
 
         case E_KS_NET_CONF_END:
+          //au8Led_clav[C_CLAV_LED_INFO_3].mode =~E_FLASH_OFF;
         break;
 
         case E_KS_NET_CLIENT_IN:
@@ -146,10 +170,12 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
 
         case E_KS_NET_CONF_EN_COURS:
         {
-          wifi_msg = AppData.eWifiMsg;
 
           switch (wifi_msg)
           {
+            case E_MSG_NOT_SET:
+            break;
+
             case E_MSG_CFG_LIENS:
             {
               if (oneshot_3)
@@ -159,13 +185,28 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
                 vPrintf("Reception d'une config de liens\n");
 
               }
+              AppData.eNetState = E_KS_NET_CONF_EN_COURS;
               // la config est deja memorisee
+            }
+            case E_MSG_CFG_BOX_END:
+            {
+              if (oneshot_4)
+              {
+                oneshot_4 = FALSE;
+
+                vPrintf("Configuration Box id %d terminee\n", AppData.u8BoxId);
+              }
+              AppData.eNetState = E_KS_NET_WAIT_CLIENT;
             }
             break;
 
             default:
             {
-              vPrintf("Wifi Message error :'%d'", wifi_msg);
+              if (oneshot_5)
+              {
+                oneshot_5 = FALSE;
+                vPrintf("Wifi 2 Message error :'%d'", wifi_msg);
+              }
             }
           }
         }
@@ -199,7 +240,7 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
     break;
 
     case E_KS_STP_ATTENDRE_BOITE:
-      au8Led_clav[C_CLAV_LED_INFO_1].mode = E_FLASH_RECHERCHE_RESEAU;
+      //au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_RECHERCHE_RESEAU;
     break;
 
     case E_KS_STP_EN_PROGR_AVEC_BOITE:

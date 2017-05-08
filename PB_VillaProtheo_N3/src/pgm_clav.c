@@ -17,8 +17,8 @@ PUBLIC etRunningStp CLAV_PgmNetMontrerClavier(void)
   teJenieStatusCode eStatus = E_JENIE_ERR_UNKNOWN;
   etRunningStp mef_clav = AppData.eClavState;
   etRunningNet mef_net = AppData.eNetState;
-//toto
-  au8Led_clav[C_CLAV_LED_INFO_1].mode = E_FLASH_MENU_LIAISON;
+
+  au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_MENU_LIAISON;
 
 #if !NO_DEBUG_ON
   int stepper = 0;
@@ -349,6 +349,8 @@ PRIVATE etRunningNet pgm_GererBoiteEntrante(tsData *psData)
   uint8 box_number = psData->pau8Data[psData->u16Length - 1];
   etRunningNet mef_net = AppData.eNetState;
 
+  au8Led_clav[C_CLAV_LED_INFO_3].mode =~E_FLASH_OFF; //E_FLASH_RSP_BC
+
 #if !NO_DEBUG_ON
   int stepper = 0;
 
@@ -499,4 +501,5 @@ PRIVATE void pgm_CreerConfigAll(uint8 box_id)
       vPrintf("Sauvegarde sur Flash terminee\n");
     }
   }
+  AppData.eNetState = E_KS_NET_CONF_END;
 }
