@@ -63,7 +63,7 @@ PUBLIC etRunningStp CLAV_UsrActionTouche(etInUsingkey keys)
   static bool_t SetAllOff = FALSE;
   etRunningStp mef_clav = E_KS_STP_ATTENTE_TOUCHE;
 
-  etRunningKbd eKbdVirtualId = AppData.eClavmod;
+  etRunningKbd eKbdVirtualId = AppData.kbd;
   uint8 vitual_kbd_id = eKbdVirtualId - E_KS_KBD_VIRTUAL_1;
   uint8 key_code = keys - E_KEY_NUM_1;
   uint8 box = 0;

@@ -92,7 +92,7 @@ typedef enum {
   E_PGL_ATTENTE_ENREGISTREMENT_AU_PERE,
   E_PGL_BOUCLE_PRINCIPALE,
   E_PGL_DEFINITION_END
-} teRunningPgl; // Program Level
+} etRunningPgl; // Program Level
 extern PUBLIC char const *dbg_teRunningPgl[];
 extern PUBLIC char const *dbg_teEventType[];
 
@@ -113,7 +113,7 @@ extern PUBLIC char const *dbg_etDefWifiMsg[];
 /****************************************************************************/
 /***        Exported Functions                                            ***/
 /****************************************************************************/
-extern PUBLIC void bp_CommunMsgReseau(teRunningPgl *eState,
+extern PUBLIC void bp_CommunMsgReseau(etRunningPgl *eState,
     teEventType eEventType, void *pvEventPrim);
 
 /****************************************************************************/

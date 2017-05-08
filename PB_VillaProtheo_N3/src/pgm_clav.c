@@ -15,8 +15,8 @@ PRIVATE void pgm_CreerConfigAll(uint8 box_id);
 PUBLIC etRunningStp CLAV_PgmNetMontrerClavier(void)
 {
   teJenieStatusCode eStatus = E_JENIE_ERR_UNKNOWN;
-  etRunningStp mef_clav = AppData.eClavState;
-  etRunningNet mef_net = AppData.eNetState;
+  etRunningStp mef_clav = AppData.stp;
+  etRunningNet mef_net = AppData.net;
 
   au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_MENU_LIAISON;
 
@@ -24,7 +24,7 @@ PUBLIC etRunningStp CLAV_PgmNetMontrerClavier(void)
   int stepper = 0;
 
   stepper = PBAR_DbgTrace(E_FN_IN, "CLAV_PgmNetMontrerClavier",
-      (void *) (AppData.eAppState), E_DBG_TYPE_NET_STATE);
+      (void *) (AppData.pgl), E_DBG_TYPE_NET_STATE);
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
 #endif
   // Enregistrer le service clavier pour etre vu des boitiers puissances
@@ -48,30 +48,30 @@ PUBLIC etRunningStp CLAV_PgmNetMontrerClavier(void)
     default:
       vPrintf("%s!!Activation service clavier a revoir\n", gch_spaces);
       mef_net = E_KS_NET_NON_DEFINI;
-      AppData.eAppState = E_PGL_BOUCLE_PRINCIPALE;
+      AppData.pgl = E_PGL_BOUCLE_PRINCIPALE;
     break;
   }
 
 #if !NO_DEBUG_ON
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
   PBAR_DbgTrace(E_FN_OUT, "CLAV_PgmNetMontrerClavier",
-      (void *) (AppData.eAppState), E_DBG_TYPE_NET_STATE);
+      (void *) (AppData.pgl), E_DBG_TYPE_NET_STATE);
 #endif
 
-  AppData.eNetState = mef_net;
+  AppData.net = mef_net;
   return mef_clav;
 }
 
 PUBLIC etRunningNet CLAV_PgmNetRetirerClavier(void)
 {
   teJenieStatusCode eStatus = E_JENIE_ERR_UNKNOWN;
-  etRunningNet mef_net = AppData.eNetState;
+  etRunningNet mef_net = AppData.net;
 
 #if !NO_DEBUG_ON
   int stepper = 0;
 
   stepper = PBAR_DbgTrace(E_FN_IN, "CLAV_PgmNetRetirerClavier",
-      (void *) (AppData.eAppState), E_DBG_TYPE_NET_STATE);
+      (void *) (AppData.pgl), E_DBG_TYPE_NET_STATE);
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
 #endif
   // Enregistrer le service clavier pour etre vu des boitiers puissances
@@ -94,13 +94,13 @@ PUBLIC etRunningNet CLAV_PgmNetRetirerClavier(void)
     default:
       vPrintf("%s!!Activation service clavier a revoir\n", gch_spaces);
       mef_net = E_KS_NET_ERROR;
-      AppData.eAppState = E_PGL_BOUCLE_PRINCIPALE;
+      AppData.pgl = E_PGL_BOUCLE_PRINCIPALE;
     break;
   }
 
 #if !NO_DEBUG_ON
   PBAR_DbgTrace(E_FN_OUT, "CLAV_PgmNetRetirerClavier",
-      (void *) (AppData.eAppState), E_DBG_TYPE_NET_STATE);
+      (void *) (AppData.pgl), E_DBG_TYPE_NET_STATE);
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
 #endif
 
@@ -109,7 +109,7 @@ PUBLIC etRunningNet CLAV_PgmNetRetirerClavier(void)
 
 PUBLIC etRunningNet CLAV_PgmNetMsgInput(tsData *psData)
 {
-  etRunningNet mef_net = AppData.eNetState;
+  etRunningNet mef_net = AppData.net;
   uint8 mode = 0;
   uint8 clav = 0;
   uint8 conf = 0;
@@ -118,11 +118,11 @@ PUBLIC etRunningNet CLAV_PgmNetMsgInput(tsData *psData)
   int stepper = 0;
 
   stepper = PBAR_DbgTrace(E_FN_IN, "CLAV_PgmNetMsgInput",
-      (void *) (AppData.eAppState), E_DBG_TYPE_NET_STATE);
+      (void *) (AppData.pgl), E_DBG_TYPE_NET_STATE);
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
 #endif
 
-  AppData.eWifiMsg = (etDefWifiMsg) (psData->pau8Data[0]);
+  AppData.eWifi = (etDefWifiMsg) (psData->pau8Data[0]);
   switch (psData->pau8Data[0])
   {
     case E_MSG_RSP_ID_BOX:
@@ -136,7 +136,7 @@ PUBLIC etRunningNet CLAV_PgmNetMsgInput(tsData *psData)
       vPrintf("%sMsg Fin config boite %d\n\n", gch_spaces, AppData.u8BoxId);
       pgm_CreerConfigAll(AppData.u8BoxId);
       mef_net = E_KS_NET_WAIT_CLIENT;
-      AppData.eAppState = E_PGL_BOUCLE_PRINCIPALE;
+      AppData.pgl = E_PGL_BOUCLE_PRINCIPALE;
     }
     break;
 
@@ -181,7 +181,7 @@ PUBLIC etRunningNet CLAV_PgmNetMsgInput(tsData *psData)
 
 #if !NO_DEBUG_ON
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
-  PBAR_DbgTrace(E_FN_OUT, "CLAV_PgmNetMsgInput", (void *) (AppData.eAppState),
+  PBAR_DbgTrace(E_FN_OUT, "CLAV_PgmNetMsgInput", (void *) (AppData.pgl),
       E_DBG_TYPE_NET_STATE);
 #endif
   return mef_net;
@@ -190,7 +190,7 @@ PUBLIC etRunningNet CLAV_PgmNetMsgInput(tsData *psData)
 #if 0
 PUBLIC etRunningNet CLAV_PgmNetMsgInput(tsData *psData)
 {
-  etRunningNet mef_net = AppData.eNetState;
+  etRunningNet mef_net = AppData.net;
   uint8 mode = 0;
   uint8 clav = 0;
   uint8 conf = 0;
@@ -199,7 +199,7 @@ PUBLIC etRunningNet CLAV_PgmNetMsgInput(tsData *psData)
   int stepper = 0;
 
   stepper = PBAR_DbgTrace(E_FN_IN, "CLAV_PgmNetMsgInput",
-      (void *) (AppData.eAppState), E_DBG_TYPE_NET_STATE);
+      (void *) (AppData.pgl), E_DBG_TYPE_NET_STATE);
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
 #endif
 
@@ -224,7 +224,7 @@ PUBLIC etRunningNet CLAV_PgmNetMsgInput(tsData *psData)
         vPrintf("%sMsg Fin config boite %d\n\n", gch_spaces, AppData.u8BoxId);
         pgm_CreerConfigAll(AppData.u8BoxId);
         mef_net = E_KS_NET_WAIT_CLIENT;
-        AppData.eAppState = E_PGL_BOUCLE_PRINCIPALE;
+        AppData.pgl = E_PGL_BOUCLE_PRINCIPALE;
       }
       break;
 
@@ -272,12 +272,12 @@ PUBLIC etRunningNet CLAV_PgmNetMsgInput(tsData *psData)
     vPrintf("%sERR:La taille n'est pas celle prevue\n", gch_spaces);
     vPrintf("%sReception d'un message non normalise !!\n", gch_spaces);
 
-    AppData.eAppState = E_PGL_BOUCLE_PRINCIPALE;
+    AppData.pgl = E_PGL_BOUCLE_PRINCIPALE;
   }
 
 #if !NO_DEBUG_ON
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
-  PBAR_DbgTrace(E_FN_OUT, "CLAV_PgmNetMsgInput", (void *) (AppData.eAppState),
+  PBAR_DbgTrace(E_FN_OUT, "CLAV_PgmNetMsgInput", (void *) (AppData.pgl),
       E_DBG_TYPE_NET_STATE);
 #endif
   return mef_net;
@@ -287,9 +287,9 @@ PUBLIC etRunningNet CLAV_PgmNetMsgInput(tsData *psData)
 
 PUBLIC etRunningStp CLAV_PgmActionTouche(etInUsingkey keys)
 {
-  etRunningStp mef_clav = AppData.eClavState;
+  etRunningStp mef_clav = AppData.stp;
   stToucheDef touche = { 0 };
-  etRunningKbd key_mode = AppData.eClavmod - E_KS_KBD_VIRTUAL_1;
+  etRunningKbd key_mode = AppData.kbd - E_KS_KBD_VIRTUAL_1;
   etInUsingkey key_code = keys - E_KEY_NUM_1;
   uint8 box_id = AppData.u8BoxId;
   uint8 position = 0;
@@ -298,7 +298,7 @@ PUBLIC etRunningStp CLAV_PgmActionTouche(etInUsingkey keys)
   int stepper = 0;
 
   stepper = PBAR_DbgTrace(E_FN_IN, "CLAV_PgmActionTouche",
-      (void *) (AppData.eAppState), E_DBG_TYPE_NET_STATE);
+      (void *) (AppData.pgl), E_DBG_TYPE_NET_STATE);
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
 #endif
 
@@ -311,10 +311,10 @@ PUBLIC etRunningStp CLAV_PgmActionTouche(etInUsingkey keys)
     // verifier si cette touche connait la boite a configurer
     // si non rajouter cette boite a la touche
 #if fn1
-    CLAV_TrouverAssociationToucheBoite(AppData.eClavmod,keys,AppData.u8BoxId);
+    CLAV_TrouverAssociationToucheBoite(AppData.kbd,keys,AppData.u8BoxId);
 #else
     touche.la_touche = keys;
-    touche.le_mode = AppData.eClavmod;
+    touche.le_clavier = AppData.kbd;
     if (CLAV_TrouverAssociationToucheBoite(&touche, box_id, &position) == FALSE)
     {
       eeprom.netConf.boxList[key_mode][key_code][position] = box_id;
@@ -337,7 +337,7 @@ PUBLIC etRunningStp CLAV_PgmActionTouche(etInUsingkey keys)
 
 #if !NO_DEBUG_ON
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
-  PBAR_DbgTrace(E_FN_OUT, "CLAV_PgmActionTouche", (void *) (AppData.eAppState),
+  PBAR_DbgTrace(E_FN_OUT, "CLAV_PgmActionTouche", (void *) (AppData.pgl),
       E_DBG_TYPE_NET_STATE);
 #endif
 
@@ -347,7 +347,7 @@ PUBLIC etRunningStp CLAV_PgmActionTouche(etInUsingkey keys)
 PRIVATE etRunningNet pgm_GererBoiteEntrante(tsData *psData)
 {
   uint8 box_number = psData->pau8Data[psData->u16Length - 1];
-  etRunningNet mef_net = AppData.eNetState;
+  etRunningNet mef_net = AppData.net;
 
   au8Led_clav[C_CLAV_LED_INFO_3].mode =~E_FLASH_OFF; //E_FLASH_RSP_BC
 
@@ -355,7 +355,7 @@ PRIVATE etRunningNet pgm_GererBoiteEntrante(tsData *psData)
   int stepper = 0;
 
   stepper = PBAR_DbgTrace(E_FN_IN, "pgm_GererBoiteEntrante",
-      (void *) (AppData.eAppState), E_DBG_TYPE_NET_STATE);
+      (void *) (AppData.pgl), E_DBG_TYPE_NET_STATE);
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
 #endif
 
@@ -392,10 +392,10 @@ PRIVATE etRunningNet pgm_GererBoiteEntrante(tsData *psData)
 
     au8Led_clav[C_CLAV_LED_INFO_2].mode = E_FLASH_EN_ATTENTE_TOUCHE_BC;
 
-    AppData.eNetState = E_KS_NET_CLIENT_IN;
+    AppData.net = E_KS_NET_CLIENT_IN;
     AppData.u8BoxId = box_number;
 
-    AppData.eAppState = E_PGL_BOUCLE_PRINCIPALE;
+    AppData.pgl = E_PGL_BOUCLE_PRINCIPALE;
 
     //----------------
     MyStepDebug();
@@ -408,15 +408,15 @@ PRIVATE etRunningNet pgm_GererBoiteEntrante(tsData *psData)
 
     // Retour au mode normal
     vPrintf("%sRetour en usage : utilisation courante\n", gch_spaces);
-    mef_net = CLAV_GererTouche(AppData.eKeyPressed);
-    AppData.eNetState = E_KS_NET_CONF_BRK;
+    mef_net = CLAV_GererTouche(AppData.key);
+    AppData.net = E_KS_NET_CONF_BRK;
 
     /// TODO : Envoyer msg a la box id (en erreur) pour qu'elle ne reste pas en attente de touche clavier
   }
 #if !NO_DEBUG_ON
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
   PBAR_DbgTrace(E_FN_OUT, "pgm_GererBoiteEntrante",
-      (void *) (AppData.eAppState), E_DBG_TYPE_NET_STATE);
+      (void *) (AppData.pgl), E_DBG_TYPE_NET_STATE);
 #endif
 
   return mef_net;
@@ -425,22 +425,22 @@ PRIVATE etRunningNet pgm_GererBoiteEntrante(tsData *psData)
 PRIVATE void pgm_CreerConfigAll(uint8 box_id)
 {
   //teClavState mef_clav 	= E_CLAV_ETAT_UNDEF;
-  etInUsingkey eLaTouche = AppData.eKeyPressed;
-  etRunningKbd eLeMode = AppData.eClavmod;
+  etInUsingkey eLaTouche = AppData.key;
+  etRunningKbd eLeMode = AppData.kbd;
   uint8 valThisBox = 0;
   uint8 i = 0;
   uint8 useBox = 0;
   uint8 tmp = 0;
 
   stToucheDef touche = { 0 };
-  etRunningKbd key_mode = AppData.eClavmod - E_KS_KBD_VIRTUAL_1;
+  etRunningKbd key_mode = AppData.kbd - E_KS_KBD_VIRTUAL_1;
   etInUsingkey key_code = eLaTouche - E_KEY_NUM_1;
   uint8 position = 0;
 
   // rajout de cette boite a la liste de celle du clavier
   vPrintf("Une B:%d de + a  key:%s ?\n", box_id, dbg_etCLAV_keys[eLaTouche]);
   touche.la_touche = eLaTouche;
-  touche.le_mode = eLeMode;
+  touche.le_clavier = eLeMode;
   if (CLAV_TrouverAssociationToucheBoite(&touche, box_id, &position) == TRUE)
   {
     vPrintf("km=%d,kc=%d,po=%d,v=%d\n", key_mode, key_code, position, box_id);
@@ -474,7 +474,7 @@ PRIVATE void pgm_CreerConfigAll(uint8 box_id)
   // Dire que Touche ALL position ptr++ a une Boite configuree
   // La touche ALL est la derniere de toute les touche autorisee
   touche.la_touche = E_KEY_NUM_ETOILE;
-  touche.le_mode = eLeMode;
+  touche.le_clavier = eLeMode;
   if (CLAV_TrouverAssociationToucheBoite(&touche, box_id, &position) == FALSE)
   {
     vPrintf("   Sauvegarde touche 'ALL' Terminee!\n");
@@ -501,5 +501,5 @@ PRIVATE void pgm_CreerConfigAll(uint8 box_id)
       vPrintf("Sauvegarde sur Flash terminee\n");
     }
   }
-  AppData.eNetState = E_KS_NET_CONF_END;
+  AppData.net = E_KS_NET_CONF_END;
 }

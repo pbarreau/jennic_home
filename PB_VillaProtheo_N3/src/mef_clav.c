@@ -30,13 +30,13 @@ PRIVATE bool_t b_client_in = FALSE;
 PUBLIC bool_t b_activer_bip = FALSE;
 
 //---------------------------
-PUBLIC teRunningPgl NEW_AnalyseBoitierDeCommande(etRunningStp *stpVal,
+PUBLIC etRunningPgl NEW_AnalyseBoitierDeCommande(etRunningStp *stpVal,
     etRunningRol *rolVal, etRunningKbd *kbdVal, etInUsingkey *keyVal,
     etRunningNet *netVal)
 {
   //etInUsingkey la_touche = E_KEY_NON_DEFINI;
   //uint8 uId = 0;
-  static teRunningPgl pglVal = E_PGL_BOUCLE_PRINCIPALE;
+  static etRunningPgl pglVal = E_PGL_BOUCLE_PRINCIPALE;
   static bool_t oneshot = FALSE;
   static bool_t oneshot_2 = FALSE;
   //teWifiMsg wifi_msg = E_MSG_NOT_SET;
@@ -94,7 +94,7 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
   static bool_t oneshot_3 = TRUE;
   static bool_t oneshot_4 = TRUE;
   static bool_t oneshot_5 = TRUE;
-  etInUsingkey toucheAction = AppData.eKeyPressed;
+  etInUsingkey toucheAction = AppData.key;
   etDefWifiMsg wifi_msg = E_MSG_NOT_SET;
 
 #ifdef WATCHDOG_ENABLED
@@ -106,30 +106,38 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
     NEW_timer_appuie_touche++;
   }
 
-  wifi_msg = AppData.eWifiMsg;
+  wifi_msg = AppData.eWifi;
 
   switch (mef_clavier)
   {
     case E_KS_STP_NON_DEFINI:
+    {
       vPrintf("Passage clavier en attente touche\n");
-      AppData.eClavState = E_KS_STP_ATTENTE_TOUCHE;
-      AppData.eClavmod = E_KS_KBD_VIRTUAL_1;
-      AppData.usage = E_KS_ROL_UTILISATEUR;
+      AppData.pgl = E_PGL_BOUCLE_PRINCIPALE;
+      AppData.key = E_KEY_NON_DEFINI;
+      AppData.rol = E_KS_ROL_UTILISATEUR;
+      AppData.kbd = E_KS_KBD_VIRTUAL_1;
+      AppData.stp = E_KS_STP_ATTENTE_TOUCHE;
+      AppData.net = E_KS_NET_NON_DEFINI;
+      AppData.eWifi = E_MSG_NOT_SET;
 
-      maConfig.rolVal = E_KS_ROL_UTILISATEUR;
-      maConfig.kbdVal = E_KS_KBD_VIRTUAL_1;
-      maConfig.keyVal = E_KEY_NON_DEFINI;
-      maConfig.stpVal = E_KS_STP_ATTENTE_TOUCHE;
-      maConfig.netVal = E_KS_NET_NON_DEFINI;
+      maConfig.pgl = E_PGL_BOUCLE_PRINCIPALE;
+      maConfig.key = E_KEY_NON_DEFINI;
+      maConfig.rol = E_KS_ROL_UTILISATEUR;
+      maConfig.kbd = E_KS_KBD_VIRTUAL_1;
+      maConfig.stp = E_KS_STP_ATTENTE_TOUCHE;
+      maConfig.net = E_KS_NET_NON_DEFINI;
+      maConfig.msg = E_MSG_NOT_SET;
+    }
     break;
 
     case E_KS_STP_ATTENTE_TOUCHE:
     {
 
-      switch (AppData.eNetState)
+      switch (AppData.net)
       {
         case E_KS_NET_CONF_START:
-          AppData.eNetState = E_KS_NET_CONF_EN_COURS;
+          AppData.net = E_KS_NET_CONF_EN_COURS;
         break;
 
         case E_KS_NET_WAIT_CLIENT:
@@ -138,7 +146,7 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
           {
             case E_MSG_RSP_ID_BOX:
             {
-              AppData.eNetState = E_KS_NET_CONF_START;
+              AppData.net = E_KS_NET_CONF_START;
             }
             break;
 
@@ -185,7 +193,7 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
                 vPrintf("Reception d'une config de liens\n");
 
               }
-              AppData.eNetState = E_KS_NET_CONF_EN_COURS;
+              AppData.net = E_KS_NET_CONF_EN_COURS;
               // la config est deja memorisee
             }
             case E_MSG_CFG_BOX_END:
@@ -196,7 +204,7 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
 
                 vPrintf("Configuration Box id %d terminee\n", AppData.u8BoxId);
               }
-              AppData.eNetState = E_KS_NET_WAIT_CLIENT;
+              AppData.net = E_KS_NET_WAIT_CLIENT;
             }
             break;
 
@@ -222,7 +230,7 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
           if (oneshot_2)
           {
             oneshot_2 = FALSE;
-            vPrintf("CASE NET NON PREVU %d\n", AppData.eNetState);
+            vPrintf("CASE NET NON PREVU %d\n", AppData.net);
           }
         break;
 
@@ -257,7 +265,7 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
 
       // Autoriser its clavier
       //vAHI_DioInterruptEnable(PBAR_CFG_NUMPAD_IN, 0);
-      AppData.eClavState = E_KS_STP_ATTENTE_TOUCHE;
+      AppData.stp = E_KS_STP_ATTENTE_TOUCHE;
     }
     break;
 
@@ -271,16 +279,16 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
         vPrintf("Touche '%c' pendant '%d' ms, code dans pgm:%d\n\n",
             code_ascii[uId], timer_touche[la_touche - 1], la_touche);
 
-        AppData.eKeyPressed = la_touche;
+        AppData.key = la_touche;
         //AppData.ukey = uId;
         //timer_touche[la_touche] = NEW_memo_delay_touche / 100;
 
         // Une touche est reconnue on peut demander a la traiter
-        AppData.eClavState = E_KS_STP_TRAITER_TOUCHE;
+        AppData.stp = E_KS_STP_TRAITER_TOUCHE;
       }
       else
       {
-        AppData.eClavState = E_KS_STP_ARMER_IT;
+        AppData.stp = E_KS_STP_ARMER_IT;
       }
     }
     break;
@@ -288,7 +296,7 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
     case E_KS_STP_TRAITER_TOUCHE:
     {
       CLAV_GererTouche(toucheAction);
-      AppData.eClavState = E_KS_STP_ARMER_IT;
+      AppData.stp = E_KS_STP_ARMER_IT;
     }
     break;
 
@@ -305,18 +313,18 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
 PUBLIC void CLAV_GererMode(etInUsingkey mode)
 {
   //teClavState mef_clav = AppData.eClavState;
-  etRunningKbd modif_mode = AppData.eClavmod;
+  etRunningKbd modif_mode = AppData.kbd;
   eLedInfo flash_val;
 
 #if !NO_DEBUG_ON
   int stepper = 0;
 
-  stepper = PBAR_DbgTrace(E_FN_IN, "CLAV_GererMode",
-      (void *) (AppData.eAppState), E_DBG_TYPE_NET_STATE);
+  stepper = PBAR_DbgTrace(E_FN_IN, "CLAV_GererMode", (void *) (AppData.pgl),
+      E_DBG_TYPE_NET_STATE);
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
 #endif
 
-  switch (AppData.usage)
+  switch (AppData.rol)
   {
     case E_KS_ROL_UTILISATEUR:
       flash_val = ~E_FLASH_OFF;
@@ -374,16 +382,16 @@ PUBLIC void CLAV_GererMode(etInUsingkey mode)
   }
 
   if ((modif_mode != E_KS_KBD_VIRTUAL_1)
-      && (AppData.eClavState != E_KS_STP_ULTRA_MODE))
+      && (AppData.stp != E_KS_STP_ULTRA_MODE))
   {
     compter_duree_mode = 0;
     start_timer_of_mode = TRUE;
   }
 
-  AppData.eClavmod = modif_mode;
+  AppData.kbd = modif_mode;
 #if !NO_DEBUG_ON
   PBAR_DbgInside(stepper, gch_spaces, E_FN_OUT, AppData);
-  PBAR_DbgTrace(E_FN_OUT, "CLAV_GererMode", (void *) AppData.eAppState,
+  PBAR_DbgTrace(E_FN_OUT, "CLAV_GererMode", (void *) AppData.pgl,
       E_DBG_TYPE_NET_STATE);
 #endif
 }
@@ -392,15 +400,8 @@ PUBLIC bool_t CLAV_TrouverAssociationToucheBoite(stToucheDef *touche,
     uint8 BoxId, uint8 *position)
 {
   bool_t eReturn = FALSE;
-#if 0
-  uint8 key_code = (
-      (touche->la_touche == E_KEY_NUM_ETOILE) ?
-      C_KEY_MEM_ALL :
-      touche->la_touche - E_KEY_NUM_1);
-  ;
-#endif
   uint8 key_code = touche->la_touche - E_KEY_NUM_1;
-  uint8 key_mode = touche->le_mode - E_KS_KBD_VIRTUAL_1;
+  uint8 key_mode = touche->le_clavier - E_KS_KBD_VIRTUAL_1;
   uint8 nbBox = eeprom.netConf.ptr_boxList[key_mode][key_code];
   ;
   uint8 i = 0;
@@ -410,7 +411,7 @@ PUBLIC bool_t CLAV_TrouverAssociationToucheBoite(stToucheDef *touche,
   int stepper = 0;
 
   stepper = PBAR_DbgTrace(E_FN_IN, "CLAV_TrouverAssociationToucheBoite",
-      (void *) (AppData.eAppState), E_DBG_TYPE_NET_STATE);
+      (void *) (AppData.pgl), E_DBG_TYPE_NET_STATE);
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
 #endif
   vPrintf("%sNb boite associee a la touche %s -> %d\n", gch_spaces,
@@ -453,7 +454,7 @@ PUBLIC bool_t CLAV_TrouverAssociationToucheBoite(stToucheDef *touche,
 #if !NO_DEBUG_ON
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
   PBAR_DbgTrace(E_FN_OUT, "CLAV_TrouverAssociationToucheBoite",
-      (void *) (AppData.eAppState), E_DBG_TYPE_NET_STATE);
+      (void *) (AppData.pgl), E_DBG_TYPE_NET_STATE);
 #endif
   return eReturn;
 }

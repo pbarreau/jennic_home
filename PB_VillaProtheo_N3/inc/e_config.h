@@ -169,28 +169,28 @@ typedef enum _clav_NetState {
 extern PUBLIC char const *dbg_teRunningNet[];
 
 typedef struct {
-  teRunningPgl eAppState;
-  etRunningStp eClavState;
-  etRunningNet eNetState;
-  etDefWifiMsg eWifiMsg;
+  etRunningPgl pgl;
+  etInUsingkey key;
+  etRunningRol rol;
+  etRunningKbd kbd;
+  etRunningStp stp;
+  etRunningNet net;
+  etDefWifiMsg eWifi;
   tePcState ePcState;
   etRunningStp ePrevClav;
-  etInUsingkey eKeyPressed;
-  etRunningRol usage;
-  etRunningKbd eClavmod;
   uint8 ukey;
   uint8 u8BoxId;
   uint64 u64ServiceAddress;
 } tsClavData;
 
 typedef struct {
-  teRunningPgl pglVal;
-  etRunningStp stpVal;
-  etRunningRol rolVal;
-  etRunningKbd kbdVal;
-  etInUsingkey keyVal;
-  etRunningNet netVal;
-  etDefWifiMsg msgVal;
+  etRunningPgl pgl;
+  etRunningStp stp;
+  etRunningRol rol;
+  etRunningKbd kbd;
+  etInUsingkey key;
+  etRunningNet net;
+  etDefWifiMsg msg;
 } stParam;
 
 #if !NO_DEBUG_ON
@@ -199,8 +199,9 @@ extern PUBLIC void PBAR_DbgInside(int level, char * pSpaces, teDbgTrace eSens,
 #endif
 
 typedef struct _touche {
+  etRunningRol le_role;
   etInUsingkey la_touche;
-  etRunningKbd le_mode;
+  etRunningKbd le_clavier;
 } stToucheDef;
 
 typedef struct {
@@ -239,7 +240,7 @@ typedef struct {
 /****************************************************************************/
 extern PUBLIC int8 NEW_TrouvePositionTouche(etInUsingkey laTouche);
 
-extern PUBLIC teRunningPgl NEW_AnalyseBoitierDeCommande(etRunningStp *stpVal,
+extern PUBLIC etRunningPgl NEW_AnalyseBoitierDeCommande(etRunningStp *stpVal,
     etRunningRol*rolVal, etRunningKbd*kbdVal, etInUsingkey *keyVal,
     etRunningNet*netVal);
 

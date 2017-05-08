@@ -12,7 +12,7 @@
 
 #include "m_config.h"
 
-PUBLIC void bp_CommunMsgReseau(teRunningPgl *eState, teEventType eEventType,
+PUBLIC void bp_CommunMsgReseau(etRunningPgl *eState, teEventType eEventType,
     void *pvEventPrim)
 {
 #if !NO_DEBUG_ON

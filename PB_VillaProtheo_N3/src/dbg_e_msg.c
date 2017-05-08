@@ -50,7 +50,7 @@ PUBLIC void PBAR_DbgInside(int level, char * pSpaces, teDbgTrace eSens,
   static etInUsingkey my_key = E_KEYS_NUM_END;
   static etRunningKbd my_mod = E_KS_KBD_END;
   static etRunningRol my_role = E_KS_ROL_END;
-  static teRunningPgl my_state = E_KS_STP_END;
+  static etRunningPgl my_state = E_KS_STP_END;
 
   memset(&gch_spaces, 0x00, sizeof(gch_spaces));
   for (i = 0; (i <= level) && (i < 20); i++)
@@ -61,31 +61,31 @@ PUBLIC void PBAR_DbgInside(int level, char * pSpaces, teDbgTrace eSens,
 
   if (level > 0)
   {
-    if (my_role != val.usage)
+    if (my_role != val.rol)
     {
-      vPrintf("%s%s%s\n", gch_spaces, sens[eSens], dbg_etCLAV_role[val.usage]);
-      my_role = val.usage;
+      vPrintf("%s%s%s\n", gch_spaces, sens[eSens], dbg_etCLAV_role[val.rol]);
+      my_role = val.rol;
     }
 
-    if (my_state != val.eClavState)
+    if (my_state != val.stp)
     {
       vPrintf("%s%s%s\n", gch_spaces, sens[eSens],
-          dbg_teClavState[val.eClavState]);
-      my_state = val.eClavState;
+          dbg_teClavState[val.stp]);
+      my_state = val.stp;
     }
 
-    if (my_mod != val.eClavmod)
+    if (my_mod != val.kbd)
     {
       vPrintf("%s%s%s\n", gch_spaces, sens[eSens],
-          dbg_etCLAV_mod[val.eClavmod]);
-      my_mod = val.eClavmod;
+          dbg_etCLAV_mod[val.kbd]);
+      my_mod = val.kbd;
     }
 
-    if (my_key != val.eKeyPressed)
+    if (my_key != val.key)
     {
       vPrintf("%s%s%s\n", gch_spaces, sens[eSens],
-          dbg_etCLAV_keys[val.eKeyPressed]);
-      my_key = val.eKeyPressed;
+          dbg_etCLAV_keys[val.key]);
+      my_key = val.key;
     }
   }
 
@@ -103,12 +103,12 @@ PUBLIC void PBAR_DbgInside(int level, char * pSpaces, teDbgTrace eSens,
 
 PUBLIC void MyStepDebug(void)
 {
-  teRunningPgl pglVal = AppData.eAppState;
-  etRunningStp stpVal = AppData.eClavState;
-  etRunningRol rolVal = AppData.usage;
-  etRunningKbd kbdVal = AppData.eClavmod;
-  etRunningNet netVal = AppData.eNetState;
-  etDefWifiMsg wifVal = AppData.eWifiMsg;
+  etRunningPgl pglVal = AppData.pgl;
+  etRunningStp stpVal = AppData.stp;
+  etRunningRol rolVal = AppData.rol;
+  etRunningKbd kbdVal = AppData.kbd;
+  etRunningNet netVal = AppData.net;
+  etDefWifiMsg wifVal = AppData.eWifi;
 
   vPrintf("Pgl:%s\n", dbg_teRunningPgl[pglVal]);
   vPrintf("Rol:%s\t\tKbd:%s\n", dbg_etCLAV_role[rolVal], dbg_etCLAV_mod[kbdVal]);
