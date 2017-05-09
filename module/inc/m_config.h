@@ -186,12 +186,13 @@ typedef enum {
   E_MSG_DATA_SELECT,
   E_MSG_ASK_ID_BOX,
   E_MSG_RSP_ID_BOX,
-  E_MSG_CFG_LIENS,
+  E_MSG_ASK_CFG_LIENS,
+  E_MSG_RSP_CFG_LIENS,
   E_MSG_CFG_BOX_END,
   E_MSG_NET_LED_OFF,
   E_MSG_NET_LED_ON,
   E_MSG_DEFINITION_END
-} PBAR_TypeMsg;
+} etDefWifiMsg;
 
 typedef enum {
   E_KPD_A,

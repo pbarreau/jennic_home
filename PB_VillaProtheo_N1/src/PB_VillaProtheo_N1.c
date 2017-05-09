@@ -654,7 +654,7 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
 
             switch (buf2[0])
             {
-              case E_MSG_CFG_LIENS:
+              case E_MSG_ASK_CFG_LIENS:
               {
                 config = buf2[2];
                 prevConf = config;

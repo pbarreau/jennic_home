@@ -140,7 +140,7 @@ PRIVATE void PBAR_LireBtnPgm_NormalUsage(void)
           if (sAppData.eAppState == APP_STATE_ATTENDRE_FIN_CFG_LOCAL)
           {
             vPrintf("> Envoyer config:%x\n", boxConf);
-            bufEmission[0] = E_MSG_CFG_LIENS;
+            bufEmission[0] = E_MSG_RSP_CFG_LIENS;
             bufEmission[1] = LabasMod << 4 | LabasKbd;
             bufEmission[2] = boxConf;
 
