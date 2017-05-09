@@ -90,8 +90,8 @@ PUBLIC void vPRT_DioSetOutput(uint32 cnf_on, uint32 cnf_off)
   // Mettre a 1 SIG_LE 573 pour charger bus
   vAHI_DioSetOutput(C_SEL_573, 0);
 
-  //cnf_on = ~cnf_on;
-  //cnf_off = ~cnf_off;
+  cnf_on = ~cnf_on;
+  cnf_off = ~cnf_off;
 
   // Configuer les sorties
   vAHI_DioSetOutput(cnf_on, cnf_off);

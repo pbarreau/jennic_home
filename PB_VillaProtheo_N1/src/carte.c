@@ -10,6 +10,9 @@
 #include "led.h"
 #include "bit.h"
 
+//En attente de changement programmation
+//Affecter valeur output
+
 #include "c_config.h"
 #include "i2c_9555.h"
 /****************************************************************************/
@@ -40,6 +43,7 @@ PUBLIC PBAR_E_KeyMode LabasMod = E_CLAV_MODE_NOT_SET;
 
 PUBLIC uint8 ledId = 0;
 PUBLIC uint8 config = 0;
+PUBLIC uint8 sel_led = 0;
 
 PUBLIC void PBAR_LireBtnPgm(void)
 {
@@ -69,7 +73,6 @@ PRIVATE void PBAR_LireBtnPgm_TstOutput(void)
 PRIVATE void PBAR_LireBtnPgm_NormalUsage(void)
 {
   uint8 boxConf = 0;
-  static bool showNet = TRUE;
 
   // Bouton Pgm appuye ??
   if ((u8JPI_PowerStatus() & 0x10) == 0 && ePgmMode == E_CLAV_MODE_NOT_SET)
@@ -92,13 +95,14 @@ PRIVATE void PBAR_LireBtnPgm_NormalUsage(void)
             cbStartTempoRechercheClavier = TRUE;
             sAppData.eAppState = APP_STATE_RECHERCHE_CLAVIER;
           }
-          else if (TimePgmPressed < 100)
+          else if ((TimePgmPressed < 100)
+              && (sAppData.eClavState == E_CLAV_EN_USAGE))
           {
             // eteindre ou alummer led conection ok
-            if (showNet)
+            if (mNetOkTypeFlash == E_FLASH_RESEAU_ACTIF)
             {
               vPrintf("Cacher Net Ok\n");
-              mNetOkTypeFlash = E_FLASH_FIN;
+              mNetOkTypeFlash = ~E_FLASH_OFF;
               au8Led[0].mode = mNetOkTypeFlash;
             }
             else
@@ -107,11 +111,12 @@ PRIVATE void PBAR_LireBtnPgm_NormalUsage(void)
               mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
               au8Led[0].mode = mNetOkTypeFlash;
             }
-            showNet = !showNet;
             sAppData.eAppState = APP_STATE_RUNNING;
           }
           else
           {
+            sAppData.eClavState = E_CLAV_EN_CONFIG;
+
             if (LaBasId != 0)
             {
               cbUnClavierActif = FALSE;
@@ -135,7 +140,7 @@ PRIVATE void PBAR_LireBtnPgm_NormalUsage(void)
           if (sAppData.eAppState == APP_STATE_ATTENDRE_FIN_CFG_LOCAL)
           {
             vPrintf("> Envoyer config:%x\n", boxConf);
-            bufEmission[0] = E_MSG_CFG_LIENS;
+            bufEmission[0] = E_MSG_RSP_CFG_LIENS;
             bufEmission[1] = LabasMod << 4 | LabasKbd;
             bufEmission[2] = boxConf;
 
@@ -202,7 +207,7 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_TstOutput(uint8 *box_cnf)
           BitNclr(conf, PBAR_DEBUT_IO+io-1);
 
         // Mettre la config
-        vPRT_DioSetOutput(~conf, conf);
+        vPRT_DioSetOutput(conf, ~conf);
 
         if (io == CARD_NB_LIGHT - 1)
           BitNclr(conf, PBAR_DEBUT_IO+io);
@@ -214,13 +219,13 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_TstOutput(uint8 *box_cnf)
       {
         if (!pass)
         {
-          vPrintf("\nMode ON\n");
+          vPrintf("\nMode OFF\n");
           vPRT_DioSetOutput((conf & (0x0 << PBAR_DEBUT_IO)),
               (conf | (0xFF << PBAR_DEBUT_IO)));
         }
         else
         {
-          vPrintf("\nMode OFF\n");
+          vPrintf("\nMode ON\n");
           vPRT_DioSetOutput((conf | (0xFF << PBAR_DEBUT_IO)),
               (conf & (0x0 << PBAR_DEBUT_IO)));
         }
@@ -240,7 +245,7 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
   bool_t bReturnConfig = FALSE;
   uint8 saveLed = 0;
   uint32 Maconf = 0;
-  static uint8 sel_led = 0;
+  //static uint8 sel_led = 0;
 
   // Bouton Pgm appuye ??
   if ((u8JPI_PowerStatus() & 0x10) == 0)
@@ -289,7 +294,7 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
 
           // Mettre la config
           Maconf = sel_led << PBAR_DEBUT_IO;
-          vPRT_DioSetOutput(~Maconf, Maconf);
+          vPRT_DioSetOutput(Maconf, ~Maconf);
 
           if (ledId == CARD_NB_LIGHT - 1)
           {
@@ -344,9 +349,8 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
             // Sauvegarde pour envoi a la boite
             // On montre la config a envoyer
             // Configuer les sorties
-            vPrintf("Show new config to user\n");
-            vPRT_DioSetOutput((~config) << PBAR_DEBUT_IO,
-                (config) << PBAR_DEBUT_IO);
+            vPRT_DioSetOutput(config << PBAR_DEBUT_IO,
+                (~config) << PBAR_DEBUT_IO);
             bReturnConfig = TRUE;
           }
         }
@@ -364,8 +368,7 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_NormalUsage(uint8 *box_cnf)
   {
     config = 0;
     // On quitte le mode test: eteindre les lumieres
-    vPrintf("switch off evrything\n");
-    vPRT_DioSetOutput((~config) << PBAR_DEBUT_IO, (config) << PBAR_DEBUT_IO);
+    vPRT_DioSetOutput(config << PBAR_DEBUT_IO, (~config) << PBAR_DEBUT_IO);
   }
 
   return (bReturnConfig);

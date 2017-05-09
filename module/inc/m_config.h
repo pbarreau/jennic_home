@@ -167,12 +167,6 @@ typedef enum {
   APP_STATE_RUNNING
 } teAppState;
 
-typedef struct {
-  teAppState eAppState;
-  uint8 u8BoxId;
-  uint64 u64ServiceAddress;
-} tsAppData;
-
 typedef enum {
   E_CLAV_EN_NON_DEFINI, E_CLAV_EN_USAGE, E_CLAV_EN_CONFIG
 } bpeClav;
@@ -192,12 +186,13 @@ typedef enum {
   E_MSG_DATA_SELECT,
   E_MSG_ASK_ID_BOX,
   E_MSG_RSP_ID_BOX,
-  E_MSG_CFG_LIENS,
+  E_MSG_ASK_CFG_LIENS,
+  E_MSG_RSP_CFG_LIENS,
   E_MSG_CFG_BOX_END,
   E_MSG_NET_LED_OFF,
   E_MSG_NET_LED_ON,
   E_MSG_DEFINITION_END
-} PBAR_TypeMsg;
+} etDefWifiMsg;
 
 typedef enum {
   E_KPD_A,
@@ -219,6 +214,13 @@ typedef enum {
   E_KPD_MODE, /// touche #
   E_KPD_END_DEF
 } PBAR_KIT_8046;
+
+typedef struct {
+  teAppState eAppState;
+  bpeClav eClavState;
+  uint8 u8BoxId;
+  uint64 u64ServiceAddress;
+} tsAppData;
 
 /****************************************************************************/
 /***        Exported Functions                                            ***/

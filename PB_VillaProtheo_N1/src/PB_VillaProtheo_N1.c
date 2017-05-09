@@ -153,6 +153,7 @@ PUBLIC void vJenie_CbInit(bool_t bWarmStart)
 
   // Reset APP_STATES
   memset(&sAppData, 0, sizeof(sAppData));
+  sAppData.eClavState = E_CLAV_EN_USAGE;
 
   u32AHI_Init();
 
@@ -331,8 +332,8 @@ PUBLIC void vJenie_CbMain(void)
           etatSorties = keep;
 
           // Configuer les sorties
-          vPRT_DioSetOutput((~etatSorties) << PBAR_DEBUT_IO,
-              (etatSorties) << PBAR_DEBUT_IO);
+          vPRT_DioSetOutput(etatSorties << PBAR_DEBUT_IO,
+              (~etatSorties) << PBAR_DEBUT_IO);
         }
         break;
 
@@ -346,8 +347,8 @@ PUBLIC void vJenie_CbMain(void)
           etatSorties = keep;
 
           // Configuer les sorties
-          vPRT_DioSetOutput((~etatSorties) << PBAR_DEBUT_IO,
-              (etatSorties) << PBAR_DEBUT_IO);
+          vPRT_DioSetOutput(etatSorties << PBAR_DEBUT_IO,
+              (~etatSorties) << PBAR_DEBUT_IO);
         }
         break;
 
@@ -397,7 +398,7 @@ PUBLIC void vJenie_CbMain(void)
 
     case APP_STATE_ATTENTE_CLAV_RSP:
     {
-      ;		//Rien
+      ;      //Rien
     }
     break;
 
@@ -422,8 +423,11 @@ PUBLIC void vJenie_CbMain(void)
     {
 
       vPrintf(" Config actuelle:%x\n", config);
+
       // Mettre les sorties au niveau de config
-      vPRT_DioSetOutput((~config) << PBAR_DEBUT_IO, (config) << PBAR_DEBUT_IO);
+      vPRT_DioSetOutput(config << PBAR_DEBUT_IO, (~config) << PBAR_DEBUT_IO);
+      // Nouveau depart
+      sel_led = config;
 
       vPrintf(" En attente de changement programmation\n");
       au8Led[0].mode = E_FLASH_BP_EN_CONFIGURATION_SORTIES;
@@ -446,6 +450,7 @@ PUBLIC void vJenie_CbMain(void)
       // On Montre mode user
       au8Led[0].mode = mNetOkTypeFlash;
 
+      sAppData.eClavState = E_CLAV_EN_USAGE;
       ePgmMode = E_CLAV_MODE_NOT_SET;
 
       bufEmission[0] = E_MSG_CFG_BOX_END;
@@ -541,8 +546,9 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
           // Indiquer mon numero de boite au clavier
           vPrintf("    Envoie de mon box id:%d\n\n", uThisBox_Id);
           vPrintf("En attente d'une touche du Boitier de commande\n");
-          bufEmission[0] = uThisBox_Id;
-          eJenie_SendData(LaBasId, bufEmission, 1, TXOPTION_SILENT);
+          bufEmission[0] = E_MSG_RSP_ID_BOX;
+          bufEmission[1] = uThisBox_Id;
+          eJenie_SendData(LaBasId, bufEmission, 2, TXOPTION_SILENT);
           /// ZZZZZZZZZZZZZZZZZZZ
           /// Avec ack ou sans ack ? TXOPTION_ACKREQ);
           // On montre Led
@@ -648,7 +654,7 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
 
             switch (buf2[0])
             {
-              case E_MSG_CFG_LIENS:
+              case E_MSG_ASK_CFG_LIENS:
               {
                 config = buf2[2];
                 prevConf = config;
@@ -731,8 +737,8 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
           config = 0;
           // On quitte le mode test: eteindre les lumieres
           vPrintf("switch off everything after data ack\n");
-         vPRT_DioSetOutput((~config) << PBAR_DEBUT_IO,
-              (config) << PBAR_DEBUT_IO);
+          vPRT_DioSetOutput((config) << PBAR_DEBUT_IO,
+              (~config) << PBAR_DEBUT_IO);
 
           // on reinitialise les registre interne
           etatSorties = 0;
