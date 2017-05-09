@@ -12,7 +12,6 @@
 
 //En attente de changement programmation
 //Affecter valeur output
-Message clavier non compris
 
 #include "c_config.h"
 #include "i2c_9555.h"
@@ -96,8 +95,8 @@ PRIVATE void PBAR_LireBtnPgm_NormalUsage(void)
             cbStartTempoRechercheClavier = TRUE;
             sAppData.eAppState = APP_STATE_RECHERCHE_CLAVIER;
           }
-          else if ((TimePgmPressed < 100) && (sAppData.eClavState ==
-              E_CLAV_EN_USAGE))
+          else if ((TimePgmPressed < 100)
+              && (sAppData.eClavState == E_CLAV_EN_USAGE))
           {
             // eteindre ou alummer led conection ok
             if (mNetOkTypeFlash == E_FLASH_RESEAU_ACTIF)
