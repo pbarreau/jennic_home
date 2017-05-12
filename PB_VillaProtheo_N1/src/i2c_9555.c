@@ -27,8 +27,6 @@ PUBLIC uint16 timer_pression_DIO12 = 0;
 PRIVATE uint8 i2cAddr[] = { ADDR_IO_1, ADDR_IO_1, ADDR_IO_2, ADDR_IO_2 };
 
 PRIVATE void u8_I2CWrite_9555(uint8 u8SlaveAddr, uint8 u8RegAddr, uint8 u8Value);
-PRIVATE uint16 u16_I2CRead_9555(uint8 u8SlaveAddr);
-PRIVATE void vPRT_It_9555(uint32 u32Device, uint32 u32ItemBitmap);
 
 PRIVATE void vPRT_PrepareJennic(sBusSpeed speed);
 PRIVATE void vPRT_PrepareSlio(void);
@@ -187,15 +185,5 @@ PUBLIC uint32 vPRT_DioReadInput(void)
 ///http://subversion.assembla.com/svn/Langaton/Acceleration/Source/EndDevice.c
 ///http://www.automatepc.fr/?page=I2cPcf8574
 PRIVATE void u8_I2CWrite_9555(uint8 u8SlaveAddr, uint8 u8RegAddr, uint8 u8Value)
-{
-}
-
-PRIVATE uint16 u16_I2CRead_9555(uint8 u8SlaveAddr)
-{
-  uint16 tmp = 0;
-  return tmp;
-}
-
-PRIVATE void vPRT_It_9555(uint32 u32Device, uint32 u32ItemBitmap)
 {
 }

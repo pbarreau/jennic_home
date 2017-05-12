@@ -37,7 +37,6 @@
 /****************************************************************************/
 /***        Local Function Prototypes                                     ***/
 /****************************************************************************/
-PRIVATE void vPRT_TraiterChangementEntree(uint32 val);
 PRIVATE uint8 showDipSwitch(void);
 /****************************************************************************/
 /***        Exported Variables                                            ***/
@@ -242,6 +241,14 @@ PUBLIC void vJenie_CbMain(void)
     break;
 
     case APP_STATE_NETWORK_UP:
+#if (PBAR_POWER_CARD == V1_USE_RELAY)
+      vPrintf("PCB_V1_RELAY");
+#elif (PBAR_POWER_CARD == V1_USE_TRIAC)
+      vPrintf("PCB_V1_TRIAC");
+#elif (PBAR_POWER_CARD == V2_USE_TRIAC)
+      vPrintf("PCB_V2_TRIAC");
+#endif
+
       if (uThisBox_Id == 0)
       {
         au8Led[0].mode = E_FLASH_BP_TEST_SORTIES;
@@ -793,8 +800,6 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
  ****************************************************************************/
 PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId, uint32 u32ItemBitmap)
 {
-  static uint8 timer_it_dio11 = 0;
-  uint32 val = 0;
 
   switch (u32DeviceId)
   {
@@ -836,9 +841,6 @@ PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId, uint32 u32ItemBitmap)
   }
 }
 
-PRIVATE void vPRT_TraiterChangementEntree(uint32 val)
-{
-}
 /****************************************************************************/
 /***        END OF FILE                                                   ***/
 /****************************************************************************/
