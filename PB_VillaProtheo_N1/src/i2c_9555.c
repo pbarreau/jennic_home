@@ -67,7 +67,17 @@ PRIVATE void vPRT_PrepareSlio(void)
   // Mettre a 0 SIG_LE 573 pour charger bus
   vAHI_DioSetOutput(0, C_SEL_573);
   // Mettre les sorties a 0
+
+#if (PBAR_POWER_CARD == V1_USE_RELAY)
   vAHI_DioSetOutput(0xFF << PBAR_DEBUT_IO, 0);
+#elif (PBAR_POWER_CARD == V1_USE_TRIAC)
+  vAHI_DioSetOutput(0, 0xFF << PBAR_DEBUT_IO);
+#elif (PBAR_POWER_CARD == V2_USE_TRIAC)
+
+  /* TODO  */
+
+#endif
+
   // Mettre a 1 SIG_LE 573 pour maintenir bus
   vAHI_DioSetOutput(C_SEL_573, 0);
 }
@@ -90,8 +100,10 @@ PUBLIC void vPRT_DioSetOutput(uint32 cnf_on, uint32 cnf_off)
   // Mettre a 1 SIG_LE 573 pour charger bus
   vAHI_DioSetOutput(C_SEL_573, 0);
 
+#if (PBAR_POWER_CARD == V1_USE_RELAY)
   cnf_on = ~cnf_on;
   cnf_off = ~cnf_off;
+#endif
 
   // Configuer les sorties
   vAHI_DioSetOutput(cnf_on, cnf_off);
@@ -161,15 +173,12 @@ PRIVATE uint32 vPRT_GererDios(uint32 cnf_a, uint32 cnf_b, uint32 cnf_ref,
 
 PUBLIC uint32 vPRT_DioReadInput(void)
 {
-  uint8 i2c_device = 0;
-  uint16 tmp = 0;
   uint32 val = 0UL;
 
   vPrintf("\n\nDemande de lecture des SLIOS\n");
   val = u32AHI_DioReadInput();
   //Prendre les bits du composant
   val = val & 0x00004F80;
-  //val  = val >> 3;
 
   vPrintf("Fin lecture des SLIOS val=%x\n\n", val);
   return val;

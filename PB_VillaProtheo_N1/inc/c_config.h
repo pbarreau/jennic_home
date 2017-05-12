@@ -12,6 +12,7 @@
 #include "interrupteurs.h"
 
 #define CARD_NB_LIGHT  8
+#define PBAR_POWER_CARD V1_USE_TRIAC
 
 #define PBAR_CFG_INPUT	(E_JPI_DIO0_INT|\
 		E_JPI_DIO1_INT |\
