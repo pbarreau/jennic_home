@@ -86,7 +86,7 @@ PRIVATE uint8 showDipSwitch(void)
 
   if ((val & E_JPI_DIO9_INT) && (val & E_JPI_DIO10_INT))
   {
-    uboxid = 16; // routeur
+    uboxid = PBAR_JEN_BOX_ID; // routeur
   }
   else if (!val)
   {

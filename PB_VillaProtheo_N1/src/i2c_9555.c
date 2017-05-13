@@ -54,7 +54,7 @@ PRIVATE void vPRT_PrepareJennic(sBusSpeed speed)
   // Mettre a 0 les donnees pour relais.
   vPRT_DioSetOutput(PBAR_CFG_CMD_RL, 0);
 
-#ifdef CARD_USE_LED_PGM
+#if CARD_USE_LED_PGM
   vAHI_DioSetOutput(C_LPIO_2, 0); //Eteindre la led mode pgm
   au8Led[C_LID_2].actif = TRUE;
   au8Led[C_LID_2].pio = C_LPID_2;

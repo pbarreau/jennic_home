@@ -51,6 +51,8 @@ PUBLIC void PBAR_MemoriserPioIdDesRelais(void)
 {
   int i = 0;
   int pos = 0;
+
+  vPrintf("\n\n");
   for (i = 0; i < 32; i++)
   {
     if (PBAR_CFG_CMD_RL & (1 << i))
@@ -66,6 +68,8 @@ PUBLIC void PBAR_MontrerPioIdDesEntrees(void)
 {
   int i = 0;
   int pos = 0;
+
+  vPrintf("\n\n");
   for (i = 0; i < 32; i++)
   {
     if (PBAR_CFG_INPUT & (1 << i))
@@ -214,7 +218,8 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_TstOutput(uint8 *box_cnf)
 {
   static uint8 io = 0;
   static bool_t pass = FALSE;
-  static uint32 conf = 0;
+  //static uint32 conf = 0;
+  static uint8 sel_led = 0;
   int i = 0;
 
   if ((u8JPI_PowerStatus() & 0x10) == 0)
@@ -230,39 +235,54 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_TstOutput(uint8 *box_cnf)
       // Analyse duree appui
       if (TimePgmPressed < 30)
       {
-        vPrintf("\nTst(%d):conf=%x;\n", io, (uint32) conf);
+        //vPrintf("\nTst(%d):conf=%x;\n", io, (uint32) conf);
 
+        BitNset(sel_led, io);
+
+#if 0
         BitNset(conf, MesIos[io]);
         vPrintf("\nTst(%d):conf=%x;\n", io, (uint32) conf);
-
         if (io)
           BitNclr(conf, MesIos[io - 1]);
-
         // Mettre la config
         vPRT_DioSetOutput(~conf, conf);
+#endif
+        if (io)
+          BitNclr(sel_led, io - 1);
+        // Mettre la config
+        vPRT_ManageRelays(sel_led);
 
+#if 0
         if (io == CARD_NB_LIGHT - 1)
           BitNclr(conf, MesIos[io]);
+#endif
+        if (io == CARD_NB_LIGHT - 1)
+          BitNclr(sel_led, io);
 
         // Passer au bit suivant
         io = (io + 1) % CARD_NB_LIGHT;
       }
       else
       {
+#if 0
         conf = 0;
         for (i = 0; i < CARD_NB_LIGHT; i++)
           conf = conf | (0x1 << MesIos[i]);
+#endif
+        for (i = 0; i < CARD_NB_LIGHT; i++)
+          sel_led = sel_led | (0x1 << i);
 
         if (!pass)
         {
           vPrintf("\nMode ON\n");
-          vPRT_DioSetOutput(0, conf);
+          //vPRT_DioSetOutput(0, conf);
+          vPRT_ManageRelays(sel_led);
         }
         else
         {
           vPrintf("\nMode OFF\n");
-          for (i = 0; i < CARD_NB_LIGHT; i++)
-            vPRT_DioSetOutput(conf, 0);
+          vPRT_ManageRelays(~sel_led);
+          //vPRT_DioSetOutput(conf, 0);
         }
         pass = !pass;
       }
