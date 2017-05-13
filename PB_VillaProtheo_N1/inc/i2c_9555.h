@@ -24,12 +24,9 @@
 
 #define	CST_ANTI_REBOND_IT	5 /// antirebond it * 10 ms
 
-typedef enum _bus_speed
-{
-	E_BUS_400_KH = 7,
-	E_BUS_100_KH = 31
-}sBusSpeed;
-
+typedef enum _bus_speed {
+  E_BUS_400_KH = 7, E_BUS_100_KH = 31
+} sBusSpeed;
 
 extern PUBLIC bool_t bIt_DIO11;
 extern PUBLIC bool_t bIt_DIO12;
@@ -41,7 +38,8 @@ extern PUBLIC uint16 prvCnf_O_9555;
 extern PUBLIC void vPRT_Init_IosOfCard(sBusSpeed speed);
 extern PUBLIC void vPRT_DioSetDirection(uint32 cnf_in, uint32 cnf_out);
 extern PUBLIC void vPRT_DioSetOutput(uint32 cnf_on, uint32 cnf_off);
-extern PUBLIC uint32 vPRT_DioReadInput (void);
+extern PUBLIC uint32 vPRT_DioReadInput(void);
+extern PUBLIC void vPRT_ManageRelays(uint8 conf);
 
 #if !NO_DEBUG_ON
 #if SHOW_TEST_1
