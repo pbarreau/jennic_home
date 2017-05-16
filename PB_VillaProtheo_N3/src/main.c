@@ -395,8 +395,10 @@ PRIVATE void APP_ConfigIoJennic(void)
 PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
 {
   uint32 tickTimerValue;
-  static bool_t last_val = 1;
+  static bool_t last_val = 0;
+  //static bool_t it_check = 0;
   bool_t cur_val = 0;
+  bool_t cur_it = 0;
 
   if (u32Device == E_AHI_DEVICE_SYSCTRL)
   {
@@ -407,47 +409,50 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
 #ifdef CLAV_IS_VELLMAN
       case E_JPI_DIO20_INT: // Touche '#'
       {
-        cur_val = (u32AHI_DioReadInput() >> 20) & 0x1;
-        if (b_NEW_start_press_count == FALSE)
-        {
-          //vPrintf("1:# it (%d)/(%d)\n", cur_val, last_val);
-          if (cur_val != last_val)
-          {
-            last_val = cur_val;
-          }
+        //desactiver it
+        vAHI_DioInterruptEnable(0, E_JPI_DIO20_INT);
 
-          if (last_val == 0)
-          {
-            //vPrintf("1:# start\n");
-            NEW_timer_appuie_touche = 0;
-            b_NEW_start_press_count = TRUE;
-            memo_its_down = u32ItemBitmap;
-            vAHI_DioInterruptEdge(E_JPI_DIO20_INT, 0);
-          }
+        // Attendre fin rebond
+        do
+        {
+          // verifier niveau
+          cur_val = (u32AHI_DioReadInput() >> 20) & 0x1;
+
+          // Nouvelle it survenue ?
+          cur_it = (u32AHI_DioInterruptStatus()>>20)&0x1;
+        }while(cur_it || (cur_val != last_val));
+
+
+        if(cur_val==0)
+        {
+          //Le bouton est presse
+          vPrintf("1:start %d\n", tickTimerValue);
+
+          // Lancer le timer perso
+          NEW_timer_appuie_touche = 0;
+          b_NEW_start_press_count = TRUE;
+          memo_its_down = u32ItemBitmap;
+          // changer sens leture it
+          vAHI_DioInterruptEdge(E_JPI_DIO20_INT, 0);
         }
         else
         {
-          if (NEW_timer_appuie_touche)
-          {
-            //vPrintf("2:# it (%d)/(%d)\n", cur_val, last_val);
-            if (cur_val != last_val)
-            {
-              last_val = cur_val;
-            }
+          // Arreter timer
+          vPrintf("2:stop %d\n", tickTimerValue);
 
-            if (last_val == 1)
-            {
-              NEW_memo_delay_touche = NEW_timer_appuie_touche;
-              vAHI_DioInterruptEdge(0, E_JPI_DIO20_INT);
-              b_NEW_start_press_count = FALSE;
-              vPrintf("2:# it:%d\n", NEW_memo_delay_touche);
-              // Informer a gerer
-              AppData.stp = E_KS_STP_TRAITER_IT;
+          b_NEW_start_press_count = FALSE;
+          NEW_memo_delay_touche = NEW_timer_appuie_touche;
 
-            }
+          // changer sens leture it
+          vAHI_DioInterruptEdge(0,E_JPI_DIO20_INT);
 
-          }
+          // Informer a gerer
+          vPrintf("3:time used '%d'\n\n", NEW_memo_delay_touche);
+          //AppData.stp = E_KS_STP_TRAITER_IT;
         }
+        // reactiver it
+        vAHI_DioInterruptEnable(E_JPI_DIO20_INT, 0);
+        last_val = ! last_val;
       }
       break;
       case E_JPI_DIO11_INT: //touche 1
