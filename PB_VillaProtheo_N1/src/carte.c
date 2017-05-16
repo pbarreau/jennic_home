@@ -136,7 +136,7 @@ PRIVATE void PBAR_LireBtnPgm_NormalUsage(void)
           if (sAppData.eAppState == APP_STATE_ATTENDRE_FIN_CFG_LOCAL)
           {
             vPrintf("> Envoyer config:%x\n", boxConf);
-            bufEmission[0] = E_MSG_CFG_LIENS;
+            bufEmission[0] = E_MSG_RSP_CFG_LIENS;
             bufEmission[1] = LabasMod << 4 | LabasKbd;
             bufEmission[2] = boxConf;
 
@@ -194,12 +194,7 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_TstOutput(uint8 *box_cnf)
       // Analyse duree appui
       if (TimePgmPressed < 30)
       {
-        // Premier passage lire la config des sorties
-        //if(bDoReadOutput)
-        {
-          //bDoReadOutput = FALSE;
-          conf = vPRT_DioReadInput();
-        }
+        conf = vPRT_DioReadInput();
         vPrintf("\nTst(%d):conf=%x;\n", io, (uint32) conf);
 
         if (io < CARD_NB_LIGHT)
@@ -238,17 +233,19 @@ PRIVATE bool_t PBAR_DecodeBtnPgm_TstOutput(uint8 *box_cnf)
       {
         if (!pass)
         {
-          vPrintf("\nMode ON\n");
-          vPRT_DioSetOutput((conf & (0x0 << PBAR_DEBUT_IO)),
-              (conf | (0xFF << PBAR_DEBUT_IO)));
+          vPrintf("\nMode all ON\n");
+          vPRT_DioSetOutput(0,0xFF);
+          //vPRT_DioSetOutput((conf & (0x0 << PBAR_DEBUT_IO)),
+              //(conf | (0xFF << PBAR_DEBUT_IO)));
         }
         else
         {
           vPrintf("\nMode OFF\n");
-          vPRT_DioSetOutput((conf | (0xFF << PBAR_DEBUT_IO)),
-              (conf & (0x0 << PBAR_DEBUT_IO)));
+          vPRT_DioSetOutput(0xFF,0);
+          //vPRT_DioSetOutput((conf | (0xFF << PBAR_DEBUT_IO)),
+              //(conf & (0x0 << PBAR_DEBUT_IO)));
+
         }
-        //vPRT_DioSetOutput(~conf,conf);
         pass = !pass;
 
       }

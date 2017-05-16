@@ -541,8 +541,9 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
           // Indiquer mon numero de boite au clavier
           vPrintf("    Envoie de mon box id:%d\n\n", uThisBox_Id);
           vPrintf("En attente d'une touche du Boitier de commande\n");
-          bufEmission[0] = uThisBox_Id;
-          eJenie_SendData(LaBasId, bufEmission, 1, TXOPTION_SILENT);
+          bufEmission[0] = E_MSG_RSP_ID_BOX;
+          bufEmission[1] = uThisBox_Id;
+          eJenie_SendData(LaBasId, bufEmission, 2, TXOPTION_SILENT);
           /// ZZZZZZZZZZZZZZZZZZZ
           /// Avec ack ou sans ack ? TXOPTION_ACKREQ);
           // On montre Led
@@ -648,7 +649,7 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
 
             switch (buf2[0])
             {
-              case E_MSG_CFG_LIENS:
+              case E_MSG_ASK_CFG_LIENS:
               {
                 config = buf2[2];
                 prevConf = config;

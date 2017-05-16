@@ -276,10 +276,15 @@ PRIVATE void vPRT_PrepareSlio(void)
  bit22 |\
  bit23);
 
+
   // Lecture de la config au demarrage input et ouput des slios
   conf = vPRT_DioReadInput();
   prvCnf_I_9555 = (conf >> 16 & 0xFF00) | (((uint16) conf >> 8) & 0x00FF);
   prvCnf_O_9555 = (conf >> 8 & 0xFF00) | (((uint16) conf) & 0x00FF);
+
+  // Eteindre les 8 triacs
+  vPRT_DioSetOutput(0xFF,0);
+
 }
 
 /**
