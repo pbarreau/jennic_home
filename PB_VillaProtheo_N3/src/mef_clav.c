@@ -161,7 +161,7 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
       la_touche = CLAV_AnalyseIts(&uId);
       if (la_touche != E_KEY_NON_DEFINI)
       {
-        timer_touche[la_touche - 1] = NEW_memo_delay_touche / 100;
+        timer_touche[la_touche - 1] = (uint16)NEW_memo_delay_touche;
         vPrintf("Touche '%c' pendant '%d' ms, code dans pgm:%d\n\n",
             code_ascii[uId], timer_touche[la_touche - 1], la_touche);
 

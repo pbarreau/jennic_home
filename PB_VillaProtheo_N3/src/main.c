@@ -29,6 +29,7 @@
 PRIVATE void InitAFroid(void);
 PRIVATE void APP_ConfigIoJennic(void);
 PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap);
+PRIVATE uint8 getItFromMask(uint32 mask);
 
 PUBLIC etInUsingkey CLAV_AnalyseIts(uint8 *position);
 
@@ -61,8 +62,8 @@ PUBLIC bool_t NEW_traiter_It = FALSE;
 
 PRIVATE bool_t b_start_press_count = FALSE;
 PUBLIC uint16 timer_appuie_touche = 0;
-PUBLIC uint16 NEW_timer_appuie_touche = 0;
-PUBLIC uint16 NEW_memo_delay_touche = 0;
+PUBLIC uint32 NEW_timer_appuie_touche = 0;
+PUBLIC uint32 NEW_memo_delay_touche = 0;
 
 #ifdef CLAV_IS_VELLMAN
 PRIVATE const uint16 ligne_colonne[] = { 0x1, 0x2, 0x4, 0x8, 0x10, 0x20, 0x40,
@@ -396,9 +397,10 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
 {
   uint32 tickTimerValue;
   static bool_t last_val = 0;
-  //static bool_t it_check = 0;
+  static uint32 start_tick = 0;
   bool_t cur_val = 0;
   bool_t cur_it = 0;
+  uint8 it_id = 0;
 
   if (u32Device == E_AHI_DEVICE_SYSCTRL)
   {
@@ -408,53 +410,6 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
     {
 #ifdef CLAV_IS_VELLMAN
       case E_JPI_DIO20_INT: // Touche '#'
-      {
-        //desactiver it
-        vAHI_DioInterruptEnable(0, E_JPI_DIO20_INT);
-
-        // Attendre fin rebond
-        do
-        {
-          // verifier niveau
-          cur_val = (u32AHI_DioReadInput() >> 20) & 0x1;
-
-          // Nouvelle it survenue ?
-          cur_it = (u32AHI_DioInterruptStatus()>>20)&0x1;
-        }while(cur_it || (cur_val != last_val));
-
-
-        if(cur_val==0)
-        {
-          //Le bouton est presse
-          //vPrintf("1:start %d\n", tickTimerValue);
-
-          // Lancer le timer perso
-          NEW_timer_appuie_touche = 0;
-          b_NEW_start_press_count = TRUE;
-          memo_its_down = u32ItemBitmap;
-          // changer sens leture it
-          vAHI_DioInterruptEdge(E_JPI_DIO20_INT, 0);
-        }
-        else
-        {
-          // Arreter timer
-          //vPrintf("2:stop %d\n", tickTimerValue);
-
-          b_NEW_start_press_count = FALSE;
-          NEW_memo_delay_touche = NEW_timer_appuie_touche;
-
-          // changer sens leture it
-          vAHI_DioInterruptEdge(0,E_JPI_DIO20_INT);
-
-          // Informer a gerer
-          vPrintf("3:time used '%d'\n\n", NEW_memo_delay_touche);
-          AppData.stp = E_KS_STP_TRAITER_IT;
-        }
-        // reactiver it
-        vAHI_DioInterruptEnable(E_JPI_DIO20_INT, 0);
-        last_val = ! last_val;
-      }
-      break;
       case E_JPI_DIO11_INT: //touche 1
       case E_JPI_DIO12_INT:
       case E_JPI_DIO13_INT:
@@ -475,29 +430,55 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
       //if(!it_en_cours)it_en_cours=4;
 #endif
       {
-        if (b_NEW_start_press_count == FALSE)
+        //desactiver it
+        vAHI_DioInterruptEnable(0, u32ItemBitmap);
+        it_id = getItFromMask(u32ItemBitmap);
+
+        // Attendre fin rebond
+        do
         {
+          // verifier niveau
+          cur_val = (u32AHI_DioReadInput() >> it_id) & 0x1;
+
+          // Nouvelle it survenue ?
+          cur_it = (u32AHI_DioInterruptStatus() >> it_id) & 0x1;
+        } while (cur_it || (cur_val != last_val));
+
+        if (cur_val == 0)
+        {
+          //Le bouton est presse
+          //vPrintf("\n\n");
+          //vPrintf("1:(%d)->start %d\n", it_id, tickTimerValue);
+          start_tick = tickTimerValue;
+
+          // Lancer le timer perso
           NEW_timer_appuie_touche = 0;
           b_NEW_start_press_count = TRUE;
-
-          // Detection passage down -> up (front montant)
-          vAHI_DioInterruptEdge(PBAR_CFG_NUMPAD_IN, 0);
           memo_its_down = u32ItemBitmap;
+          // changer sens leture it
+          vAHI_DioInterruptEdge(u32ItemBitmap, 0);
         }
         else
         {
-          //bloquer les its
-          //vAHI_DioInterruptEnable(0, PBAR_CFG_NUMPAD_IN);
-
-          NEW_memo_delay_touche = NEW_timer_appuie_touche;
+          // Arreter timer
+          //vPrintf("2:(%d)->stop %d\n", it_id, tickTimerValue);
 
           b_NEW_start_press_count = FALSE;
+          NEW_memo_delay_touche = NEW_timer_appuie_touche/100;
+          //NEW_memo_delay_touche = (start_tick - tickTimerValue)/100;
+
+          // changer sens leture it
+          vAHI_DioInterruptEdge(0, u32ItemBitmap);
 
           // Informer a gerer
+          vPrintf("3:(%d)->time used '%d'\n\n", it_id, NEW_memo_delay_touche);
           AppData.stp = E_KS_STP_TRAITER_IT;
         }
-        break;
+        // reactiver it
+        vAHI_DioInterruptEnable(u32ItemBitmap, 0);
+        last_val = !last_val;
       }
+      break;
 
       default:
         vPrintf("It non prevue:%x\n", u32ItemBitmap);
@@ -505,6 +486,20 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
     }
   }
 }
+
+PRIVATE uint8 getItFromMask(uint32 mask)
+{
+  int i = 0;
+
+  for (i = 0; i < (8 * sizeof(uint32)); i++)
+  {
+    if (IsBitSet(mask, i))
+      break;
+  }
+
+  return i;
+}
+
 #if 0
 // Routine de lecture du clavier matriciel sous IT
 PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
@@ -614,20 +609,20 @@ PUBLIC etInUsingkey CLAV_AnalyseIts(uint8 *position)
 {
   etInUsingkey ret_val = E_KEY_NON_DEFINI;
   uint32 val3 = 0UL;
-  uint16 byte2 = NEW_memo_delay_touche;
+  uint32 byte2 = NEW_memo_delay_touche;
   int i = 0;
 
-  // Pression suffisante ?
+// Pression suffisante ?
   if (byte2 < C_MIN_KEY_PRESS_TIME)
   {
     vPrintf("Appuie trop court:'%d' ms\n", byte2);
     return ret_val;
   }
 
-  // Lecture resultat
+// Lecture resultat
   val3 = memo_its_down & 0x001FF800;
   byte2 = (uint16) (val3 >> 11);
-  //vPrintf("memo_its_down=%x, Val3=%x, info2;%x\n", memo_its_down, val3, byte2);
+//vPrintf("memo_its_down=%x, Val3=%x, info2;%x\n", memo_its_down, val3, byte2);
 
   for (i = 0; i < CLAV_NB_KEYS; i++)
   {
@@ -654,8 +649,8 @@ PUBLIC etInUsingkey CLAV_AnalyseIts(uint8 *position)
 
   vPrintf(" Traitement it:");
 
-  // Pour la recherche faire defiler a un chacune des sortie
-  // et lire la valeur en entree
+// Pour la recherche faire defiler a un chacune des sortie
+// et lire la valeur en entree
   switch (memo_its_down)
   {
     case E_AHI_DIO12_INT:
@@ -691,7 +686,7 @@ PUBLIC etInUsingkey CLAV_AnalyseIts(uint8 *position)
     break;
   }
 
-  // Recherche de la touche clavier
+// Recherche de la touche clavier
   if (depart != (4 * C_CLAV_LGN_OUT))
   {
     // Desactivation des its clavier
@@ -766,7 +761,7 @@ PUBLIC void CLAV_ResetLecture(void)
   vPrintf("ERR : Attente front montant trop long\n");
   vPrintf("Retour attente pression touche\n");
 
-  // Remettre decodage front descendant
+// Remettre decodage front descendant
   vAHI_DioInterruptEdge(0, PBAR_CFG_NUMPAD_IN);
   b_it_detect_front_descendant = FALSE;
 
@@ -790,26 +785,26 @@ PRIVATE void InitAFroid(void)
     vPrintf("API Memoire flash OK\n");
   }
 
-  // Config io de cette appli
+// Config io de cette appli
   APP_ConfigIoJennic();
 
-  // Type utilisation par defaut
+// Type utilisation par defaut
   liaison_clavier = E_AUTONOMOUS;
 
-  // Initialisation de la machine a etat fini
+// Initialisation de la machine a etat fini
   memset(&AppData, 0, sizeof(AppData));
 
-  // Reflet memoire eeprom
+// Reflet memoire eeprom
   memset(&eeprom, 0, sizeof(bpsFlash));
 
-  // Test Parametres
+// Test Parametres
   memset(&maConfig, 0, sizeof(stParam));
 
   if (!bAHI_FullFlashRead(FLASH_START, sizeof(bpsFlash), (uint8 *) &eeprom))
   {
     vPrintf("Pb Lors de la lecture de la config Flash\n");
   }
-  // La flash a t elle une config ?
+// La flash a t elle une config ?
   if (eeprom.nbBoite == 0xFF || eeprom.nbBoite == 0x00)
   {
     vPrintf("Configuration liens necessaire\n");

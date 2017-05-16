@@ -140,7 +140,7 @@ PUBLIC etRunningNet CLAV_PgmNetMsgInput(tsData *psData)
     }
     break;
 
-    case E_MSG_CFG_LIENS:
+    case E_MSG_RSP_CFG_LIENS:
     {
       mode = psData->pau8Data[psData->u16Length - 2] >> 4 & 0x0F;
       clav = psData->pau8Data[psData->u16Length - 2] & 0x0F;
@@ -323,7 +323,7 @@ PUBLIC etRunningStp CLAV_PgmActionTouche(etInUsingkey keys)
           box_id);
     }
 #endif
-    bufEmission[0] = E_MSG_CFG_LIENS;
+    bufEmission[0] = E_MSG_ASK_CFG_LIENS;
     bufEmission[1] = key_mode << 4 | key_code;
     bufEmission[2] = eeprom.netConf.boxData[key_mode][key_code][box_id];
 

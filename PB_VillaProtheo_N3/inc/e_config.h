@@ -44,7 +44,7 @@ extern "C"
 // --------------------------
 #ifdef CLAV_IS_VELLMAN
 #define CLAV_NB_KEYS  10
-#define C_MIN_KEY_PRESS_TIME  5  // en ms
+#define C_MIN_KEY_PRESS_TIME  10  // en ms
 
 #define PBAR_CFG_NUMPAD_IN  (\
     E_JPI_DIO11_INT |\
@@ -318,8 +318,8 @@ extern PUBLIC bool_t b_EteindreNet;
 extern PUBLIC bool_t NEW_traiter_It;
 extern PUBLIC const uint8 code_ascii[];
 extern PUBLIC bool_t b_NEW_start_press_count;
-extern PUBLIC uint16 NEW_memo_delay_touche;
-extern PUBLIC uint16 NEW_timer_appuie_touche;
+extern PUBLIC uint32 NEW_memo_delay_touche;
+extern PUBLIC uint32 NEW_timer_appuie_touche;
 
 extern PUBLIC etRunningStp (*MenuPossible[2][3])(stParam *param);
 extern PUBLIC etRunningStp pFn1_1(stParam *param);

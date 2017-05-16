@@ -77,14 +77,15 @@ PUBLIC etRunningStp CLAV_UsrActionTouche(etInUsingkey keys)
   if ((((keys > E_KEY_NON_DEFINI) && (keys < E_KEY_NUM_MOD_1))
       || (keys == E_KEY_NUM_ETOILE)) == FALSE)
   {
+    vPrintf("Special key..no light\n");
     return mef_clav;
   }
 
   for (box = 0; box < C_MAX_BOXES + 1; box++)
   {
     useBox = eeprom.netConf.boxList[vitual_kbd_id][key_code][box];
-    vPrintf(" virualKbd=%d,keycode=%d,boxuse=%d,v=%d\n", vitual_kbd_id,
-        key_code, box, useBox);
+    //vPrintf(" virualKbd=%d, keycode=%d, lstChainebox=%d,v=%d\n", vitual_kbd_id,
+        //key_code, box, useBox);
     if (eeprom.netConf.boxList[vitual_kbd_id][key_code][box] == 0x00)
     {
       //suivant de box = box
@@ -98,12 +99,12 @@ PUBLIC etRunningStp CLAV_UsrActionTouche(etInUsingkey keys)
       vPrintf("  Use box %d (m:%s, k:%s, ptr:%d)\n", useBox,
           dbg_etCLAV_mod[eKbdVirtualId], dbg_etCLAV_keys[keys], box);
 
-      vPrintf("  bit:%x\n",
+      vPrintf("  bit eeprom:%x ->",
           eeprom.netConf.boxData[vitual_kbd_id][key_code][useBox]);
 
       if (eeprom.netConf.boxData[vitual_kbd_id][key_code][useBox])
       {
-        vPrintf("  Io [%x] avec boite %d\n",
+        vPrintf(" Io [%x] avec boite %d\n",
             eeprom.netConf.boxData[vitual_kbd_id][key_code][useBox], useBox);
         // Oui alors a t on en memoire l'@ de cette boite
         if (eeprom.BoxAddr[useBox])
@@ -117,36 +118,30 @@ PUBLIC etRunningStp CLAV_UsrActionTouche(etInUsingkey keys)
           {
             //Demande sous forme de bascule
             bufEmission[0] = E_MSG_DATA_SELECT;
-
-            if (timer_touche[AppData.ukey] <= C_PRESSION_T1)
-            {
-              bufEmission[2] = 0xFF;
-            }
-            else
-            {
-              bufEmission[2] = 0x00;
-            }
           }
           else
           {
             // Demande Globale imposee
             bufEmission[0] = E_MSG_DATA_ALL;
-
-            if (SetAllOff == TRUE)
-            {
-              // On doit tout eteindre
-              bufEmission[2] = 0x00;
-            }
-            else
-            {
-              // On doit tout allumer
-              bufEmission[2] = 0xFF;
-            }
           }
 
+          // Info a mettre en position 1
           bufEmission[1] =
               eeprom.netConf.boxData[vitual_kbd_id][key_code][useBox];
 
+          // info a mettre en position 2
+          if (timer_touche[key_code] <= C_PRESSION_T1)
+          {
+            // Allumer
+            bufEmission[2] = 0xFF;
+          }
+          else
+          {
+            // Eteindre
+            bufEmission[2] = 0x00;
+          }
+
+          vPrintf("%s(%dms)", dbg_etCLAV_keys[keys],timer_touche[key_code]);
           vPrintf("  --> MSG (%x,%x,%x) a [%x:%x]\n", bufEmission[0],
               bufEmission[1], bufEmission[2],
               (uint32) (AppData.u64ServiceAddress >> 32),
@@ -164,10 +159,12 @@ PUBLIC etRunningStp CLAV_UsrActionTouche(etInUsingkey keys)
     }
   }
 
+#if 0
   if (keys == E_KEY_NUM_ETOILE)
   {
     SetAllOff = !SetAllOff; // Global
   }
+#endif
 
   mef_clav = E_KS_STP_ATTENTE_TOUCHE;
   return mef_clav;
