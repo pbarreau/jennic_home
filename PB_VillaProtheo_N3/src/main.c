@@ -426,7 +426,7 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
         if(cur_val==0)
         {
           //Le bouton est presse
-          vPrintf("1:start %d\n", tickTimerValue);
+          //vPrintf("1:start %d\n", tickTimerValue);
 
           // Lancer le timer perso
           NEW_timer_appuie_touche = 0;
@@ -438,7 +438,7 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
         else
         {
           // Arreter timer
-          vPrintf("2:stop %d\n", tickTimerValue);
+          //vPrintf("2:stop %d\n", tickTimerValue);
 
           b_NEW_start_press_count = FALSE;
           NEW_memo_delay_touche = NEW_timer_appuie_touche;
@@ -448,7 +448,7 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
 
           // Informer a gerer
           vPrintf("3:time used '%d'\n\n", NEW_memo_delay_touche);
-          //AppData.stp = E_KS_STP_TRAITER_IT;
+          AppData.stp = E_KS_STP_TRAITER_IT;
         }
         // reactiver it
         vAHI_DioInterruptEnable(E_JPI_DIO20_INT, 0);
