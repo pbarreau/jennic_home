@@ -31,17 +31,10 @@ extern "C"
 #define TEMPS_MODE			6000 	// en 10 * ms
 
 #define C_TIME_REBOND_DOWN  300
-#define C_TIME_REBOND_UP  300
+#define C_TIME_REBOND_UP    300
 
-#define C_MIN_DURE_PRESSION	4
-#define C_MAX_DURE_PRESSION	200
-#define C_TIME_ULTRA		200
 
 #define C_PRESSION_T1		100	/// Limite rotation mode
-#define C_PRESSION_T2		85	/// Limite Bcast net
-#define C_PRESSION_T3		100	/// Limite passage configuration
-#define C_PRESSION_T4		100	/// Limite Save
-#define C_PRESSION_T5		150	/// Limite Ultracare
 
 // --------------------------
 #ifdef CLAV_IS_VELLMAN
@@ -92,7 +85,6 @@ extern "C"
 #define C_KEY_MEM_ALL C_MAX_KEYS
 
 #define C_MAX_TENTATIVES	4	/// Nb d'essai decodage clavier avant echec
-#define	C_MAX_MODES	4
 /****************************************************************************/
 /***        Type Definitions                                              ***/
 /****************************************************************************/
@@ -244,17 +236,17 @@ typedef struct {
 /****************************************************************************/
 /***        Exported Functions                                            ***/
 /****************************************************************************/
-extern PUBLIC int8 NEW_TrouvePositionTouche(etInUsingkey laTouche);
+//extern PUBLIC int8 NEW_TrouvePositionTouche(etInUsingkey laTouche);
 
-extern PUBLIC etRunningPgl NEW_AnalyseBoitierDeCommande(etRunningStp *stpVal,
-    etRunningRol*rolVal, etRunningKbd*kbdVal, etInUsingkey *keyVal,
-    etRunningNet*netVal);
+//extern PUBLIC etRunningPgl NEW_AnalyseBoitierDeCommande(etRunningStp *stpVal,
+//    etRunningRol*rolVal, etRunningKbd*kbdVal, etInUsingkey *keyVal,
+//    etRunningNet*netVal);
 
 // ----------------
 // mef_clav.c
 // ----------------
 extern PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier);
-extern PUBLIC void CLAV_ResetLecture(void);
+//extern PUBLIC void CLAV_ResetLecture(void);
 extern PUBLIC void CLAV_GererMode(etInUsingkey mode);
 
 #if fn1
@@ -274,7 +266,7 @@ extern PUBLIC void MyStepDebug(void);
 // ----------------
 // clav_usage.c
 // ----------------
-extern PUBLIC etRunningStp CLAV_BoutonDeConfiguration(bool_t * bip_on);
+//extern PUBLIC etRunningStp CLAV_BoutonDeConfiguration(bool_t * bip_on);
 extern PUBLIC void CLAV_NetMsgInput(tsData *psData);
 extern PUBLIC etRunningStp CLAV_GererTouche(etInUsingkey keys);
 
@@ -298,11 +290,11 @@ extern PUBLIC etInUsingkey CLAV_AnalyseIts(uint8 *position);
 /****************************************************************************/
 #ifdef CLAV_IS_VELLMAN
 #define CST_NB_MODES  4
-extern const PUBLIC etInUsingkey R_Key_modes[CST_NB_MODES];
-extern PUBLIC bool_t bStartTimerIo_19;
-extern PUBLIC bool_t OneIt20;
+//extern const PUBLIC etInUsingkey R_Key_modes[CST_NB_MODES];
+//extern PUBLIC bool_t bStartTimerIo_19;
+//extern PUBLIC bool_t OneIt20;
 
-extern PUBLIC uint16 TimingIo_19;
+//extern PUBLIC uint16 TimingIo_19;
 #endif
 
 extern PUBLIC tsClavData AppData;

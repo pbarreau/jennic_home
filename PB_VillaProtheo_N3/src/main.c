@@ -58,19 +58,13 @@ typedef enum _my_it {
   E_IT_ZN_NOT_SET, E_IT_ZN_1, E_IT_ZN_2, E_IT_ZN_3, E_IT_ZN_4, E_IT_ZN_END
 } etItZone;
 
-//PRIVATE bool_t b_It_tempo_enable = FALSE;
 PRIVATE bool_t preserve_states = FALSE;
-PRIVATE bool_t b_it_detect_front_descendant = FALSE;
-//PRIVATE uint16 tempo_rebond = 0;
 PUBLIC bool_t NEW_traiter_It = FALSE;
 
-PRIVATE bool_t b_start_press_count = FALSE;
 PUBLIC uint16 timer_appuie_touche = 0;
 PUBLIC uint32 NEW_timer_appuie_touche = 200;
 PUBLIC uint32 NEW_memo_delay_touche = 0;
 
-PRIVATE bool_t b_NEW_it_down = FALSE;
-PRIVATE uint32 edge_it_down = 0;
 
 #ifdef CLAV_IS_VELLMAN
 PRIVATE const uint16 ligne_colonne[] = { 0x1, 0x2, 0x4, 0x8, 0x10, 0x20, 0x40,
@@ -190,11 +184,6 @@ PUBLIC void vJenie_CbMain(void)
 #ifdef WATCHDOG_ENABLED
   vAHI_WatchdogRestart();
 #endif
-
-  if (b_NEW_it_down)
-  {
-    edge_it_down++;
-  }
 
   switch (AppData.pgl)
   {
@@ -418,14 +407,7 @@ PRIVATE void APP_ConfigIoJennic(void)
 PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
 {
   uint32 tickTimerValue;
-  static bool_t last_val = 0;
-  static uint32 start_tick = 0;
-  bool_t cur_val = 0;
-  bool_t cur_it = 0;
   uint8 it_id = 0;
-  uint8 looptime = 0;
-  static bool_t it_down = FALSE;
-  static etItZone it_zone = E_IT_ZN_NOT_SET;
 
   if (u32Device == E_AHI_DEVICE_SYSCTRL)
   {
@@ -950,6 +932,7 @@ PUBLIC etInUsingkey CLAV_AnalyseIts(uint8 *position)
 }
 #endif
 
+#if 0
 PUBLIC void CLAV_ResetLecture(void)
 {
   vPrintf("ERR : Attente front montant trop long\n");
@@ -966,6 +949,7 @@ PUBLIC void CLAV_ResetLecture(void)
   AppData.stp = E_KS_STP_ATTENTE_TOUCHE;
 
 }
+#endif
 
 PRIVATE void InitAFroid(void)
 {
@@ -1010,6 +994,7 @@ PRIVATE void InitAFroid(void)
 
 }
 
+#if 0
 PUBLIC int8 NEW_TrouvePositionTouche(etInUsingkey laTouche)
 {
   int8 val = -1;
@@ -1025,3 +1010,4 @@ PUBLIC int8 NEW_TrouvePositionTouche(etInUsingkey laTouche)
 
   return val;
 }
+#endif

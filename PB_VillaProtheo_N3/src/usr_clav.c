@@ -13,8 +13,8 @@
 
 #include "e_config.h"
 
-PUBLIC bool_t bStartTimerIo_19 = FALSE;
-PUBLIC bool_t OneIt20 = FALSE;
+//PUBLIC bool_t bStartTimerIo_19 = FALSE;
+//PUBLIC bool_t OneIt20 = FALSE;
 
 PUBLIC uint16 TimingIo_19 = 0;
 
@@ -60,7 +60,6 @@ PUBLIC etRunningNet CLAV_UsrNetMsgInput(tsData *psData)
 
 PUBLIC etRunningStp CLAV_UsrActionTouche(etInUsingkey keys)
 {
-  static bool_t SetAllOff = FALSE;
   etRunningStp mef_clav = E_KS_STP_ATTENTE_TOUCHE;
 
   etRunningKbd eKbdVirtualId = AppData.kbd;
@@ -85,7 +84,7 @@ PUBLIC etRunningStp CLAV_UsrActionTouche(etInUsingkey keys)
   {
     useBox = eeprom.netConf.boxList[vitual_kbd_id][key_code][box];
     //vPrintf(" virualKbd=%d, keycode=%d, lstChainebox=%d,v=%d\n", vitual_kbd_id,
-        //key_code, box, useBox);
+    //key_code, box, useBox);
     if (eeprom.netConf.boxList[vitual_kbd_id][key_code][box] == 0x00)
     {
       //suivant de box = box
@@ -141,7 +140,7 @@ PUBLIC etRunningStp CLAV_UsrActionTouche(etInUsingkey keys)
             bufEmission[2] = 0x00;
           }
 
-          vPrintf("%s(%dms)", dbg_etCLAV_keys[keys],timer_touche[key_code]);
+          vPrintf("%s(%dms)", dbg_etCLAV_keys[keys], timer_touche[key_code]);
           vPrintf("  --> MSG (%x,%x,%x) a [%x:%x]\n", bufEmission[0],
               bufEmission[1], bufEmission[2],
               (uint32) (AppData.u64ServiceAddress >> 32),
@@ -158,13 +157,6 @@ PUBLIC etRunningStp CLAV_UsrActionTouche(etInUsingkey keys)
       }
     }
   }
-
-#if 0
-  if (keys == E_KEY_NUM_ETOILE)
-  {
-    SetAllOff = !SetAllOff; // Global
-  }
-#endif
 
   mef_clav = E_KS_STP_ATTENTE_TOUCHE;
   return mef_clav;

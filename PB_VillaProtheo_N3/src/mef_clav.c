@@ -38,6 +38,7 @@ PUBLIC uint32 timer_antirebond_up = 0;
 PUBLIC bool_t b_activer_bip = FALSE;
 
 //---------------------------
+#if 0
 PUBLIC etRunningPgl NEW_AnalyseBoitierDeCommande(etRunningStp *stpVal,
     etRunningRol *rolVal, etRunningKbd *kbdVal, etInUsingkey *keyVal,
     etRunningNet *netVal)
@@ -89,6 +90,7 @@ PUBLIC etRunningPgl NEW_AnalyseBoitierDeCommande(etRunningStp *stpVal,
 
   return pglVal;
 }
+#endif
 
 PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
 {
