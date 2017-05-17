@@ -54,16 +54,23 @@ PUBLIC etRunningStp (*MenuPossible[2][3])(stParam *param) =
 PRIVATE uint32 memo_its_down = 0UL;
 PRIVATE eStatusClavier liaison_clavier = E_AUTONOMOUS;
 
-//PRIVATE bool_t b_It_tempo_enable = FALSE;
+typedef enum _my_it {
+  E_IT_ZN_NOT_SET, E_IT_ZN_1, E_IT_ZN_2, E_IT_ZN_3, E_IT_ZN_4, E_IT_ZN_END
+} etItZone;
 
+//PRIVATE bool_t b_It_tempo_enable = FALSE;
+PRIVATE bool_t preserve_states = FALSE;
 PRIVATE bool_t b_it_detect_front_descendant = FALSE;
 //PRIVATE uint16 tempo_rebond = 0;
 PUBLIC bool_t NEW_traiter_It = FALSE;
 
 PRIVATE bool_t b_start_press_count = FALSE;
 PUBLIC uint16 timer_appuie_touche = 0;
-PUBLIC uint32 NEW_timer_appuie_touche = 0;
+PUBLIC uint32 NEW_timer_appuie_touche = 200;
 PUBLIC uint32 NEW_memo_delay_touche = 0;
+
+PRIVATE bool_t b_NEW_it_down = FALSE;
+PRIVATE uint32 edge_it_down = 0;
 
 #ifdef CLAV_IS_VELLMAN
 PRIVATE const uint16 ligne_colonne[] = { 0x1, 0x2, 0x4, 0x8, 0x10, 0x20, 0x40,
@@ -140,7 +147,7 @@ PUBLIC void vJenie_CbInit(bool_t bWarmStart)
   vUtils_Init();
 #endif
 
-  if (bWarmStart == FALSE)
+  if ((bWarmStart == FALSE) && (preserve_states == FALSE))
   {
     InitAFroid();
   }
@@ -184,6 +191,11 @@ PUBLIC void vJenie_CbMain(void)
   vAHI_WatchdogRestart();
 #endif
 
+  if (b_NEW_it_down)
+  {
+    edge_it_down++;
+  }
+
   switch (AppData.pgl)
   {
     case E_PGL_RECHERCHE_RESEAU:
@@ -194,6 +206,8 @@ PUBLIC void vJenie_CbMain(void)
       vPrintf("Connection Reseau etablit\n");
       // Montrer par flash que l'on est connecte
       au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
+      //au8Led_clav[C_CLAV_LED_INFO_2].actif = FALSE;
+      //au8Led_clav[C_CLAV_LED_INFO_3].actif = FALSE;
 
       // Autoriser la prise en compte des its clavier
       vAHI_DioInterruptEnable(PBAR_CFG_NUMPAD_IN, 0);
@@ -276,6 +290,14 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
         vPrintf("ERREUR RESEAU CLAVIER %d\n", AppData.net);
       }
 
+    }
+    break;
+
+    case E_JENIE_STACK_RESET:
+    {
+      // Preserver l'etat "Programme" du clavier
+      vPrintf("Pile Jennic redemarre\n");
+      preserve_states = TRUE;
     }
     break;
 
@@ -401,6 +423,9 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
   bool_t cur_val = 0;
   bool_t cur_it = 0;
   uint8 it_id = 0;
+  uint8 looptime = 0;
+  static bool_t it_down = FALSE;
+  static etItZone it_zone = E_IT_ZN_NOT_SET;
 
   if (u32Device == E_AHI_DEVICE_SYSCTRL)
   {
@@ -430,53 +455,47 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
       //if(!it_en_cours)it_en_cours=4;
 #endif
       {
-        //desactiver it
-        vAHI_DioInterruptEnable(0, u32ItemBitmap);
         it_id = getItFromMask(u32ItemBitmap);
 
-        // Attendre fin rebond
-        do
+        switch (AppData.stp)
         {
-          // verifier niveau
-          cur_val = (u32AHI_DioReadInput() >> it_id) & 0x1;
+          case E_KS_STP_ATTENTE_TOUCHE:
+          {
+            vPrintf("1:Down(%d)\n", it_id);
+            memo_its_down = u32ItemBitmap;
+            AppData.stp = E_KS_STP_DEBUT_IT;
+            timer_antirebond_dow = 0;
+            b_DebutIt = TRUE;
+          }
+          break;
 
-          // Nouvelle it survenue ?
-          cur_it = (u32AHI_DioInterruptStatus() >> it_id) & 0x1;
-        } while (cur_it || (cur_val != last_val));
+          case E_KS_STP_COMPTER_DUREE_PRESSION:
+          {
+            b_compter_pression = FALSE;
+            NEW_memo_delay_touche = timer_duree_pression / 100;
+            // Informer a gerer
+            vPrintf("2:UP(%d)->time used '%d'\n", it_id, NEW_memo_delay_touche);
+            AppData.stp = E_KS_STP_REBOND_HAUT_COMMENCE;
+            timer_antirebond_up = 0;
+            b_FinIt = TRUE;
+          }
+          break;
 
-        if (cur_val == 0)
-        {
-          //Le bouton est presse
-          //vPrintf("\n\n");
-          //vPrintf("1:(%d)->start %d\n", it_id, tickTimerValue);
-          start_tick = tickTimerValue;
+          case E_KS_STP_DEBUT_IT:
+          case E_KS_STP_REBOND_HAUT_COMMENCE:
+          case E_KS_STP_TRAITER_TOUCHE:
+          {
+            ; // It Parasite
+          }
+          break;
 
-          // Lancer le timer perso
-          NEW_timer_appuie_touche = 0;
-          b_NEW_start_press_count = TRUE;
-          memo_its_down = u32ItemBitmap;
-          // changer sens leture it
-          vAHI_DioInterruptEdge(u32ItemBitmap, 0);
+          default:
+          {
+            vPrintf("Step sous it non prevu:%d\n", AppData.stp);
+          }
+          break;
+
         }
-        else
-        {
-          // Arreter timer
-          //vPrintf("2:(%d)->stop %d\n", it_id, tickTimerValue);
-
-          b_NEW_start_press_count = FALSE;
-          NEW_memo_delay_touche = NEW_timer_appuie_touche/100;
-          //NEW_memo_delay_touche = (start_tick - tickTimerValue)/100;
-
-          // changer sens leture it
-          vAHI_DioInterruptEdge(0, u32ItemBitmap);
-
-          // Informer a gerer
-          vPrintf("3:(%d)->time used '%d'\n\n", it_id, NEW_memo_delay_touche);
-          AppData.stp = E_KS_STP_TRAITER_IT;
-        }
-        // reactiver it
-        vAHI_DioInterruptEnable(u32ItemBitmap, 0);
-        last_val = !last_val;
       }
       break;
 
@@ -486,6 +505,181 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
     }
   }
 }
+
+#ifdef VERSION_2
+switch (it_zone)
+{
+  case E_IT_ZN_NOT_SET:
+  {
+    if(NEW_timer_appuie_touche<100)
+    return;
+    // une it
+    it_zone = E_IT_ZN_1;
+    b_NEW_it_down = TRUE;
+    edge_it_down = 0;
+    vPrintf("DOWN start\n");
+    memo_its_down = u32ItemBitmap;
+    vPrintf("Round Trip:%d\n",NEW_timer_appuie_touche);
+    b_NEW_start_press_count = TRUE;
+    NEW_timer_appuie_touche = 0;
+    vAHI_DioInterruptEdge(u32ItemBitmap, 0);
+  }
+  break;
+
+  case E_IT_ZN_1:
+  {
+    NEW_memo_delay_touche = edge_it_down/100;
+    vPrintf("Value:%d\n",NEW_memo_delay_touche);
+
+    b_NEW_start_press_count = TRUE;
+    NEW_timer_appuie_touche = 0;
+    if (NEW_memo_delay_touche > C_MIN_KEY_PRESS_TIME)
+    {
+      vPrintf("Traitement\n");
+      AppData.stp = E_KS_STP_TRAITER_IT;
+    }
+    else
+    {
+      AppData.stp = E_KS_STP_ARMER_IT;
+      vPrintf("!!Error\n");
+    }
+    vPrintf("\n");
+    it_zone = E_IT_ZN_NOT_SET;
+  }
+  break;
+#if 0
+  case E_IT_ZN_2:
+  {
+    vPrintf("UP\n");
+    it_zone = E_IT_ZN_NOT_SET;
+  }
+  break;
+
+  case E_IT_ZN_3:
+  {
+    vPrintf("Value 2:%d\n",edge_it_down);
+
+    if (edge_it_down < 15)
+    {
+      // une it
+      it_zone = E_IT_ZN_3;
+    }
+    else
+    {
+      //b_NEW_start_press_count = FALSE;
+      b_NEW_it_down = FALSE;
+      NEW_memo_delay_touche = edge_it_down/100;
+      edge_it_down = 0;
+      // Informer a gerer
+      vPrintf("3:(%d)->time used '%d'\n\n", it_id, NEW_memo_delay_touche);
+
+      if (NEW_memo_delay_touche > C_MIN_KEY_PRESS_TIME)
+      {
+        vPrintf("Traitement\n");
+        AppData.stp = E_KS_STP_TRAITER_IT;
+      }
+      else
+      {
+        AppData.stp = E_KS_STP_ARMER_IT;
+        vPrintf("!!Error\n");
+      }
+
+      // une it
+      it_zone = E_IT_ZN_NOT_SET;
+    }
+  }
+  break;
+#endif
+  default:
+  {
+    vPrintf("!!Erreur zone analyse it\n");
+  }
+}
+
+#endif
+
+#if 0
+//desactiver it
+vAHI_DioInterruptEnable(0, u32ItemBitmap);
+it_id = getItFromMask(u32ItemBitmap);
+
+// lancer timer
+if(b_NEW_it_down == FALSE)
+{
+  b_NEW_it_down = TRUE;
+}
+else
+{
+  if(edge_it_down < 150)
+  {
+    return;
+  }
+  else
+  {
+    /// Niveau bas OK
+    NEW_timer_appuie_touche = 0;
+    b_NEW_start_press_count = TRUE;
+
+    // Armer remonte it
+  }
+}
+NEW_timer_appuie_touche = 0;
+b_NEW_start_press_count = TRUE;
+// Attendre fin rebond
+do
+{
+  // verifier niveau
+  cur_val = (u32AHI_DioReadInput() >> it_id) & 0x1;
+
+  // Nouvelle it survenue ?
+  cur_it = (u32AHI_DioInterruptStatus() >> it_id) & 0x1;
+}while ((NEW_timer_appuie_touche < 150) && (cur_val != last_val));
+
+if (cur_val == 0)
+{
+  //Le bouton est presse
+  //vPrintf("\n\n");
+  //vPrintf("1:(%d)->start %d\n", it_id, tickTimerValue);
+  vPrintf("Down\n");
+  start_tick = tickTimerValue;
+
+  // Lancer le timer perso
+  NEW_timer_appuie_touche = 0;
+  //b_NEW_start_press_count = TRUE;
+  memo_its_down = u32ItemBitmap;
+  // changer sens leture it
+  vAHI_DioInterruptEdge(u32ItemBitmap, 0);
+}
+else
+{
+  // Arreter timer
+  //vPrintf("2:(%d)->stop %d\n", it_id, tickTimerValue);
+  vPrintf("UP\n");
+  b_NEW_start_press_count = FALSE;
+  NEW_memo_delay_touche = NEW_timer_appuie_touche / 100;
+  //NEW_memo_delay_touche = (start_tick - tickTimerValue)/100;
+
+  // changer sens leture it
+  vAHI_DioInterruptEdge(0, u32ItemBitmap);
+
+  // Informer a gerer
+  vPrintf("3:(%d)->time used '%d'\n\n", it_id, NEW_memo_delay_touche);
+
+  if (NEW_memo_delay_touche > C_MIN_KEY_PRESS_TIME)
+  {
+    AppData.stp = E_KS_STP_TRAITER_IT;
+  }
+  else
+  {
+    AppData.stp = E_KS_STP_ARMER_IT;
+    vPrintf("!!Error\n");
+  }
+}
+// reactiver it
+vAHI_DioInterruptEnable(u32ItemBitmap, 0);
+last_val = !last_val;
+
+#endif
 
 PRIVATE uint8 getItFromMask(uint32 mask)
 {

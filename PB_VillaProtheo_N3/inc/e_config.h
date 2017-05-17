@@ -29,13 +29,15 @@ extern "C"
 /***        Macro Definitions                                             ***/
 /****************************************************************************/
 #define TEMPS_MODE			6000 	// en 10 * ms
-#define C_TEMPS_ANTI_REBOND	2		//10*ms
+
+#define C_TIME_REBOND_DOWN  300
+#define C_TIME_REBOND_UP  300
 
 #define C_MIN_DURE_PRESSION	4
 #define C_MAX_DURE_PRESSION	200
 #define C_TIME_ULTRA		200
 
-#define C_PRESSION_T1		85	/// Limite rotation mode
+#define C_PRESSION_T1		100	/// Limite rotation mode
 #define C_PRESSION_T2		85	/// Limite Bcast net
 #define C_PRESSION_T3		100	/// Limite passage configuration
 #define C_PRESSION_T4		100	/// Limite Save
@@ -149,6 +151,10 @@ typedef enum _clav_state {
   E_KS_STP_ATTENDRE_FIN_CONFIG_BOITE,
   E_KS_STP_EN_PROGR_AVEC_BOITE,
   E_KS_STP_ULTRA_MODE,
+  E_KS_STP_DEBUT_IT,
+  E_KS_STP_REBOND_BAS_FINI,
+  E_KS_STP_COMPTER_DUREE_PRESSION,
+  E_KS_STP_REBOND_HAUT_COMMENCE,
   E_KS_STP_END
 } etRunningStp; /// Keyboard states
 extern PUBLIC char const *dbg_teClavState[];
@@ -320,6 +326,14 @@ extern PUBLIC const uint8 code_ascii[];
 extern PUBLIC bool_t b_NEW_start_press_count;
 extern PUBLIC uint32 NEW_memo_delay_touche;
 extern PUBLIC uint32 NEW_timer_appuie_touche;
+
+//--------------
+extern PUBLIC bool_t b_DebutIt;
+extern PUBLIC uint32 timer_antirebond_dow;
+extern PUBLIC bool_t b_compter_pression;
+extern PUBLIC uint32 timer_duree_pression;
+extern PUBLIC bool_t b_FinIt;
+extern PUBLIC uint32 timer_antirebond_up;
 
 extern PUBLIC etRunningStp (*MenuPossible[2][3])(stParam *param);
 extern PUBLIC etRunningStp pFn1_1(stParam *param);

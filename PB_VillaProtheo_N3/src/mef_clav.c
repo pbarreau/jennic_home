@@ -24,6 +24,15 @@
 
 //PRIVATE void CLAV_GererMultiple();
 PUBLIC bool_t b_NEW_start_press_count = FALSE;
+
+PUBLIC bool_t b_DebutIt = FALSE;
+PUBLIC uint32 timer_antirebond_dow = 0;
+
+PUBLIC bool_t b_compter_pression = FALSE;
+PUBLIC uint32 timer_duree_pression = 0;
+
+PUBLIC bool_t b_FinIt = FALSE;
+PUBLIC uint32 timer_antirebond_up = 0;
 //---------------------------------------------------
 
 PUBLIC bool_t b_activer_bip = FALSE;
@@ -93,9 +102,19 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
   vAHI_WatchdogRestart();
 #endif
 
-  if (b_NEW_start_press_count)
+  if (b_DebutIt)
   {
-    NEW_timer_appuie_touche++;
+    timer_antirebond_dow++;
+  }
+
+  if (b_compter_pression)
+  {
+    timer_duree_pression++;
+  }
+
+  if (b_FinIt)
+  {
+    timer_antirebond_up++;
   }
 
   wifi_msg = AppData.eWifi;
@@ -106,13 +125,22 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
     {
       vPrintf("Passage clavier en attente touche\n");
       AppData.pgl = E_PGL_BOUCLE_PRINCIPALE;
-      AppData.key = E_KEY_NON_DEFINI;
-      AppData.rol = E_KS_ROL_UTILISATEUR;
-      AppData.kbd = E_KS_KBD_VIRTUAL_1;
       AppData.stp = E_KS_STP_ATTENTE_TOUCHE;
-      AppData.net = E_KS_NET_NON_DEFINI;
-      AppData.eWifi = E_MSG_NOT_SET;
+      AppData.key = E_KEY_NON_DEFINI;
 
+      if (AppData.rol == E_KS_ROL_NON_DEFINI)
+        AppData.rol = E_KS_ROL_UTILISATEUR;
+
+      if (AppData.kbd == E_KS_KBD_NON_DEFINI)
+        AppData.kbd = E_KS_KBD_VIRTUAL_1;
+
+      if (AppData.net == E_KS_NET_NON_DEFINI)
+        AppData.net = E_KS_NET_NON_DEFINI;
+
+      if (AppData.eWifi == E_MSG_NOT_SET)
+        AppData.eWifi = E_MSG_NOT_SET;
+
+#if 0
       maConfig.pgl = E_PGL_BOUCLE_PRINCIPALE;
       maConfig.key = E_KEY_NON_DEFINI;
       maConfig.rol = E_KS_ROL_UTILISATEUR;
@@ -120,10 +148,52 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
       maConfig.stp = E_KS_STP_ATTENTE_TOUCHE;
       maConfig.net = E_KS_NET_NON_DEFINI;
       maConfig.msg = E_MSG_NOT_SET;
+#endif
     }
     break;
 
     case E_KS_STP_ATTENTE_TOUCHE:
+      // On regarde les fronts descendants
+      vAHI_DioInterruptEdge(0, PBAR_CFG_NUMPAD_IN);
+    break;
+
+    case E_KS_STP_DEBUT_IT:
+    {
+      if (timer_antirebond_dow < C_TIME_REBOND_DOWN)
+      {
+        AppData.stp = E_KS_STP_DEBUT_IT;
+      }
+      else
+      {
+        b_DebutIt = FALSE;
+        AppData.stp = E_KS_STP_COMPTER_DUREE_PRESSION;
+        timer_duree_pression = 0;
+        b_compter_pression = TRUE;
+      }
+    }
+    break;
+
+    case E_KS_STP_COMPTER_DUREE_PRESSION:
+    {
+      // On regarde les fronts Montant
+      vAHI_DioInterruptEdge(PBAR_CFG_NUMPAD_IN, 0);
+    }
+    break;
+
+    case E_KS_STP_REBOND_HAUT_COMMENCE:
+    {
+      if (timer_antirebond_up < C_TIME_REBOND_UP)
+      {
+        AppData.stp = E_KS_STP_REBOND_HAUT_COMMENCE;
+      }
+      else
+      {
+        b_FinIt = FALSE;
+        vPrintf("Traitement It\n\n");
+        AppData.stp = E_KS_STP_TRAITER_IT;
+      }
+
+    }
     break;
 
     case E_KS_STP_SERVICE_ON:
@@ -147,21 +217,26 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
 
     case E_KS_STP_ARMER_IT:
     {
-      // Rearmer detection It
+
+      // Bloquer Its
+      //vAHI_DioInterruptEnable(0, PBAR_CFG_NUMPAD_IN);
+      //flush its
+      //u32AHI_DioInterruptStatus();
       // Preparation Detection Front descendant sur entrees
       vAHI_DioInterruptEdge(0, PBAR_CFG_NUMPAD_IN);
-
+      // deBloquer Its
+      //vAHI_DioInterruptEnable(PBAR_CFG_NUMPAD_IN, 0);
       AppData.stp = E_KS_STP_ATTENTE_TOUCHE;
+
     }
     break;
 
     case E_KS_STP_TRAITER_IT:
     {
-
       la_touche = CLAV_AnalyseIts(&uId);
       if (la_touche != E_KEY_NON_DEFINI)
       {
-        timer_touche[la_touche - 1] = (uint16)NEW_memo_delay_touche;
+        timer_touche[la_touche - 1] = (uint16) NEW_memo_delay_touche;
         vPrintf("Touche '%c' pendant '%d' ms, code dans pgm:%d\n\n",
             code_ascii[uId], timer_touche[la_touche - 1], la_touche);
 
@@ -217,13 +292,18 @@ PUBLIC void CLAV_GererMode(etInUsingkey mode)
       flash_val = ~E_FLASH_ALWAYS;
     break;
     case E_KS_ROL_CHOISIR:
-      flash_val = E_FLASH_ERREUR_DECTECTEE;
+      au8Led_clav[C_CLAV_LED_INFO_3].mode = 0x10;
+      flash_val = 0x10;
     break;
     default:
       flash_val = E_FLASH_RECHERCHE_RESEAU;
     break;
   }
   au8Led_clav[C_CLAV_LED_INFO_2].mode = flash_val;
+
+  // montrer seulement le changement de role
+  if (AppData.rol == E_KS_ROL_CHOISIR)
+    return;
 
   switch (mode)
   {
@@ -233,22 +313,22 @@ PUBLIC void CLAV_GererMode(etInUsingkey mode)
     break;
 
     case E_KEY_NUM_MOD_2:
-      au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_MENU_LED_NET;
+      au8Led_clav[C_CLAV_LED_INFO_3].mode = 0x2; //E_FLASH_MENU_LED_NET;
       modif_mode = E_KS_KBD_VIRTUAL_2;
     break;
 
     case E_KEY_NUM_MOD_3:
-      au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_MENU_BIP_CLAVIER;
+      au8Led_clav[C_CLAV_LED_INFO_3].mode = 0x05; //E_FLASH_MENU_BIP_CLAVIER;
       modif_mode = E_KS_KBD_VIRTUAL_3;
     break;
 
     case E_KEY_NUM_MOD_4:
-      au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_MENU_LIAISON;
+      au8Led_clav[C_CLAV_LED_INFO_3].mode = 0x08; //E_FLASH_MENU_LIAISON;
       modif_mode = E_KS_KBD_VIRTUAL_4;
     break;
 
     case E_KEY_NUM_MOD_5:
-      au8Led_clav[C_CLAV_LED_INFO_3].mode = E_FLASH_ERREUR_DECTECTEE;
+      au8Led_clav[C_CLAV_LED_INFO_3].mode = 0x0B; //E_FLASH_ERREUR_DECTECTEE;
       modif_mode = E_KS_KBD_VIRTUAL_1;
     break;
 
