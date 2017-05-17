@@ -20,6 +20,7 @@ extern "C"
 #include <Button.h>
 #include <Jenie.h>
 #include "services.h"
+#include "m_network_msg.h"
 
 /****************************************************************************/
 /***        Macro Definitions                                             ***/
@@ -179,20 +180,6 @@ typedef enum {
   E_CLAV_MODE_3,
   E_CLAV_MODE_END
 } PBAR_E_KeyMode;
-
-typedef enum {
-  E_MSG_NOT_SET,
-  E_MSG_DATA_ALL,
-  E_MSG_DATA_SELECT,
-  E_MSG_ASK_ID_BOX,
-  E_MSG_RSP_ID_BOX,
-  E_MSG_ASK_CFG_LIENS,
-  E_MSG_RSP_CFG_LIENS,
-  E_MSG_CFG_BOX_END,
-  E_MSG_NET_LED_OFF,
-  E_MSG_NET_LED_ON,
-  E_MSG_DEFINITION_END
-} etDefWifiMsg;
 
 typedef enum {
   E_KPD_A,
