@@ -28,7 +28,7 @@ PRIVATE void InitAFroid(void);
 PRIVATE void APP_ConfigIoJennic(void);
 PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap);
 PRIVATE void CLAV_GestionIts(void);
-PRIVATE etCLAV_keys CLAV_AnalyseIts(uint8 *position);
+PRIVATE etInUsingkey CLAV_AnalyseIts(uint8 *position);
 
 /****************************************************************************/
 /***        Exported Variables                                            ***/
@@ -66,10 +66,10 @@ PRIVATE const uint8 ligne_colonne[] = {
     0x7D, 0x7B, 0x77
 
 };
-PRIVATE const etCLAV_keys key_code[] = { E_KEY_NUM_1, E_KEY_NUM_4, E_KEY_NUM_7,
-    E_KEY_ETOILE, E_KEY_NUM_2, E_KEY_NUM_5, E_KEY_NUM_8, E_KEY_NUM_0,
-    E_KEY_NUM_3, E_KEY_NUM_6, E_KEY_NUM_9, E_KEY_DIESE, E_KEY_MOD_1,
-    E_KEY_MOD_2, E_KEY_MOD_3, E_KEY_MOD_4 };
+PRIVATE const etInUsingkey key_code[] = { E_KEY_NUM_1, E_KEY_NUM_4, E_KEY_NUM_7,
+    E_KEY_NUM_ETOILE, E_KEY_NUM_2, E_KEY_NUM_5, E_KEY_NUM_8, E_KEY_NUM_0,
+    E_KEY_NUM_3, E_KEY_NUM_6, E_KEY_NUM_9, E_KEY_NUM_DIESE, E_KEY_NUM_MOD_1,
+    E_KEY_NUM_MOD_2, E_KEY_NUM_MOD_3, E_KEY_NUM_MOD_4 };
 PUBLIC uint16 timer_touche[16] = { 0 };
 
 #if !NO_DEBUG_ON
@@ -124,7 +124,7 @@ PUBLIC void vJenie_CbInit(bool_t bWarmStart)
   else
   {
     vPrintf("Recherche reseau!\n");
-    AppData.eAppState = APP_RECHERCHE_RESEAU;
+    AppData.pgl = E_PGL_RECHERCHE_RESEAU;
     // Montrer la led d'activite reseau
     au8Led_clav[C_CLAV_LED_INFO_1].mode = E_FLASH_RECHERCHE_RESEAU;
     au8Led_clav[C_CLAV_LED_INFO_1].actif = TRUE;
@@ -147,13 +147,13 @@ PUBLIC void vJenie_CbMain(void)
   vAHI_WatchdogRestart();
 #endif
 
-  switch (AppData.eAppState)
+  switch (AppData.pgl)
   {
-    case APP_RECHERCHE_RESEAU:
+    case E_PGL_RECHERCHE_RESEAU:
       ; // Rien attendre
     break;
 
-    case APP_RESEAU_ETABLI:
+    case E_PGL_RESEAU_ETABLI:
       vPrintf("Connection Reseau etablit\n");
       // Montrer par flash que l'on est connecte
       au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
@@ -162,11 +162,11 @@ PUBLIC void vJenie_CbMain(void)
       vAHI_DioInterruptEnable(PBAR_CFG_NUMPAD_IN, 0);
 
       // etape suivante
-      AppData.eAppState = APP_BOUCLE_PRINCIPALE;
+      AppData.pgl = E_PGL_BOUCLE_PRINCIPALE;
 
     break;
 
-    case APP_BOUCLE_PRINCIPALE:
+    case E_PGL_BOUCLE_PRINCIPALE:
       // Test pour voir si connection a un pc
       if (liaison_clavier == E_CONNECTED_TO_PC)
       {
@@ -179,7 +179,7 @@ PUBLIC void vJenie_CbMain(void)
         {
           start_timer_of_mode = FALSE;
           compter_duree_mode = 0;
-          CLAV_GererMode(E_KEY_MOD_1);
+          CLAV_GererMode(E_KEY_NUM_MOD_1);
         }
         CLAV_AnalyserEtat(AppData.eClavState);
       }
@@ -198,13 +198,13 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
 {
   //tsSvcReqRsp *psStackMgmtData =(tsSvcReqRsp *)pvEventPrim;
 
-  bp_CommunMsgReseau(&AppData.eAppState, eEventType, pvEventPrim);
+  bp_CommunMsgReseau(&AppData.pgl, eEventType, pvEventPrim);
 
   switch (eEventType)
   {
     case E_JENIE_NETWORK_UP:
     {
-      AppData.eAppState = APP_RESEAU_ETABLI;
+      AppData.pgl = E_PGL_RESEAU_ETABLI;
     }
     break;
 
@@ -214,17 +214,17 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
 
     case E_JENIE_REG_SVC_RSP:
     {
-      if (AppData.eClavState == E_CLAV_SERVICE_ON)
+      if (AppData.eClavState == E_KS_STP_SERVICE_ON)
       {
         vPrintf(" Le service est bien enregistre chez le pere\n\n");
         vPrintf("En attente de demande d'une boite\n\n");
-        AppData.eClavState = E_CLAV_ATTENDRE_BOITE;
+        AppData.eClavState = E_KS_STP_ATTENDRE_BOITE;
       }
-      else if (AppData.eClavState == E_CLAV_SERVICE_OFF)
+      else if (AppData.eClavState == E_KS_STP_SERVICE_OFF)
       {
         vPrintf(" Le service est bien Retire chez le pere\n\n");
         vPrintf("En attente de commandes utilisateur\n\n");
-        AppData.eClavState = E_CLAV_ETAT_EN_ATTENTE;
+        AppData.eClavState = E_KS_STP_ATTENTE_TOUCHE;
       }
       else
       {
@@ -248,16 +248,16 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
 {
   tsData *psData = (tsData *) pvEventPrim;
 
-  bp_CommunMsgReseau(&AppData.eAppState, eEventType, pvEventPrim);
+  bp_CommunMsgReseau(&AppData.pgl, eEventType, pvEventPrim);
 
   switch (eEventType)
   {
     case E_JENIE_DATA:
     {
       vPrintf("Net Data in\n");
-      switch (AppData.eAppState)
+      switch (AppData.pgl)
       {
-        case APP_BOUCLE_PRINCIPALE:
+        case E_PGL_BOUCLE_PRINCIPALE:
         {
           CLAV_NetMsgInput(psData);
         }
@@ -266,7 +266,7 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
         default:
         {
           vPrintf("ERR:E_JENIE_DATA, AppData.eAppState -> %d\n",
-              AppData.eAppState);
+              AppData.pgl);
         }
         break;
       }
@@ -422,23 +422,23 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
 
 PRIVATE void CLAV_GestionIts(void)
 {
-  etCLAV_keys la_touche = E_NO_KEYS;
+  etInUsingkey la_touche = E_KEY_NON_DEFINI;
   uint8 posCodeAscii = 0;
 
   if (b_it_detect_front_descendant == TRUE)
   {
     la_touche = CLAV_AnalyseIts(&posCodeAscii);
-    if (la_touche != E_NO_KEYS)
+    if (la_touche != E_KEY_NON_DEFINI)
     {
       vPrintf("Touche '%c' trouvee, code dans pgm:%d\n",
           code_ascii[posCodeAscii], la_touche);
-      AppData.eKeyPressed = la_touche;
+      AppData.key = la_touche;
       AppData.ukey = posCodeAscii;
 
       vPrintf("Debut mesure du temps d'appuie\n");
       b_start_press_count = TRUE;
 
-      AppData.eClavState = E_CLAV_ETAT_TRAITER_IT;
+      AppData.eClavState = E_KS_STP_TRAITER_IT;
 
       // Detection passage down -> up (front montant)
       vAHI_DioInterruptEdge(PBAR_CFG_NUMPAD_IN, 0);
@@ -447,7 +447,7 @@ PRIVATE void CLAV_GestionIts(void)
     {
       vPrintf("la_touche == E_NO_KEYS\n");
       b_it_detect_front_descendant = FALSE;
-      AppData.eClavState = E_CLAV_ETAT_EN_ATTENTE;
+      AppData.eClavState = E_KS_STP_ATTENTE_TOUCHE;
     }
   }
   else
@@ -466,16 +466,16 @@ PRIVATE void CLAV_GestionIts(void)
 
       // Un appui puis un relachement on ete detectee et minutee
       //on effectue une action
-      AppData.eClavState = E_CLAV_ETAT_ANALYSER_TOUCHE;
+      AppData.eClavState = E_KS_STP_TRAITER_TOUCHE;
     }
     else
     {
       vPrintf("Temps Pression insuffisant:%d\n", timer_appuie_touche);
       vPrintf("Retour en attente pression touche\n");
       // Ignorer la touche
-      AppData.eKeyPressed = E_NO_KEYS;
+      AppData.key = E_KEY_NON_DEFINI;
       AppData.ukey = 0;
-      AppData.eClavState = E_CLAV_ETAT_EN_ATTENTE;
+      AppData.eClavState = E_KS_STP_ATTENTE_TOUCHE;
 
     }
     timer_appuie_touche = 0;
@@ -484,7 +484,7 @@ PRIVATE void CLAV_GestionIts(void)
   }
 }
 
-PRIVATE etCLAV_keys CLAV_AnalyseIts(uint8 *position)
+PRIVATE etInUsingkey CLAV_AnalyseIts(uint8 *position)
 {
   uint8 byte = 0;
   uint8 tentative = 0;
@@ -492,7 +492,7 @@ PRIVATE etCLAV_keys CLAV_AnalyseIts(uint8 *position)
   uint8 depart = 0;
   uint32 val = 0;
   bool_t trouve = FALSE;
-  etCLAV_keys ret_val = E_NO_KEYS;
+  etInUsingkey ret_val = E_KEY_NON_DEFINI;
 
   vPrintf(" Traitement it:");
 
@@ -614,8 +614,8 @@ PUBLIC void CLAV_ResetLecture(void)
   b_start_press_count = FALSE;
   timer_appuie_touche = 0;
   AppData.ukey = 0;
-  AppData.eKeyPressed = E_NO_KEYS;
-  AppData.eClavState = E_CLAV_ETAT_EN_ATTENTE;
+  AppData.key = E_KEY_NON_DEFINI;
+  AppData.eClavState = E_KS_STP_ATTENTE_TOUCHE;
 
 }
 

@@ -15,7 +15,7 @@
 
 #if !NO_DEBUG_ON
 
-PUBLIC char const *dbg_teNetState[] = { "APP_INITIALISATION",
+PUBLIC char const *dbg_teRunningPgl[] = { "APP_INITIALISATION",
     "APP_RECHERCHE_RESEAU", "APP_RESEAU_ETABLI", "APP_CONNECTION_RESEAU",
     "APP_PERTE_RESEAU", "APP_ATTENTE_ENREGISTREMENT_AU_PERE",
     "APP_BOUCLE_PRINCIPALE", "APP_DEFINITION_END" };
@@ -76,7 +76,7 @@ PUBLIC int PBAR_DbgTrace(teDbgTrace eSens, char *fn, void *val_enum,
   switch (enumType)
   {
     case E_DBG_TYPE_NET_STATE:
-      strcpy(enumMsg, dbg_teNetState[(teNetState) val_enum]);
+      strcpy(enumMsg, dbg_teRunningPgl[(etRunningPgl) val_enum]);
     break;
 
     case E_DBG_TYPE_TYPE_MSG:

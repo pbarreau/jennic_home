@@ -12,7 +12,7 @@
 
 #include "m_config.h"
 
-PUBLIC void bp_CommunMsgReseau(teNetState *eState, teEventType eEventType,
+PUBLIC void bp_CommunMsgReseau(etRunningPgl *eState, teEventType eEventType,
     void *pvEventPrim)
 {
 #if !NO_DEBUG_ON
@@ -29,7 +29,7 @@ PUBLIC void bp_CommunMsgReseau(teNetState *eState, teEventType eEventType,
     {
       /* Indicates stack is up and running */
       vPrintf("\nReseau Ok\n");
-      if (*eState == APP_RECHERCHE_RESEAU)
+      if (*eState == E_PGL_RECHERCHE_RESEAU)
       {
         vPrintf(" Canal:%d, Id:%x\n", pNet->u8Channel, pNet->u16PanID);
         vPrintf(" Pere:[%x:%x]\n", (uint32) (pNet->u64ParentAddress >> 32),

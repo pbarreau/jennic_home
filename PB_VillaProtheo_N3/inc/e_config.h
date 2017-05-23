@@ -70,7 +70,7 @@ extern "C"
 /***        Type Definitions                                              ***/
 /****************************************************************************/
 typedef enum _keys {
-  E_NO_KEYS,
+  E_KEY_NON_DEFINI,
   E_KEY_NUM_1,
   E_KEY_NUM_2,
   E_KEY_NUM_3,
@@ -81,48 +81,48 @@ typedef enum _keys {
   E_KEY_NUM_8,
   E_KEY_NUM_9,
   E_KEY_NUM_0,
-  E_KEY_MOD_1,
-  E_KEY_MOD_2,
-  E_KEY_MOD_3,
-  E_KEY_MOD_4,
-  E_KEY_ETOILE,
-  E_KEY_DIESE,
-  E_KEYS_END
-} etCLAV_keys;
+  E_KEY_NUM_MOD_1,
+  E_KEY_NUM_MOD_2,
+  E_KEY_NUM_MOD_3,
+  E_KEY_NUM_MOD_4,
+  E_KEY_NUM_ETOILE,
+  E_KEY_NUM_DIESE,
+  E_KEYS_NUM_END
+} etInUsingkey;
 extern PUBLIC char const * dbg_etCLAV_keys[];
 
 typedef enum _clav_mod {
-  E_CLAV_MODE_NOT_SET,
-  E_CLAV_MODE_DEFAULT,
-  E_CLAV_MODE_2,
-  E_CLAV_MODE_3,
-  E_CLAV_MODE_4,
-  E_CLAV_MODE_END
-} etCLAV_mod;
+  E_KS_KBD_NON_DEFINI,
+  E_KS_KBD_VIRTUAL_1,
+  E_KS_KBD_VIRTUAL_2,
+  E_KS_KBD_VIRTUAL_3,
+  E_KS_KBD_VIRTUAL_4,
+  E_KS_KBD_END
+} etRunningKbd;
 extern PUBLIC char const *dbg_etCLAV_mod[];
 
 typedef enum {
-  E_CLAV_USAGE_NON_DEFINI,
-  E_CLAV_USAGE_NORMAL,
-  E_CLAV_USAGE_CONFIG,
-  E_CLAV_USAGE_END
-} etCLAV_role;
+  E_KS_ROL_NON_DEFINI,
+  E_KS_ROL_UTILISATEUR,
+  E_KS_ROL_TECHNICIEN,
+  E_KS_ROL_CHOISIR,
+  E_KS_ROL_END
+} etRunningRol;
 extern PUBLIC char const *dbg_etCLAV_role[];
 
 typedef enum _clav_state {
-  E_CLAV_ETAT_EN_INITIALISATION,
-  E_CLAV_ETAT_EN_ATTENTE,
-  E_CLAV_ETAT_TRAITER_IT,
-  E_CLAV_ETAT_ANALYSER_TOUCHE,
-  E_CLAV_SERVICE_ON,
-  E_CLAV_SERVICE_OFF,
-  E_CLAV_ATTENDRE_BOITE,
-  E_CLAV_ATTENDRE_FIN_CONFIG_BOITE,
-  E_CLAV_EN_PROGR_AVEC_BOITE,
-  E_CLAV_ETAT_UNDEF,
-  E_CLAV_ULTRA_MODE,
-  E_CLAV_ETAT_END
-} teClavState;
+  E_KS_STP_NON_DEFINI,
+  E_KS_STP_ATTENTE_TOUCHE,
+  E_KS_STP_TRAITER_IT,
+  E_KS_STP_TRAITER_TOUCHE,
+  E_KS_STP_SERVICE_ON,
+  E_KS_STP_SERVICE_OFF,
+  E_KS_STP_ATTENDRE_BOITE,
+  E_KS_STP_ATTENDRE_FIN_CONFIG_BOITE,
+  E_KS_STP_EN_PROGR_AVEC_BOITE,
+  E_KS_STP_ULTRA_MODE,
+  E_KS_STP_END
+} etRunningStp;
 extern PUBLIC char const *dbg_teClavState[];
 
 typedef enum _clav_NetState {
@@ -141,18 +141,18 @@ typedef enum _clav_NetState {
 extern PUBLIC char const *dbg_teRunningNet[];
 
 typedef struct {
-  teNetState eAppState;
-  teClavState eClavState;
-  etRunningNet net;
   etDefWifiMsg eWifi;
+  etInUsingkey key;
+  etRunningKbd kbd;
+  etRunningNet net;
+  etRunningPgl pgl;
+  etRunningRol rol;
+  etRunningStp eClavState;
+  etRunningStp stp;
   tePcState ePcState;
-  teClavState ePrevClav;
-  etCLAV_keys eKeyPressed;
-  etCLAV_role usage;
-  etCLAV_mod eClavmod;
-  uint8 ukey;
-  uint8 u8BoxId;
   uint64 u64ServiceAddress;
+  uint8 u8BoxId;
+  uint8 ukey;
 } tsClavData;
 #if !NO_DEBUG_ON
 extern PUBLIC void PBAR_DbgInside(int level, char * pSpaces, teDbgTrace eSens,
@@ -160,8 +160,8 @@ extern PUBLIC void PBAR_DbgInside(int level, char * pSpaces, teDbgTrace eSens,
 #endif
 
 typedef struct _touche {
-  etCLAV_keys la_touche;
-  etCLAV_mod le_mode;
+  etInUsingkey la_touche;
+  etRunningKbd le_clavier;
 } stToucheDef;
 
 typedef struct {
@@ -201,13 +201,13 @@ typedef struct {
 // ----------------
 // mef_clav.c
 // ----------------
-extern PUBLIC void CLAV_AnalyserEtat(teClavState mef_clavier);
+extern PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier);
 extern PUBLIC void CLAV_ResetLecture(void);
-extern PUBLIC void CLAV_GererMode(etCLAV_keys mode);
+extern PUBLIC void CLAV_GererMode(etInUsingkey mode);
 
 #if fn1
-extern PUBLIC bool_t CLAV_TrouverAssociationToucheBoite(etCLAV_mod eMode,
-    etCLAV_keys eKey,uint8 BoxId);
+extern PUBLIC bool_t CLAV_TrouverAssociationToucheBoite(etRunningKbd eMode,
+    etInUsingkey eKey,uint8 BoxId);
 #else
 extern bool_t CLAV_TrouverAssociationToucheBoite(stToucheDef *touche,
     uint8 BoxId, uint8 *position);
@@ -221,23 +221,23 @@ extern PUBLIC void CLAV_AnalyserPc(tePcState mef_pc);
 // ----------------
 // clav_usage.c
 // ----------------
-extern PUBLIC teClavState CLAV_BoutonDeConfiguration(bool_t * bip_on);
+extern PUBLIC etRunningStp CLAV_BoutonDeConfiguration(bool_t * bip_on);
 extern PUBLIC void CLAV_NetMsgInput(tsData *psData);
-extern PUBLIC teClavState CLAV_GererTouche(etCLAV_keys keys);
+extern PUBLIC etRunningStp CLAV_GererTouche(etInUsingkey keys);
 
 // -----------------
 // pgm_clav.c
 // -----------------
-extern PUBLIC teClavState CLAV_PgmNetMontrerClavier(void);
-extern PUBLIC teClavState CLAV_PgmNetRetirerClavier(void);
-extern PUBLIC teClavState CLAV_PgmNetMsgInput(tsData *psData);
-extern PUBLIC teClavState CLAV_PgmActionTouche(etCLAV_keys keys);
+extern PUBLIC etRunningStp CLAV_PgmNetMontrerClavier(void);
+extern PUBLIC etRunningStp CLAV_PgmNetRetirerClavier(void);
+extern PUBLIC etRunningStp CLAV_PgmNetMsgInput(tsData *psData);
+extern PUBLIC etRunningStp CLAV_PgmActionTouche(etInUsingkey keys);
 
 // -----------------
 // usr_clav.c
 // -----------------
-extern PUBLIC teClavState CLAV_UsrActionTouche(etCLAV_keys keys);
-extern PUBLIC teClavState CLAV_UsrNetMsgInput(tsData *psData);
+extern PUBLIC etRunningStp CLAV_UsrActionTouche(etInUsingkey keys);
+extern PUBLIC etRunningStp CLAV_UsrNetMsgInput(tsData *psData);
 
 /****************************************************************************/
 /***        Exported Variables                                            ***/

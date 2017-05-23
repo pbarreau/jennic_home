@@ -43,10 +43,10 @@ PUBLIC void PBAR_DbgInside(int level, char * pSpaces, teDbgTrace eSens,
   char const *sens[] = { "IN:", "OUT:" };
   int i = 0;
 
-  static etCLAV_keys my_key = E_KEYS_END;
-  static etCLAV_mod my_mod = E_CLAV_MODE_END;
-  static etCLAV_role my_role = E_CLAV_USAGE_END;
-  static teNetState my_state = E_CLAV_ETAT_END;
+  static etInUsingkey my_key = E_KEYS_NUM_END;
+  static etRunningKbd my_mod = E_KS_KBD_END;
+  static etRunningRol my_role = E_KS_ROL_END;
+  static etRunningPgl my_state = E_KS_STP_END;
 
   memset(&gch_spaces, 0x00, sizeof(gch_spaces));
   for (i = 0; (i <= level) && (i < 20); i++)
@@ -57,10 +57,10 @@ PUBLIC void PBAR_DbgInside(int level, char * pSpaces, teDbgTrace eSens,
 
   if (level > 0)
   {
-    if (my_role != val.usage)
+    if (my_role != val.rol)
     {
-      vPrintf("%s%s%s\n", gch_spaces, sens[eSens], dbg_etCLAV_role[val.usage]);
-      my_role = val.usage;
+      vPrintf("%s%s%s\n", gch_spaces, sens[eSens], dbg_etCLAV_role[val.rol]);
+      my_role = val.rol;
     }
 
     if (my_state != val.eClavState)
@@ -70,27 +70,27 @@ PUBLIC void PBAR_DbgInside(int level, char * pSpaces, teDbgTrace eSens,
       my_state = val.eClavState;
     }
 
-    if (my_mod != val.eClavmod)
+    if (my_mod != val.kbd)
     {
       vPrintf("%s%s%s\n", gch_spaces, sens[eSens],
-          dbg_etCLAV_mod[val.eClavmod]);
-      my_mod = val.eClavmod;
+          dbg_etCLAV_mod[val.kbd]);
+      my_mod = val.kbd;
     }
 
-    if (my_key != val.eKeyPressed)
+    if (my_key != val.key)
     {
       vPrintf("%s%s%s\n", gch_spaces, sens[eSens],
-          dbg_etCLAV_keys[val.eKeyPressed]);
-      my_key = val.eKeyPressed;
+          dbg_etCLAV_keys[val.key]);
+      my_key = val.key;
     }
   }
 
   if ((level == 1) && (eSens == E_FN_OUT))
   {
-    my_key = E_KEYS_END;
-    my_mod = E_CLAV_MODE_END;
-    my_role = E_CLAV_USAGE_END;
-    my_state = E_CLAV_ETAT_END;
+    my_key = E_KEYS_NUM_END;
+    my_mod = E_KS_KBD_END;
+    my_role = E_KS_ROL_END;
+    my_state = E_KS_STP_END;
   }
 
   if (eSens == E_FN_IN)

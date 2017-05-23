@@ -13,9 +13,9 @@
 
 #include "e_config.h"
 
-PUBLIC teClavState CLAV_UsrNetMsgInput(tsData *psData)
+PUBLIC etRunningStp CLAV_UsrNetMsgInput(tsData *psData)
 {
-  teClavState mef_clav = E_CLAV_ETAT_UNDEF;
+  etRunningStp mef_clav = E_KS_STP_NON_DEFINI;
   etDefWifiMsg le_message = E_MSG_NOT_SET;
   vPrintf("Message Reseau a destination de clavier recut\n");
 
@@ -53,14 +53,14 @@ PUBLIC teClavState CLAV_UsrNetMsgInput(tsData *psData)
   return mef_clav;
 }
 
-PUBLIC teClavState CLAV_UsrActionTouche(etCLAV_keys keys)
+PUBLIC etRunningStp CLAV_UsrActionTouche(etInUsingkey keys)
 {
   static bool_t SetAllOff = FALSE;
-  teClavState mef_clav = E_CLAV_ETAT_UNDEF;
+  etRunningStp mef_clav = E_KS_STP_NON_DEFINI;
 
-  etCLAV_mod eKeyMode = AppData.eClavmod;
-  uint8 key_mode = eKeyMode - E_CLAV_MODE_DEFAULT;
-  uint8 key_code = (keys == E_KEY_ETOILE ? C_KEY_MEM_ALL : keys - E_KEY_NUM_1);
+  etRunningKbd eKeyMode = AppData.kbd;
+  uint8 key_mode = eKeyMode - E_KS_KBD_VIRTUAL_1;
+  uint8 key_code = (keys == E_KEY_NUM_ETOILE ? C_KEY_MEM_ALL : keys - E_KEY_NUM_1);
 
   uint8 box = 0;
   uint8 useBox = 0;
@@ -70,8 +70,8 @@ PUBLIC teClavState CLAV_UsrActionTouche(etCLAV_keys keys)
       dbg_etCLAV_mod[eKeyMode]);
 
   // A ton une demande valide
-  if ((eKeyMode > E_CLAV_MODE_NOT_SET) && (eKeyMode < E_CLAV_MODE_END)
-      && (keys < E_KEYS_END))
+  if ((eKeyMode > E_KS_KBD_NON_DEFINI) && (eKeyMode < E_KS_KBD_END)
+      && (keys < E_KEYS_NUM_END))
   {
     // sur clavier 4x4 regarder 1-9,0 et *
     // Regarder le tableau ptr_destination
@@ -109,7 +109,7 @@ PUBLIC teClavState CLAV_UsrActionTouche(etCLAV_keys keys)
 
             // Le temps d'appui sur la touche determine le on ou le off
             // ON (court), OFF (Long)
-            if (keys != E_KEY_ETOILE)
+            if (keys != E_KEY_NUM_ETOILE)
             {
               //Demande sous forme de bascule
               bufEmission[0] = E_MSG_DATA_SELECT;
@@ -141,7 +141,7 @@ PUBLIC teClavState CLAV_UsrActionTouche(etCLAV_keys keys)
             }
 #if 0
             // envoyer le message à cette boite
-            if(keys != E_KEY_ETOILE)
+            if(keys != E_KEY_NUM_ETOILE)
             {
               //Demande sous forme de bascule
               bufEmission[0]=E_MSG_DATA_SELECT;
@@ -184,12 +184,12 @@ PUBLIC teClavState CLAV_UsrActionTouche(etCLAV_keys keys)
     }
   }
 
-  if (keys == E_KEY_ETOILE)
+  if (keys == E_KEY_NUM_ETOILE)
   {
     SetAllOff = !SetAllOff; // Global
   }
 
-  mef_clav = E_CLAV_ETAT_EN_ATTENTE;
+  mef_clav = E_KS_STP_ATTENTE_TOUCHE;
   return mef_clav;
 }
 
@@ -210,13 +210,13 @@ PRIVATE keyball(void)
   {
     // recuperer la config du clavier et la stocker
     // dans la touche ALL
-    valThisBox |= eeprom.netConf.boxData[eModeOnConf-E_CLAV_MODE_DEFAULT][i][IncomingBoxId];
+    valThisBox |= eeprom.netConf.boxData[eModeOnConf-E_KS_KBD_VIRTUAL_1][i][IncomingBoxId];
     vPrintf(" box:%d key:%d, val:%x\n",useBox,i,valThisBox);
   }
 
   // sauvegarder cette valeur dans la touche ALL de la boite en cours
   // On sauve la touche all
-  eeprom.netConf.boxData[eModeOnConf-E_CLAV_MODE_DEFAULT][C_MAX_KEYS][IncomingBoxId] = valThisBox;
+  eeprom.netConf.boxData[eModeOnConf-E_KS_KBD_VIRTUAL_1][C_MAX_KEYS][IncomingBoxId] = valThisBox;
 
   // Dire que Touche ALL position ptr++ a une Boite configuree
   VerifierExistanceBoite(eModeOnConf,E_KPD_ALL,IncomingBoxId);
