@@ -63,9 +63,6 @@ extern "C"
 #define C_CLAV_PIO_OUT_4	11
 
 #define C_MAX_TENTATIVES	4	/// Nb d'essai decodage clavier avant echec
-#define	C_MAX_KEYS	10
-#define C_KEY_MEM_ALL	C_MAX_KEYS
-#define	C_MAX_MODES	4
 /****************************************************************************/
 /***        Type Definitions                                              ***/
 /****************************************************************************/
@@ -85,11 +82,14 @@ typedef enum _keys {
   E_KEY_NUM_MOD_2,
   E_KEY_NUM_MOD_3,
   E_KEY_NUM_MOD_4,
-  E_KEY_NUM_ETOILE,
+  E_KEY_NUM_MOD_5,
+  E_KEY_NUM_MOD_6,
   E_KEY_NUM_DIESE,
+  E_KEY_NUM_ETOILE,
   E_KEYS_NUM_END
 } etInUsingkey;
 extern PUBLIC char const * dbg_etCLAV_keys[];
+#define C_MAX_KEYS  (E_KEYS_NUM_END -E_KEY_NUM_1)
 
 typedef enum _clav_mod {
   E_KS_KBD_NON_DEFINI,
@@ -100,6 +100,8 @@ typedef enum _clav_mod {
   E_KS_KBD_END
 } etRunningKbd;
 extern PUBLIC char const *dbg_etCLAV_mod[];
+#define C_MAX_MODES (E_KS_KBD_END - E_KS_KBD_VIRTUAL_1)
+//#define C_KEY_MEM_ALL C_MAX_KEYS
 
 typedef enum {
   E_KS_ROL_NON_DEFINI,
@@ -167,18 +169,25 @@ typedef struct _touche {
 typedef struct {
   // Tableau de Config des Box
   // selon touche et mode
-  uint8 boxData[C_MAX_MODES][C_MAX_KEYS + 1][C_MAX_BOXES];
+  uint8 boxData[C_MAX_MODES][C_MAX_KEYS][C_MAX_BOXES+1];
 
   // Tableau Pointeur liste
   // box configuree pour une touche selon mode
-  uint8 boxList[C_MAX_MODES][C_MAX_KEYS + 1][C_MAX_BOXES + 1];
+  uint8 boxList[C_MAX_MODES][C_MAX_KEYS][C_MAX_BOXES+1];
 
   // Tableau indiquant
   // le premier emplacement disponible
   // dans ptr_boxes pour une touche selon un mode
-  uint8 ptr_boxList[C_MAX_MODES][C_MAX_KEYS + 1];
+  uint8 ptr_boxList[C_MAX_MODES][C_MAX_KEYS];
 
 } bpsConfReseau;
+
+// Pour certaine flash a l'init tout est 0xff pour d'autre c'est 0x00
+// comme la boite me sert de clef de recherche je n'utilise pas la valeur box_id = 0
+// donc je pers en memoire...raison du C_MAX_BOXES+1
+
+// Pour un clavier virtuel donne une des touches de ce clavier peut agir
+// sur un certain nombre de boites (ptr_boxList)
 
 // Init
 // En mode 0 on configure la touche 2 donc ptr_boxList[0][2] = 0
@@ -191,7 +200,7 @@ typedef struct {
 
 typedef struct {
   uint8 nbBoite;
-  uint64 BoxAddr[C_MAX_BOXES];
+  uint64 BoxAddr[C_MAX_BOXES+1];
   bpsConfReseau netConf;
 } bpsFlash; // Info a mettre sur la flash
 
@@ -250,11 +259,12 @@ extern PUBLIC uint16 compter_duree_mode;
 
 extern PUBLIC uint16 timer_appuie_touche;
 extern PUBLIC bool_t b_activer_bip;
-extern PUBLIC uint16 timer_touche[16];
+extern PUBLIC uint16 timer_touche[E_KEYS_NUM_END];
 extern PUBLIC uint8 bufEmission[3];
 
 extern PUBLIC char gch_spaces[20];
 extern PUBLIC eLedInfo mNetOkTypeFlash;
+extern PUBLIC const uint8 code_ascii[];
 
 #if defined __cplusplus
 }

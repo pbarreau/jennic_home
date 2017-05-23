@@ -69,8 +69,7 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
     break;
 
     case E_KS_STP_TRAITER_IT:
-      if (AppData.key == E_KEY_NUM_DIESE
-          || AppData.key == E_KEY_NUM_ETOILE)
+      if (AppData.key == E_KEY_NUM_DIESE || AppData.key == E_KEY_NUM_ETOILE)
       {
         max_time = C_TIME_ULTRA;
       }
@@ -110,8 +109,8 @@ PUBLIC void CLAV_GererMode(etInUsingkey mode)
 #if !NO_DEBUG_ON
   int stepper = 0;
 
-  stepper = PBAR_DbgTrace(E_FN_IN, "CLAV_GererMode",
-      (void *) (AppData.pgl), E_DBG_TYPE_NET_STATE);
+  stepper = PBAR_DbgTrace(E_FN_IN, "CLAV_GererMode", (void *) (AppData.pgl),
+      E_DBG_TYPE_NET_STATE);
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
 #endif
 
@@ -166,10 +165,7 @@ PUBLIC bool_t CLAV_TrouverAssociationToucheBoite(stToucheDef *touche,
     uint8 BoxId, uint8 *position)
 {
   bool_t eReturn = FALSE;
-  uint8 key_code = (
-      (touche->la_touche == E_KEY_NUM_ETOILE) ?
-          C_KEY_MEM_ALL : touche->la_touche - E_KEY_NUM_1);
-  ;
+  uint8 key_code = touche->la_touche - E_KEY_NUM_1;
   uint8 key_mode = touche->le_clavier - E_KS_KBD_VIRTUAL_1;
   uint8 nbBox = eeprom.netConf.ptr_boxList[key_mode][key_code];
   ;
@@ -183,26 +179,27 @@ PUBLIC bool_t CLAV_TrouverAssociationToucheBoite(stToucheDef *touche,
       (void *) (AppData.pgl), E_DBG_TYPE_NET_STATE);
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
 #endif
-  vPrintf("%sNb boite associee à la touche %s -> %d\n", gch_spaces,
+  vPrintf("%sNb boite pour touche %s -> %d\n", gch_spaces,
       dbg_etCLAV_keys[touche->la_touche], nbBox);
 
-  vPrintf("%sRecherche dans la liste chainee des boites associee à la touche\n",
+  vPrintf("%sRecherche dans la liste chainee des boites\n",
       gch_spaces);
   for (i = 0; (i <= nbBox) && (i < C_MAX_BOXES); i++)
   {
     useBox = eeprom.netConf.boxList[key_mode][key_code][i];
-    vPrintf("%sPtr_box:%d, boxid : %d\n", gch_spaces, i, useBox);
 
     if (useBox == 0x00)
     {
       // On a parcouru toute la liste
       // sans trouver de correspondance
-      vPrintf("%s Sauvegarde necessaire a position %d !\n", gch_spaces, i);
+      vPrintf("%s Sauvegarde necessaire  position %d !\n", gch_spaces, i);
       eReturn = FALSE;
       break;
     }
     else
     {
+      vPrintf("%sPtr_box:%d, cur_boxid : %d\n", gch_spaces, i, useBox);
+
       if (useBox == BoxId)
       {
         vPrintf("%sTrouve a position:%d !\n", gch_spaces, i);

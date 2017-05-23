@@ -70,10 +70,10 @@ PRIVATE const etInUsingkey key_code[] = { E_KEY_NUM_1, E_KEY_NUM_4, E_KEY_NUM_7,
     E_KEY_NUM_ETOILE, E_KEY_NUM_2, E_KEY_NUM_5, E_KEY_NUM_8, E_KEY_NUM_0,
     E_KEY_NUM_3, E_KEY_NUM_6, E_KEY_NUM_9, E_KEY_NUM_DIESE, E_KEY_NUM_MOD_1,
     E_KEY_NUM_MOD_2, E_KEY_NUM_MOD_3, E_KEY_NUM_MOD_4 };
-PUBLIC uint16 timer_touche[16] = { 0 };
+PUBLIC uint16 timer_touche[E_KEYS_NUM_END] = { 0 };
 
 #if !NO_DEBUG_ON
-PRIVATE const uint8 code_ascii[] = "147*2580369#ABCD";
+PUBLIC const uint8 code_ascii[] = "147*2580369#ABCD";
 #endif
 
 // -----------------------------------------------------
@@ -254,7 +254,6 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
   {
     case E_JENIE_DATA:
     {
-      vPrintf("Net Data in\n");
       switch (AppData.pgl)
       {
         case E_PGL_BOUCLE_PRINCIPALE:
@@ -457,9 +456,9 @@ PRIVATE void CLAV_GestionIts(void)
     if (timer_appuie_touche >= C_MIN_DURE_PRESSION)
     {
       // Calcul du temps d'appuie de la touche + bip + traitement
-      timer_touche[AppData.ukey] = timer_appuie_touche;
+      timer_touche[AppData.key-1] = timer_appuie_touche;
       vPrintf(" Duree maintient de touche '%c'= %d\n\n",
-          code_ascii[AppData.ukey], timer_touche[AppData.ukey]);
+          code_ascii[AppData.ukey], timer_touche[AppData.key-1]);
 
       // Memorisation de l'etat avant traitement de la touche
       //AppData.ePrevClav = AppData.eClavState;

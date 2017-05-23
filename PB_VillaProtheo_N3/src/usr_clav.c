@@ -29,7 +29,7 @@ PUBLIC etRunningStp CLAV_UsrNetMsgInput(tsData *psData)
       {
         vPrintf("Demande reseau de couper led Net\n");
         mNetOkTypeFlash = E_FLASH_OFF;
-        au8Led_clav[C_CLAV_LED_INFO_1].mode =mNetOkTypeFlash;
+        au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
       }
       break;
 
@@ -37,7 +37,7 @@ PUBLIC etRunningStp CLAV_UsrNetMsgInput(tsData *psData)
       {
         vPrintf("Demande reseau de montrer led Net\n");
         mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
-        au8Led_clav[C_CLAV_LED_INFO_1].mode =mNetOkTypeFlash;
+        au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
       }
       break;
 
@@ -60,7 +60,7 @@ PUBLIC etRunningStp CLAV_UsrActionTouche(etInUsingkey keys)
 
   etRunningKbd eKeyMode = AppData.kbd;
   uint8 key_mode = eKeyMode - E_KS_KBD_VIRTUAL_1;
-  uint8 key_code = (keys == E_KEY_NUM_ETOILE ? C_KEY_MEM_ALL : keys - E_KEY_NUM_1);
+  uint8 key_code = keys - E_KEY_NUM_1;
 
   uint8 box = 0;
   uint8 useBox = 0;
@@ -76,7 +76,7 @@ PUBLIC etRunningStp CLAV_UsrActionTouche(etInUsingkey keys)
     // sur clavier 4x4 regarder 1-9,0 et *
     // Regarder le tableau ptr_destination
     // Max boucle == C_MAX_BOXES
-    for (box = 0; box < C_MAX_BOXES + 1; box++)
+    for (box = 0; box <= C_MAX_BOXES; box++)
     {
       useBox = eeprom.netConf.boxList[key_mode][key_code][box];
       vPrintf(" keymode=%d,keycode=%d,boxuse=%d,v=%d\n", key_mode, key_code,
@@ -114,7 +114,7 @@ PUBLIC etRunningStp CLAV_UsrActionTouche(etInUsingkey keys)
               //Demande sous forme de bascule
               bufEmission[0] = E_MSG_DATA_SELECT;
 
-              if (timer_touche[AppData.ukey] <= C_PRESSION_T1)
+              if (timer_touche[AppData.key - 1] <= C_PRESSION_T1)
               {
                 bufEmission[2] = 0xFF;
               }

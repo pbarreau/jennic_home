@@ -216,8 +216,8 @@ PUBLIC etRunningStp CLAV_PgmActionTouche(etInUsingkey keys)
     if (CLAV_TrouverAssociationToucheBoite(&touche, box_id, &position) == FALSE)
     {
       eeprom.netConf.boxList[key_mode][key_code][position] = box_id;
-      eeprom.netConf.ptr_boxList[key_mode][key_code]++;
-      vPrintf("%s La touche a la connaisance de la boite %d!\n", gch_spaces,
+      //eeprom.netConf.ptr_boxList[key_mode][key_code]++;
+      vPrintf("%s La touche '%c' non configuree pour  boite %d!\n", gch_spaces, code_ascii[AppData.ukey],
           box_id);
     }
 #endif
@@ -257,7 +257,7 @@ PRIVATE etRunningStp pgm_GererBoiteEntrante(tsData *psData)
 
   vPrintf("%sBoite id [%d] \n", gch_spaces, box_number);
 
-  if (box_number < C_MAX_BOXES)
+  if (box_number <= C_MAX_BOXES)
   {
     // verifier que l'on ne connait pas deja cette @
     //if(eeprom.BoxAddr[IncomingBoxId]==0xffffffffffffffffULL){
@@ -329,12 +329,14 @@ PRIVATE void pgm_CreerConfigAll(uint8 box_id)
   uint8 position = 0;
 
   // rajout de cette boite a la liste de celle du clavier
-  vPrintf("Une B:%d de + a  key:%s ?\n", box_id, dbg_etCLAV_keys[eLaTouche]);
+  vPrintf("Box:%d et key:%s ?\n", box_id, dbg_etCLAV_keys[eLaTouche]);
   touche.la_touche = eLaTouche;
   touche.le_clavier = eLeMode;
   if (CLAV_TrouverAssociationToucheBoite(&touche, box_id, &position) == TRUE)
   {
-    vPrintf("km=%d,kc=%d,po=%d,v=%d\n", key_mode, key_code, position, box_id);
+    vPrintf("%s OK:Touche '%c' avec boite %d!\n", gch_spaces, code_ascii[AppData.ukey],
+        box_id);
+    vPrintf("kbd=%d,key=%d,ptr=%d,bid=%d\n", key_mode, key_code, position, box_id);
     eeprom.netConf.boxList[key_mode][key_code][position] = box_id;
     eeprom.netConf.ptr_boxList[key_mode][key_code]++;
     vPrintf("   Sauvegarde Terminee!\n");
@@ -360,7 +362,7 @@ PRIVATE void pgm_CreerConfigAll(uint8 box_id)
 
   // sauvegarder cette valeur dans la touche ALL de la boite en cours
   // On sauve la touche all
-  eeprom.netConf.boxData[key_mode][C_KEY_MEM_ALL][box_id] = valThisBox;
+  eeprom.netConf.boxData[key_mode][(E_KEY_NUM_ETOILE - 1)][box_id] = valThisBox;
 
   // Dire que Touche ALL position ptr++ a une Boite configuree
   // La touche ALL est la derniere de toute les touche autorisee
@@ -369,8 +371,8 @@ PRIVATE void pgm_CreerConfigAll(uint8 box_id)
   if (CLAV_TrouverAssociationToucheBoite(&touche, box_id, &position) == FALSE)
   {
     vPrintf("   Sauvegarde touche 'ALL' Terminee!\n");
-    eeprom.netConf.boxList[key_mode][C_KEY_MEM_ALL][position] = box_id;
-    eeprom.netConf.ptr_boxList[key_mode][C_KEY_MEM_ALL]++;
+    eeprom.netConf.boxList[key_mode][(E_KEY_NUM_ETOILE - 1)][position] = box_id;
+    eeprom.netConf.ptr_boxList[key_mode][(E_KEY_NUM_ETOILE - 1)]++;
   }
 
   // sauvegarder la config dans la flash !!!
