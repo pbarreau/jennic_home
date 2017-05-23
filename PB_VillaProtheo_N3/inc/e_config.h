@@ -125,9 +125,26 @@ typedef enum _clav_state {
 } teClavState;
 extern PUBLIC char const *dbg_teClavState[];
 
+typedef enum _clav_NetState {
+  E_KS_NET_NON_DEFINI,
+  E_KS_NET_CONF_START,
+  E_KS_NET_WAIT_CLIENT,
+  E_KS_NET_CLIENT_IN,
+  E_KS_NET_CONF_EN_COURS,
+  E_KS_NET_CONF_END, // Config correctement terminee
+  E_KS_NET_CONF_BRK, // Configuration reseau interrompu
+  E_KS_NET_CLAV_ON,
+  E_KS_NET_MSG_IN,
+  E_KS_NET_ERROR,
+  E_KS_NET_END
+} etRunningNet;
+extern PUBLIC char const *dbg_teRunningNet[];
+
 typedef struct {
   teNetState eAppState;
   teClavState eClavState;
+  etRunningNet net;
+  etDefWifiMsg eWifi;
   tePcState ePcState;
   teClavState ePrevClav;
   etCLAV_keys eKeyPressed;

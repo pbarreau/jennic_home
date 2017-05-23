@@ -16,12 +16,12 @@
 PUBLIC teClavState CLAV_UsrNetMsgInput(tsData *psData)
 {
   teClavState mef_clav = E_CLAV_ETAT_UNDEF;
-  PBAR_TypeMsg le_message = E_MSG_NOT_SET;
+  etDefWifiMsg le_message = E_MSG_NOT_SET;
   vPrintf("Message Reseau a destination de clavier recut\n");
 
   if (psData->u16Length == 3)
   {
-    le_message = (PBAR_TypeMsg) (psData->pau8Data[psData->u16Length - 3]);
+    le_message = (etDefWifiMsg) (psData->pau8Data[psData->u16Length - 3]);
 
     switch (le_message)
     {

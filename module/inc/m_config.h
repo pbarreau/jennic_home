@@ -19,6 +19,7 @@ extern "C"
 /****************************************************************************/
 #include <Jenie.h>
 #include "led.h"
+#include "m_network_msg.h"
 
 /****************************************************************************/
 /***        Macro Definitions                                             ***/
@@ -96,6 +97,7 @@ typedef enum {
 extern PUBLIC char const *dbg_teNetState[];
 extern PUBLIC char const *dbg_teEventType[];
 
+#if 0
 typedef enum {
   E_MSG_NOT_SET,
   E_MSG_DATA_ALL,
@@ -107,8 +109,10 @@ typedef enum {
   E_MSG_NET_LED_OFF,
   E_MSG_NET_LED_ON,
   E_MSG_DEFINITION_END
-} PBAR_TypeMsg;
+} etDefWifiMsg;
 extern PUBLIC char const *dbg_PBAR_TypeMsg[];
+#endif
+
 
 /****************************************************************************/
 /***        Exported Functions                                            ***/

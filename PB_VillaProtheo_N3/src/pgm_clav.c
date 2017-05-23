@@ -118,76 +118,61 @@ PUBLIC teClavState CLAV_PgmNetMsgInput(tsData *psData)
   PBAR_DbgInside(stepper, gch_spaces, E_FN_IN, AppData);
 #endif
 
-  if ((psData->u16Length) == 1)
+  AppData.eWifi = (etDefWifiMsg) (psData->pau8Data[0]);
+  switch (psData->pau8Data[0])
   {
-    if (AppData.eClavState == E_CLAV_ATTENDRE_BOITE)
+    case E_MSG_RSP_ID_BOX:
     {
           vPrintf("%sune boite se fait connaitre\n", gch_spaces);
           mef_clav = pgm_GererBoiteEntrante(psData);
     }
-    else
+    break;
+    case E_MSG_CFG_BOX_END:
     {
-      vPrintf("%sMessage recut hors contexte prevu!\n", gch_spaces);
+      vPrintf("%sMsg Fin config boite %d\n\n", gch_spaces, AppData.u8BoxId);
+      pgm_CreerConfigAll(AppData.u8BoxId);
+      mef_clav = E_KS_NET_WAIT_CLIENT;
+      AppData.eAppState = APP_BOUCLE_PRINCIPALE;
     }
-  }
-  else if (psData->u16Length == 3)
-  {
-    switch (psData->pau8Data[psData->u16Length - 3])
+    break;
+
+    case E_MSG_RSP_CFG_LIENS:
     {
-      case E_MSG_CFG_BOX_END:
-      {
-        vPrintf("%sMsg Fin config boite %d\n\n", gch_spaces, AppData.u8BoxId);
-        pgm_CreerConfigAll(AppData.u8BoxId);
-        mef_clav = E_CLAV_ATTENDRE_BOITE;
-        AppData.eAppState = APP_BOUCLE_PRINCIPALE;
-      }
-      break;
+      mode = psData->pau8Data[psData->u16Length - 2] >> 4 & 0x0F;
+      clav = psData->pau8Data[psData->u16Length - 2] & 0x0F;
+      conf = psData->pau8Data[psData->u16Length - 1];
 
-      case E_MSG_CFG_LIENS:
-      {
-        mode = psData->pau8Data[psData->u16Length - 2] >> 4 & 0x0F;
-        clav = psData->pau8Data[psData->u16Length - 2] & 0x0F;
-        conf = psData->pau8Data[psData->u16Length - 1];
+      vPrintf("%sReception config liens\n", gch_spaces);
+      vPrintf("%s Box:%d, Mode:%d, clav:%d, conf:%x\n\n", gch_spaces,
+          AppData.u8BoxId, mode, clav, conf);
 
-        vPrintf("%sReception config liens\n", gch_spaces);
-        vPrintf("%s Box:%d, Mode:%d, clav:%d, conf:%x\n\n", gch_spaces,
-            AppData.u8BoxId, mode, clav, conf);
-
-        eeprom.netConf.boxData[mode][clav][AppData.u8BoxId] = conf;
-        mef_clav = E_CLAV_ATTENDRE_FIN_CONFIG_BOITE;
-      }
-      break;
-
-      case E_MSG_NET_LED_OFF:
-      {
-        vPrintf("Demande reseau de couper led Net\n");
-        mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
-        au8Led_clav[C_CLAV_LED_INFO_1].mode =mNetOkTypeFlash;
-      }
-      break;
-
-      case E_MSG_NET_LED_ON:
-      {
-        vPrintf("Demande reseau de montrer led Net\n");
-        mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
-        au8Led_clav[C_CLAV_LED_INFO_1].mode =mNetOkTypeFlash;
-      }
-      break;
-
-      default:
-      {
-        vPrintf("%sFIN CFG Msg de la boite non compris\n", gch_spaces);
-      }
-      break;
-
+      eeprom.netConf.boxData[mode][clav][AppData.u8BoxId] = conf;
+      mef_clav = E_KS_NET_CONF_EN_COURS;
     }
-  }
-  else
-  {
-    vPrintf("%sERR:La taille n'est pas celle prevue\n", gch_spaces);
-    vPrintf("%sReception d'un message non normalise !!\n", gch_spaces);
+    break;
 
-    AppData.eAppState = APP_BOUCLE_PRINCIPALE;
+    case E_MSG_NET_LED_OFF:
+    {
+      vPrintf("Demande reseau de couper led Net\n");
+      mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
+      au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
+    }
+    break;
+
+    case E_MSG_NET_LED_ON:
+    {
+      vPrintf("Demande reseau de montrer led Net\n");
+      mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
+      au8Led_clav[C_CLAV_LED_INFO_1].mode = mNetOkTypeFlash;
+    }
+    break;
+
+    default:
+    {
+      vPrintf("%sFIN CFG Msg de la boite non compris\n", gch_spaces);
+    }
+    break;
+
   }
 
 #if !NO_DEBUG_ON
@@ -236,7 +221,7 @@ PUBLIC teClavState CLAV_PgmActionTouche(etCLAV_keys keys)
           box_id);
     }
 #endif
-    bufEmission[0] = E_MSG_CFG_LIENS;
+    bufEmission[0] = E_MSG_ASK_CFG_LIENS;
     bufEmission[1] = key_mode << 4 | key_code;
     bufEmission[2] = eeprom.netConf.boxData[key_mode][key_code][box_id];
 

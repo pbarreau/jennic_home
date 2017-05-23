@@ -80,7 +80,7 @@ PUBLIC int PBAR_DbgTrace(teDbgTrace eSens, char *fn, void *val_enum,
     break;
 
     case E_DBG_TYPE_TYPE_MSG:
-      strcpy(enumMsg, dbg_PBAR_TypeMsg[(PBAR_TypeMsg) val_enum]);
+      strcpy(enumMsg, dbg_PBAR_TypeMsg[(etDefWifiMsg) val_enum]);
     break;
 
     default:
