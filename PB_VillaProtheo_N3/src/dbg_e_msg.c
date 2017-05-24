@@ -102,4 +102,23 @@ PUBLIC void PBAR_DbgInside(int level, char * pSpaces, teDbgTrace eSens,
 #endif
 }
 
+PUBLIC void MyStepDebug(void)
+{
+  etRunningPgl pglVal = AppData.pgl;
+  etRunningStp stpVal = AppData.stp;
+  etRunningRol rolVal = AppData.rol;
+  etRunningKbd kbdVal = AppData.kbd;
+  etInUsingkey kbdKey = AppData.key;
+  etRunningNet netVal = AppData.net;
+  etDefWifiMsg wifVal = AppData.eWifi;
+
+  vPrintf("Pgl:%s\n", dbg_teRunningPgl[pglVal]);
+  vPrintf("Rol:%s\t\tKbd:%s\n", dbg_etCLAV_role[rolVal],
+      dbg_etCLAV_mod[kbdVal]);
+  vPrintf("Stp:%s\tKey:%s\n", dbg_teClavState[stpVal], dbg_etCLAV_keys[kbdKey]);
+  vPrintf("Net:%s\t\tWifi:%s\n", dbg_teRunningNet[netVal],
+      dbg_etDefWifiMsg[wifVal]);
+
+}
+
 #endif // #if !NO_DEBUG_ON

@@ -313,10 +313,13 @@ PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId, uint32 u32ItemBitmap)
 
       if (b_activer_bip == TRUE)
       {
+        vAHI_DioSetOutput(C_CLAV_BUZER,0);
         temps_bip++;
         if (temps_bip >= C_TEMPS_BIP)
         {
+          // Eteindre buzzer
           b_activer_bip = FALSE;
+          temps_bip = 0;
           vAHI_DioSetOutput(0, C_CLAV_BUZER);
         }
       }

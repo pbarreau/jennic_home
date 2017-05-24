@@ -20,9 +20,11 @@ PUBLIC char const *dbg_teRunningPgl[] = { "APP_INITIALISATION",
     "APP_PERTE_RESEAU", "APP_ATTENTE_ENREGISTREMENT_AU_PERE",
     "APP_BOUCLE_PRINCIPALE", "APP_DEFINITION_END" };
 
-PUBLIC char const *dbg_PBAR_TypeMsg[] = { "E_MSG_DATA_ALL", "E_MSG_DATA_SELECT",
-    "E_MSG_ASK_ID_BOX", "E_MSG_RSP_ID_BOX", "E_MSG_CFG_LIENS",
-    "E_MSG_CFG_BOX_END", "E_MSG_DEFINITION_END" };
+PUBLIC char const *dbg_etDefWifiMsg[] = { "E_MSG_NOT_SET", "E_MSG_DATA_ALL",
+    "E_MSG_DATA_SELECT", "E_MSG_ASK_ID_BOX", "E_MSG_RSP_ID_BOX",
+    "E_MSG_ASK_CFG_LIENS", "E_MSG_RSP_CFG_LIENS", "E_MSG_CFG_BOX_END",
+    "E_MSG_NET_LED_OFF", "E_MSG_NET_LED_ON", "E_MSG_ASK_RESET_CARD",
+    "E_MSG_ASK_ERASE_FLASH", "E_MSG_DEFINITION_END" };
 
 /// Specific API Jeni
 PUBLIC char const *dbg_teEventType[] = { "E_JENIE_REG_SVC_RSP",
@@ -80,7 +82,7 @@ PUBLIC int PBAR_DbgTrace(teDbgTrace eSens, char *fn, void *val_enum,
     break;
 
     case E_DBG_TYPE_TYPE_MSG:
-      strcpy(enumMsg, dbg_PBAR_TypeMsg[(etDefWifiMsg) val_enum]);
+      strcpy(enumMsg, dbg_etDefWifiMsg[(etDefWifiMsg) val_enum]);
     break;
 
     default:

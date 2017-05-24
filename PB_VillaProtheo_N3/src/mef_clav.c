@@ -36,6 +36,7 @@ PUBLIC uint32 timer_antirebond_up = 0;
 //---------------------------------------------------
 
 PUBLIC bool_t b_activer_bip = FALSE;
+PUBLIC bool_t b_MasterBip = FALSE;
 
 //---------------------------
 PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
@@ -175,6 +176,15 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
             code_ascii[uId], timer_touche[la_touche - 1], la_touche);
 
         AppData.key = la_touche;
+        // Bib Pour la touche ?
+        if(b_MasterBip == TRUE)
+        {
+          b_activer_bip = TRUE;
+        }
+        else
+        {
+          b_activer_bip = FALSE;
+        }
 
         // Une touche est reconnue on peut demander a la traiter
         AppData.stp = E_KS_STP_TRAITER_TOUCHE;

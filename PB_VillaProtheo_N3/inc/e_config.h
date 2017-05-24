@@ -37,6 +37,7 @@ extern "C"
 #define C_MAX_DURE_PRESSION	200
 #define C_TIME_ULTRA		200
 
+#define C_TIME_TO_CHANGE_ROLE 300
 #define C_PRESSION_T1		30	/// Limite activation bip
 #define C_PRESSION_T2		60	/// Limite Bcast Off
 #define C_PRESSION_T3		90	/// Limite Bcast On
@@ -233,6 +234,7 @@ extern bool_t CLAV_TrouverAssociationToucheBoite(stToucheDef *touche,
 // mef_pc.c
 // ----------------
 extern PUBLIC void CLAV_AnalyserPc(tePcState mef_pc);
+extern PUBLIC void MyStepDebug(void);
 
 // ----------------
 // clav_usage.c
@@ -267,6 +269,7 @@ extern PUBLIC uint16 compter_duree_mode;
 
 extern PUBLIC uint16 timer_appuie_touche;
 extern PUBLIC bool_t b_activer_bip;
+extern PUBLIC bool_t b_MasterBip;
 extern PUBLIC uint16 timer_touche[E_KEYS_NUM_END];
 extern PUBLIC uint8 bufEmission[3];
 
