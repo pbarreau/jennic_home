@@ -40,11 +40,10 @@ PUBLIC bool_t b_activer_bip = FALSE;
 //---------------------------
 PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
 {
-  uint16 max_time = 0;
+  //uint16 max_time = 0;
   static bool_t oneshot = FALSE;
   static etInUsingkey la_touche = E_KEY_NON_DEFINI;
-  uint8 uId = 0;
-
+  static uint8 uId = 0;
 
 #ifdef WATCHDOG_ENABLED
   vAHI_WatchdogRestart();
@@ -87,29 +86,29 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
       }
       else
       {
-        b_DebutIt = FALSE;
-        AppData.stp = E_KS_STP_COMPTER_DUREE_PRESSION;
-        timer_duree_pression = 0;
-        b_compter_pression = TRUE;
+        // A t on detecte une touche
+        la_touche = CLAV_AnalyseIts(&uId);
+        if (la_touche != E_KEY_NON_DEFINI)
+        {
+          /// TODO : La touche est elle au niveau bas ?
+          //
+          b_DebutIt = FALSE;
+          AppData.stp = E_KS_STP_COMPTER_DUREE_PRESSION;
+          timer_duree_pression = 0;
+          b_compter_pression = TRUE;
+        }
+        else
+        {
+          // On a pas compris la touche
+          // retour en attente touche
+          AppData.stp = E_KS_STP_ARMER_IT;
+        }
       }
     }
     break;
 
     case E_KS_STP_COMPTER_DUREE_PRESSION:
     {
-      la_touche = CLAV_AnalyseIts(&uId);
-      if (la_touche != E_KEY_NON_DEFINI)
-      {
-        timer_touche[la_touche - 1] = (uint16) NEW_memo_delay_touche;
-        vPrintf("Touche '%c' pendant '%d' ms, code dans pgm:%d\n\n",
-            code_ascii[uId], timer_touche[la_touche - 1], la_touche);
-
-        AppData.key = la_touche;
-
-        // Une touche est reconnue on peut demander a la traiter
-        AppData.stp = E_KS_STP_TRAITER_TOUCHE;
-      }
-
       // On regarde les fronts Montant
       vAHI_DioInterruptEdge(PBAR_CFG_NUMPAD_IN, 0);
     }
@@ -171,13 +170,12 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
       //la_touche = CLAV_AnalyseIts(&uId);
       if (la_touche != E_KEY_NON_DEFINI)
       {
-#if 0
         timer_touche[la_touche - 1] = (uint16) NEW_memo_delay_touche;
         vPrintf("Touche '%c' pendant '%d' ms, code dans pgm:%d\n\n",
             code_ascii[uId], timer_touche[la_touche - 1], la_touche);
 
         AppData.key = la_touche;
-#endif
+
         // Une touche est reconnue on peut demander a la traiter
         AppData.stp = E_KS_STP_TRAITER_TOUCHE;
       }
@@ -188,9 +186,8 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
     }
     break;
 
-
 #if 0
-    case E_KS_STP_TRAITER_IT:
+      case E_KS_STP_TRAITER_IT:
       if (AppData.key == E_KEY_NUM_DIESE || AppData.key == E_KEY_NUM_ETOILE)
       {
         max_time = C_TIME_ULTRA;
@@ -204,7 +201,7 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
       {
         CLAV_ResetLecture();
       }
-    break;
+      break;
 #endif
     case E_KS_STP_TRAITER_TOUCHE:
     {
