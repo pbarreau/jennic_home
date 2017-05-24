@@ -28,7 +28,7 @@ PRIVATE void InitAFroid(void);
 PRIVATE void APP_ConfigIoJennic(void);
 PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap);
 PRIVATE void CLAV_GestionIts(void);
-PRIVATE etInUsingkey CLAV_AnalyseIts(uint8 *position);
+//PRIVATE etInUsingkey CLAV_AnalyseIts(uint8 *position);
 
 /****************************************************************************/
 /***        Exported Variables                                            ***/
@@ -45,7 +45,7 @@ PUBLIC eLedInfo mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
 /****************************************************************************/
 PRIVATE bool_t b_recherche_touche_en_cours = FALSE;
 PRIVATE uint32 memo_its_down = 0UL;
-PRIVATE uint32 memo_its_up = 0UL;
+//PRIVATE uint32 memo_its_up = 0UL;
 PRIVATE eStatusClavier liaison_clavier = E_AUTONOMOUS;
 
 PRIVATE bool_t anti_rebond_it = FALSE;
@@ -56,6 +56,7 @@ PRIVATE bool_t b_it_detect_front_descendant = FALSE;
 
 PRIVATE bool_t b_start_press_count = FALSE;
 PUBLIC uint16 timer_appuie_touche = 0;
+PUBLIC uint32 NEW_memo_delay_touche = 0;
 
 PRIVATE const uint8 pioClavOut[] = { C_CLAV_PIO_OUT_1, C_CLAV_PIO_OUT_2,
 C_CLAV_PIO_OUT_3, C_CLAV_PIO_OUT_4 };
@@ -167,6 +168,7 @@ PUBLIC void vJenie_CbMain(void)
     break;
 
     case E_PGL_BOUCLE_PRINCIPALE:
+    {
       // Test pour voir si connection a un pc
       if (liaison_clavier == E_CONNECTED_TO_PC)
       {
@@ -181,8 +183,9 @@ PUBLIC void vJenie_CbMain(void)
           compter_duree_mode = 0;
           CLAV_GererMode(E_KEY_NUM_MOD_1);
         }
-        CLAV_AnalyserEtat(AppData.eClavState);
+        CLAV_AnalyserEtat(AppData.stp);
       }
+    }
     break;
 
     default:
@@ -264,8 +267,7 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
 
         default:
         {
-          vPrintf("ERR:E_JENIE_DATA, AppData.eAppState -> %d\n",
-              AppData.pgl);
+          vPrintf("ERR:E_JENIE_DATA, AppData.eAppState -> %d\n", AppData.pgl);
         }
         break;
       }
@@ -378,37 +380,50 @@ PRIVATE void PBAR_ISR_Clavier_c3(uint32 u32Device, uint32 u32ItemBitmap)
     switch (u32ItemBitmap)
     {
       case E_AHI_DIO12_INT:
-        //if(!it_en_cours)it_en_cours=1;
       case E_AHI_DIO13_INT:
-        //if(!it_en_cours)it_en_cours=2;
       case E_AHI_DIO14_INT:
-        //if(!it_en_cours)it_en_cours=3;
       case E_AHI_DIO15_INT:
-        //if(!it_en_cours)it_en_cours=4;
       {
-        if ((anti_rebond_it == FALSE) && (b_recherche_touche_en_cours == FALSE))
+        switch (AppData.stp)
         {
-          anti_rebond_it = TRUE;
-
-          vPrintf("\nApparition It front : ");
-
-          if (b_it_detect_front_descendant == FALSE)
+          case E_KS_STP_ATTENTE_TOUCHE:
           {
-            b_it_detect_front_descendant = TRUE;
-            vPrintf("descendant\n");
-
-            // Memorisation de l'it
+            vPrintf("1:Down\n");
             memo_its_down = u32ItemBitmap;
+            AppData.stp = E_KS_STP_DEBUT_IT;
+            timer_antirebond_dow = 0;
+            b_DebutIt = TRUE;
           }
-          else
-          {
-            b_it_detect_front_descendant = FALSE;
-            vPrintf("montant\n");
+          break;
 
-            // Memorisation de l'it
-            memo_its_up = u32ItemBitmap;
+          case E_KS_STP_COMPTER_DUREE_PRESSION:
+          {
+            b_compter_pression = FALSE;
+            NEW_memo_delay_touche = timer_duree_pression / 100;
+            // Informer a gerer
+            vPrintf("2:UP->time used '%d'\n", NEW_memo_delay_touche);
+            AppData.stp = E_KS_STP_REBOND_HAUT_COMMENCE;
+            timer_antirebond_up = 0;
+            b_FinIt = TRUE;
           }
+          break;
+
+          case E_KS_STP_DEBUT_IT:
+          case E_KS_STP_REBOND_HAUT_COMMENCE:
+          case E_KS_STP_TRAITER_TOUCHE:
+          {
+            ; // It Parasite
+          }
+          break;
+
+          default:
+          {
+            vPrintf("Step sous it non prevu:%d\n", AppData.stp);
+          }
+          break;
+
         }
+
       }
       break;
 
@@ -456,9 +471,9 @@ PRIVATE void CLAV_GestionIts(void)
     if (timer_appuie_touche >= C_MIN_DURE_PRESSION)
     {
       // Calcul du temps d'appuie de la touche + bip + traitement
-      timer_touche[AppData.key-1] = timer_appuie_touche;
+      timer_touche[AppData.key - 1] = timer_appuie_touche;
       vPrintf(" Duree maintient de touche '%c'= %d\n\n",
-          code_ascii[AppData.ukey], timer_touche[AppData.key-1]);
+          code_ascii[AppData.ukey], timer_touche[AppData.key - 1]);
 
       // Memorisation de l'etat avant traitement de la touche
       //AppData.ePrevClav = AppData.eClavState;
@@ -483,7 +498,7 @@ PRIVATE void CLAV_GestionIts(void)
   }
 }
 
-PRIVATE etInUsingkey CLAV_AnalyseIts(uint8 *position)
+PUBLIC etInUsingkey CLAV_AnalyseIts(uint8 *position)
 {
   uint8 byte = 0;
   uint8 tentative = 0;

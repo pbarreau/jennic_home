@@ -30,6 +30,8 @@ extern "C"
 /****************************************************************************/
 #define TEMPS_MODE			6000 	// en 10 * ms
 #define C_TEMPS_ANTI_REBOND	2		//10*ms
+#define C_TIME_REBOND_DOWN  300
+#define C_TIME_REBOND_UP    300
 
 #define C_MIN_DURE_PRESSION	4
 #define C_MAX_DURE_PRESSION	200
@@ -113,16 +115,21 @@ typedef enum {
 extern PUBLIC char const *dbg_etCLAV_role[];
 
 typedef enum _clav_state {
-  E_KS_STP_NON_DEFINI,
-  E_KS_STP_ATTENTE_TOUCHE,
-  E_KS_STP_TRAITER_IT,
-  E_KS_STP_TRAITER_TOUCHE,
+  E_KS_STP_NON_DEFINI,      /// Mode de traitement du clavier non definit
+  E_KS_STP_ATTENTE_TOUCHE, /// Attente que l'utilisateur appuie sur une touche du clavier
+  E_KS_STP_ARMER_IT,        /// Preparation lecture clavier
+  E_KS_STP_TRAITER_IT,      /// Determiner qu'elle touche appuyée
+  E_KS_STP_TRAITER_TOUCHE,  /// Effectuer traitement de la touche
   E_KS_STP_SERVICE_ON,
   E_KS_STP_SERVICE_OFF,
   E_KS_STP_ATTENDRE_BOITE,
   E_KS_STP_ATTENDRE_FIN_CONFIG_BOITE,
   E_KS_STP_EN_PROGR_AVEC_BOITE,
   E_KS_STP_ULTRA_MODE,
+  E_KS_STP_DEBUT_IT,
+  E_KS_STP_REBOND_BAS_FINI,
+  E_KS_STP_COMPTER_DUREE_PRESSION,
+  E_KS_STP_REBOND_HAUT_COMMENCE,
   E_KS_STP_END
 } etRunningStp;
 extern PUBLIC char const *dbg_teClavState[];
@@ -233,6 +240,7 @@ extern PUBLIC void CLAV_AnalyserPc(tePcState mef_pc);
 extern PUBLIC etRunningStp CLAV_BoutonDeConfiguration(bool_t * bip_on);
 extern PUBLIC void CLAV_NetMsgInput(tsData *psData);
 extern PUBLIC etRunningStp CLAV_GererTouche(etInUsingkey keys);
+extern PUBLIC etInUsingkey CLAV_AnalyseIts(uint8 *position);
 
 // -----------------
 // pgm_clav.c
@@ -265,6 +273,15 @@ extern PUBLIC uint8 bufEmission[3];
 extern PUBLIC char gch_spaces[20];
 extern PUBLIC eLedInfo mNetOkTypeFlash;
 extern PUBLIC const uint8 code_ascii[];
+extern PUBLIC uint32 NEW_memo_delay_touche;
+
+//--------------
+extern PUBLIC bool_t b_DebutIt;
+extern PUBLIC uint32 timer_antirebond_dow;
+extern PUBLIC bool_t b_compter_pression;
+extern PUBLIC uint32 timer_duree_pression;
+extern PUBLIC bool_t b_FinIt;
+extern PUBLIC uint32 timer_antirebond_up;
 
 #if defined __cplusplus
 }

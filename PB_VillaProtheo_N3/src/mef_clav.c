@@ -23,6 +23,16 @@
 #include "e_config.h"
 
 //PRIVATE void CLAV_GererMultiple();
+PUBLIC bool_t b_DebutIt = FALSE;
+PUBLIC uint32 timer_antirebond_dow = 0;
+
+PUBLIC bool_t b_compter_pression = FALSE;
+PUBLIC uint32 timer_duree_pression = 0;
+
+PUBLIC bool_t b_FinIt = FALSE;
+PUBLIC uint32 timer_antirebond_up = 0;
+//---------------------------------------------------
+
 //---------------------------------------------------
 
 PUBLIC bool_t b_activer_bip = FALSE;
@@ -32,21 +42,93 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
 {
   uint16 max_time = 0;
   static bool_t oneshot = FALSE;
+  static etInUsingkey la_touche = E_KEY_NON_DEFINI;
+  uint8 uId = 0;
+
 
 #ifdef WATCHDOG_ENABLED
   vAHI_WatchdogRestart();
 #endif
 
+  if (b_DebutIt)
+  {
+    timer_antirebond_dow++;
+  }
+
+  if (b_compter_pression)
+  {
+    timer_duree_pression++;
+  }
+
+  if (b_FinIt)
+  {
+    timer_antirebond_up++;
+  }
+
   switch (mef_clavier)
   {
     case E_KS_STP_NON_DEFINI:
       vPrintf("Passage clavier en attente touche\n");
-      AppData.eClavState = E_KS_STP_ATTENTE_TOUCHE;
+      AppData.stp = E_KS_STP_ATTENTE_TOUCHE;
       AppData.kbd = E_KS_KBD_VIRTUAL_1;
       AppData.rol = E_KS_ROL_UTILISATEUR;
     break;
 
     case E_KS_STP_ATTENTE_TOUCHE:
+      // On regarde les fronts descendants
+      vAHI_DioInterruptEdge(0, PBAR_CFG_NUMPAD_IN);
+    break;
+
+    case E_KS_STP_DEBUT_IT:
+    {
+      if (timer_antirebond_dow < C_TIME_REBOND_DOWN)
+      {
+        AppData.stp = E_KS_STP_DEBUT_IT;
+      }
+      else
+      {
+        b_DebutIt = FALSE;
+        AppData.stp = E_KS_STP_COMPTER_DUREE_PRESSION;
+        timer_duree_pression = 0;
+        b_compter_pression = TRUE;
+      }
+    }
+    break;
+
+    case E_KS_STP_COMPTER_DUREE_PRESSION:
+    {
+      la_touche = CLAV_AnalyseIts(&uId);
+      if (la_touche != E_KEY_NON_DEFINI)
+      {
+        timer_touche[la_touche - 1] = (uint16) NEW_memo_delay_touche;
+        vPrintf("Touche '%c' pendant '%d' ms, code dans pgm:%d\n\n",
+            code_ascii[uId], timer_touche[la_touche - 1], la_touche);
+
+        AppData.key = la_touche;
+
+        // Une touche est reconnue on peut demander a la traiter
+        AppData.stp = E_KS_STP_TRAITER_TOUCHE;
+      }
+
+      // On regarde les fronts Montant
+      vAHI_DioInterruptEdge(PBAR_CFG_NUMPAD_IN, 0);
+    }
+    break;
+
+    case E_KS_STP_REBOND_HAUT_COMMENCE:
+    {
+      if (timer_antirebond_up < C_TIME_REBOND_UP)
+      {
+        AppData.stp = E_KS_STP_REBOND_HAUT_COMMENCE;
+      }
+      else
+      {
+        b_FinIt = FALSE;
+        vPrintf("Traitement It\n\n");
+        AppData.stp = E_KS_STP_TRAITER_IT;
+      }
+
+    }
     break;
 
     case E_KS_STP_SERVICE_ON:
@@ -68,6 +150,46 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
     case E_KS_STP_ATTENDRE_FIN_CONFIG_BOITE:
     break;
 
+    case E_KS_STP_ARMER_IT:
+    {
+
+      // Bloquer Its
+      //vAHI_DioInterruptEnable(0, PBAR_CFG_NUMPAD_IN);
+      //flush its
+      //u32AHI_DioInterruptStatus();
+      // Preparation Detection Front descendant sur entrees
+      vAHI_DioInterruptEdge(0, PBAR_CFG_NUMPAD_IN);
+      // deBloquer Its
+      //vAHI_DioInterruptEnable(PBAR_CFG_NUMPAD_IN, 0);
+      AppData.stp = E_KS_STP_ATTENTE_TOUCHE;
+
+    }
+    break;
+
+    case E_KS_STP_TRAITER_IT:
+    {
+      //la_touche = CLAV_AnalyseIts(&uId);
+      if (la_touche != E_KEY_NON_DEFINI)
+      {
+#if 0
+        timer_touche[la_touche - 1] = (uint16) NEW_memo_delay_touche;
+        vPrintf("Touche '%c' pendant '%d' ms, code dans pgm:%d\n\n",
+            code_ascii[uId], timer_touche[la_touche - 1], la_touche);
+
+        AppData.key = la_touche;
+#endif
+        // Une touche est reconnue on peut demander a la traiter
+        AppData.stp = E_KS_STP_TRAITER_TOUCHE;
+      }
+      else
+      {
+        AppData.stp = E_KS_STP_ARMER_IT;
+      }
+    }
+    break;
+
+
+#if 0
     case E_KS_STP_TRAITER_IT:
       if (AppData.key == E_KEY_NUM_DIESE || AppData.key == E_KEY_NUM_ETOILE)
       {
@@ -83,11 +205,12 @@ PUBLIC void CLAV_AnalyserEtat(etRunningStp mef_clavier)
         CLAV_ResetLecture();
       }
     break;
-
+#endif
     case E_KS_STP_TRAITER_TOUCHE:
     {
 
       AppData.eClavState = CLAV_GererTouche(AppData.key);
+      AppData.stp = E_KS_STP_ARMER_IT;
 
     }
     break;
@@ -182,8 +305,7 @@ PUBLIC bool_t CLAV_TrouverAssociationToucheBoite(stToucheDef *touche,
   vPrintf("%sNb boite pour touche %s -> %d\n", gch_spaces,
       dbg_etCLAV_keys[touche->la_touche], nbBox);
 
-  vPrintf("%sRecherche dans la liste chainee des boites\n",
-      gch_spaces);
+  vPrintf("%sRecherche dans la liste chainee des boites\n", gch_spaces);
   for (i = 0; (i <= nbBox) && (i < C_MAX_BOXES); i++)
   {
     useBox = eeprom.netConf.boxList[key_mode][key_code][i];
