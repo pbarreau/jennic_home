@@ -1,44 +1,74 @@
-/*
- * led.h
+/****************************************************************************
+ * $Rev::                   $: Revision of last commit
+ * $Author::                $: Author of last commit
+ * $Date::                  $: Date of last commit
+ * $HeadURL:                $
+ ****************************************************************************
+ * This software is owned by Jennic and/or its supplier and is protected
+ * under applicable copyright laws. All rights are reserved. We grant You,
+ * and any third parties, a license to use this software solely and
+ * exclusively on Jennic products. You, and any third parties must reproduce
+ * the copyright and warranty notice and any other legend of ownership on each
+ * copy or partial copy of the software.
  *
- *  Created on: 3 juil. 2013
- *      Author: RapidOs
+ * THIS SOFTWARE IS PROVIDED "AS IS". JENNIC MAKES NO WARRANTIES, WHETHER
+ * EXPRESS, IMPLIED OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE,
+ * ACCURACY OR LACK OF NEGLIGENCE. JENNIC SHALL NOT, IN ANY CIRCUMSTANCES,
+ * BE LIABLE FOR ANY DAMAGES, INCLUDING, BUT NOT LIMITED TO, SPECIAL,
+ * INCIDENTAL OR CONSEQUENTIAL DAMAGES FOR ANY REASON WHATSOEVER.
+ *
+ * Copyright Jennic Ltd 2010. All rights reserved
+ ****************************************************************************/
+/** @file
+ *
+ * @defgroup
+ *
  */
+#ifndef  LED_H_INCLUDED
+#define  LED_H_INCLUDED
 
-#ifndef LED_H_
-#define LED_H_
+#if defined __cplusplus
+extern "C" {
+#endif
 
-#define	CST_NB_IHM_LED	2
-#define	CST_LED_PERIOD	8
+/****************************************************************************/
+/***        Include Files                                                 ***/
+/****************************************************************************/
+#include <jendefs.h>
 
-// Gestion des Leds
-// Rpl: void vAHI_DioSetOutput(uint32 u32On, uint32 u32Off);
-#define vLedSet(ON,LED) \
-    vAHI_DioSetOutput( \
-        (ON) ? 0 			: (1<<LED), \
-            (ON) ? (1<<LED) 	: 0\
-    )
+/****************************************************************************/
+/***        Macro Definitions                                             ***/
+/****************************************************************************/
 
-typedef enum {
-  E_LED_OFF = 0x00,	/// Etteindre la Led
-  E_LED_MSG_1 = 0x01,
-  E_LED_MSG_2 = 0x02,
-  E_LED_MSG_3 = 0x04,
-  E_LED_MSG_4 = 0x06,
-  E_LED_MSG_5 = 0x08,
-  E_LED_MSG_6 = 0x0C,
-  E_LED_MSG_7 = 0x10,
-  E_LED_MSG_8 = 0x14,
-  E_LED_ON = 0xFF	/// Allumer la led
-} eLedInfo;
+/****************************************************************************/
+/***        Type Definitions                                              ***/
+/****************************************************************************/
+typedef enum
+{
+    E_LED_COLOR_RED,
+    E_LED_COLOR_AMBER,
+    E_LED_COLOR_GREEN,
+}teLedColor;
 
-typedef struct {
-  bool_t actif;	/// Flag indiquant s'il faut utiliser la led
-  eLedInfo mode;	/// Type de Flash, Fixe, Eteinte, ..
-  uint8 pio;	/// Pio ou est branché la led
-} sLed;
+/****************************************************************************/
+/***        Exported Functions                                            ***/
+/****************************************************************************/
+PUBLIC void vLED_Off(void);
+PUBLIC void vLED_Init(void);
+PUBLIC void vLED_On(teLedColor eColor);
+PUBLIC void vLED_Flash(teLedColor eColor, uint16 u16Periodms);
 
-extern PUBLIC sLed au8Led[CST_NB_IHM_LED];
-extern PUBLIC void IHM_ClignoteLed(void);
+/****************************************************************************/
+/***        Exported Variables                                            ***/
+/****************************************************************************/
 
-#endif /* LED_H_ */
+#if defined __cplusplus
+}
+#endif
+
+#endif  /* LED_H_INCLUDED */
+
+/****************************************************************************/
+/***        END OF FILE                                                   ***/
+/****************************************************************************/
