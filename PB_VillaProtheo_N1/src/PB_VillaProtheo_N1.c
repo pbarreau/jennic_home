@@ -1,24 +1,13 @@
 /****************************************************************************
- * $Rev::                   $: Revision of last commit
- * $Author::                $: Author of last commit
- * $Date::                  $: Date of last commit
- * $HeadURL:                $
+ *
+ * MODULE:             JenNet Coordinator Node
+ *
+ * LAST MODIFIED BY:   $Author: $
+ *                     $Modtime: $
+ *
  ****************************************************************************
- * This software is owned by Jennic and/or its supplier and is protected
- * under applicable copyright laws. All rights are reserved. We grant You,
- * and any third parties, a license to use this software solely and
- * exclusively on Jennic products. You, and any third parties must reproduce
- * the copyright and warranty notice and any other legend of ownership on each
- * copy or partial copy of the software.
  *
- * THIS SOFTWARE IS PROVIDED "AS IS". JENNIC MAKES NO WARRANTIES, WHETHER
- * EXPRESS, IMPLIED OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE,
- * ACCURACY OR LACK OF NEGLIGENCE. JENNIC SHALL NOT, IN ANY CIRCUMSTANCES,
- * BE LIABLE FOR ANY DAMAGES, INCLUDING, BUT NOT LIMITED TO, SPECIAL,
- * INCIDENTAL OR CONSEQUENTIAL DAMAGES FOR ANY REASON WHATSOEVER.
  *
- * Copyright Jennic Ltd 2010. All rights reserved
  ****************************************************************************/
 
 /****************************************************************************/
@@ -26,83 +15,82 @@
 /****************************************************************************/
 #include <jendefs.h>
 #include <string.h>
+
 #include <Jenie.h>
 #include <JPI.h>
-#include <JenNetApi.h>
+#include <Printf.h>
 #include "Utils.h"
-#include "config.h"
 
-#include <Utilities.h>
-
-/* Project includes */
-#include "ip.h"
-#include "time.h"
-#include "setup.h"
-#include <rtc.h>
-#include <config.h>
-#include <sensordata.h>
-#include "serial.h"
-
+#include "c_config.h"
+#include "bit.h"
+#include "led.h"
+#include "i2c_9555.h"
 
 /****************************************************************************/
 /***        Macro Definitions                                             ***/
 /****************************************************************************/
-/* Address of ROM based un-aligment access exception handler */
-#define UNALIGNED_ACCESS *((volatile uint32 *)(0x4000008))
 
 /****************************************************************************/
 /***        Type Definitions                                              ***/
 /****************************************************************************/
 
-typedef enum
-{
-    E_STATE_IDLE,
-    E_STATE_NWK_STARTED
-}teAppState;
-
-typedef enum
-{
-    E_EVENT_NWK_STARTED,
-    E_EVENT_DATA_RECEIVED,
-    E_EVENT_POLL,
-}teAppEvent;
-
-typedef struct
-{
-    uint64          u64Addr;
-    tsSensorData    sData;
-}tsSensor;
-
-typedef struct
-{
-    uint16          u16TickCounts;
-    tsSetup         sSetup;
-    teAppState      eAppState;
-    uint32          u32LastSensorPollTime;
-}tsAppData;
 /****************************************************************************/
 /***        Local Function Prototypes                                     ***/
 /****************************************************************************/
-PRIVATE void vSetState(teAppState eNewState);
-PRIVATE void vProcessEvent(teAppEvent eEvent, void *pvParam);
-PUBLIC void vUnalignedAccessHandler (void);
-
+PRIVATE uint8 showDipSwitch(void);
 /****************************************************************************/
 /***        Exported Variables                                            ***/
 /****************************************************************************/
-extern void unaligned_access_handler(uint32 u32HeapAddr, uint32 u32Vector);
+PUBLIC ebpLedInfo mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
 /****************************************************************************/
 /***        Local Variables                                               ***/
 /****************************************************************************/
-PRIVATE tsAppData sAppData;
-PUBLIC  tsSensorList sSensorList;
-PRIVATE tsJenieRoutingTable asRoutingTable[ROUTING_TABLE_SIZE];
 
-/* Version/build information. */
-PRIVATE uint8 au8Version[] __attribute__ ((used))   = "Gateway Monitor (Coordinator) - v1.0.0";
-PRIVATE uint8 au8BuildDate[] __attribute__ ((used)) = __DATE__;
-PRIVATE uint8 au8BuildTime[] __attribute__ ((used)) = __TIME__;
+/* Routing table storage */
+PRIVATE tsJenieRoutingTable asRoutingTable[100];
 
+PRIVATE uint8 pBuff[2]; // pointeur In & Read du buffer
+PRIVATE uint8 bufReception[PBAR_RBUF_SIZE]; // Buffer circulaire reception
+PRIVATE uint64 bufAddr[PBAR_RBUF_SIZE];
+PRIVATE uint8 buf2[3] = { 0, 0, 0 };
+
+// Pour config Clavier distant
+PRIVATE uint8 prevConf = 0;
+
+PRIVATE uint16 TimeRechercheClavier = 0;
+
+PRIVATE uint8 etatSorties; // reflet des ios actuel
+
+/****************************************************************************/
+PRIVATE uint8 showDipSwitch(void)
+{
+  uint32 val = 0L;
+  uint8 uboxid = 0;
+
+  // Set IO In
+  vAHI_DioSetDirection(
+      E_JPI_DIO0_INT |\
+      E_JPI_DIO1_INT |\
+      E_JPI_DIO8_INT |\
+      E_JPI_DIO9_INT,
+      0);
+
+  val = u32AHI_DioReadInput();
+  // Recuperer la valeur de conf de la boite
+  uboxid = ((uint8) ((val >> 6) & 0x0C) | ((uint8) val & 0x03));
+
+#if !NO_DEBUG_ON
+  /* Open UART for printf use {v2} */
+  vUART_printInit();
+  /* Initialise utilities */
+  vUtils_Init();
+#endif
+
+  // Detection type de boite
+  vPrintf("!!Box Id set by dip switch : %d\n\n", uboxid);
+
+  return (uboxid);
+}
 
 /****************************************************************************
  *
@@ -119,29 +107,17 @@ PRIVATE uint8 au8BuildTime[] __attribute__ ((used)) = __TIME__;
  ****************************************************************************/
 PUBLIC void vJenie_CbConfigureNetwork(void)
 {
-  /* Install ROM based unaligned access handler. This is a patch to fix some
-     alignment issues with the uIP stack */
-  UNALIGNED_ACCESS = (uint32) vUnalignedAccessHandler;
+  uThisBox_Id = 1;
+  gJenie_Channel = PBAR_CHANNEL;
+  gJenie_NetworkApplicationID = PBAR_NID;
+  gJenie_PanID = PBAR_PAN_ID;
 
-  /* Configure stack parameters */
-  gJenie_PanID                            = PAN_ID;
-  gJenie_NetworkApplicationID             = NETWORK_ID;
-  gJenie_Channel                          = 0;
-  gJenie_ScanChannels                     = CHANNEL_SCAN_MASK;
-  gJenie_MaxChildren                      = 16;
-  gJenie_MaxSleepingChildren              = 8;
-  gJenie_MaxBcastTTL                      = 5;
-  gJenie_MaxFailedPkts                    = 3;
-  gJenie_RoutingEnabled                   = TRUE;
-  gJenie_RoutingTableSize                 = ROUTING_TABLE_SIZE;
-  gJenie_RoutingTableSpace                = (void *)asRoutingTable;
-  gJenie_RouterPingPeriod                 = ((SENSOR_MAX_PING_PERIOD_ms / 2UL) / 100UL); /* Units of 100ms */
-  gJenie_EndDeviceChildActivityTimeout    = ((SENSOR_MAX_PING_PERIOD_ms * 3UL) / 100UL); /* Units of 100ms */
-  gJenie_RecoverFromJpdm                  = FALSE;
-  gJenie_RecoverChildrenFromJpdm          = FALSE;
 
+  /* Configure stack with routing table data */
+  gJenie_RoutingEnabled = TRUE;
+  gJenie_RoutingTableSize = PBAR_RTBL_SIZE;
+  gJenie_RoutingTableSpace = (void *) asRoutingTable;
 }
-
 /****************************************************************************
  *
  * NAME: vJenie_CbInit
@@ -157,36 +133,55 @@ PUBLIC void vJenie_CbConfigureNetwork(void)
 
 PUBLIC void vJenie_CbInit(bool_t bWarmStart)
 {
-  teJenieStatusCode eResult;
-    /* Initialise utilities */
-    vUtils_Init();
-    vAHI_WatchdogStop();
+  teJenieStatusCode eStatus; /* Jenie status code */
+  teJenieDeviceType eDevType = E_JENIE_ROUTER;
 
-    /* Initialise application data */
-    vSetState(E_STATE_IDLE);
+  // Reset Buffer Application
+  memset(&bufReception, 0, sizeof(bufReception));
+  memset(&pBuff, 0, sizeof(pBuff));
 
-    /* Read configration from flash */
-    (void)bSetup_Read(&sAppData.sSetup);
+  // Reset APP_STATES
+  memset(&sAppData, 0, sizeof(sAppData));
+  sAppData.eClavState = E_CLAV_EN_USAGE;
 
-    /* Initialise generic timer module */
-    vTime_Init(TIME_TIMER_0);
+  u32AHI_Init();
 
-  /* Initialise IP interface */
-  vIP_Init(&sAppData.sSetup.sLocalAddr, &sAppData.sSetup.sGatewayAddr, &sAppData.sSetup.sSubnetMask);
+#if !NO_DEBUG_ON
+  vUtils_Init();
+  vUART_printInit();
+#endif
 
-    /* Initialise RTC */
-  vRTC_Init(RTC_WAKE_TIMER_NONE, RTC_CLK_SRC_APP);
-  vRTC_SetDate(&sAppData.sSetup.sDate);
-  vRTC_SetTime(&sAppData.sSetup.sTime);
-  sAppData.u16TickCounts = 0;
+  vPRT_Init_IosOfCard(E_BUS_400_KH);
 
-  /* Start the Jenie stack */
-  eResult = eJenie_Start(E_JENIE_COORDINATOR);
-  if(eResult != E_JENIE_SUCCESS)
+
+  vPrintf("Mode Installation Coordonateur\n");
+  eDevType = E_JENIE_COORDINATOR;
+
+  // Activation de la led status
+  au8Led[C_LID_1].actif = TRUE;
+  au8Led[C_LID_1].pio = C_LPID_1;
+
+  au8Led[C_LID_2].actif = TRUE;
+  au8Led[C_LID_2].pio = C_LPID_2;
+  au8Led[C_LID_2].mode = E_FLASH_OFF;
+
+  au8Led[C_LID_3].actif = TRUE;
+  au8Led[C_LID_3].pio = C_LPID_3;
+  au8Led[C_LID_3].mode = E_FLASH_OFF;
+
+  if ((eStatus = eJenie_Start(eDevType)) != E_JENIE_SUCCESS)
   {
-    /* Try again... */
-    vJPI_SwReset();
+    au8Led[C_LID_1].mode = E_FLASH_ERREUR_DECTECTEE;
+
+    vPrintf("!!Jenie err: %d\n", eStatus);
+    while (1)
+      ;
   }
+  else
+  {
+    vPrintf("Mise en place du reseau !!\n\n");
+  }
+
 }
 
 /****************************************************************************
@@ -202,28 +197,284 @@ PUBLIC void vJenie_CbInit(bool_t bWarmStart)
  ****************************************************************************/
 PUBLIC void vJenie_CbMain(void)
 {
-  uint8 u8Status;
-    /* regular watchdog reset */
-    //#ifdef WATCHDOG_ENABLED
-       //vAHI_WatchdogRestart();
-    //#endif
-    vProcessEvent(E_EVENT_POLL, NULL);
-    /* Read the UART status */
-    u8Status = u8AHI_UartReadLineStatus(SETUP_PORT);
-    /* If data in Receive FIFO */
-    if (u8Status & E_AHI_UART_LS_DR)
+  teJenieStatusCode eStatus;
+  uint8 keep;
+  uint8 mask;
+  uint8 valu;
+
+  /* regular watchdog reset */
+#ifdef WATCHDOG_ENABLED
+  vAHI_WatchdogRestart();
+#endif
+
+  switch (sAppData.eAppState)
   {
-      u8Status = u8AHI_UartReadData (SETUP_PORT);
-      /* If character = S or s then*/
-    if ((u8Status == 'S') ||(u8Status == 's'))
-    {
-      /* Display the setup menu, this function does not return. */
-      vSetup_Task(au8Version, au8BuildDate, au8BuildTime);
-      /* Restart the JN5148 */
-      vAHI_SwReset();
+    case APP_STATE_WAITING_FOR_NETWORK:
+      /* nothing to do till network is up and running */
+      au8Led[0].mode = E_FLASH_RECHERCHE_RESEAU;
+      break;
+
+    case APP_STATE_NETWORK_UP:
+#if (PBAR_POWER_CARD == V1_USE_RELAY)
+      vPrintf("PCB_V1_RELAY");
+#elif (PBAR_POWER_CARD == V1_USE_TRIAC)
+      vPrintf("PCB_V1_TRIAC");
+#elif (PBAR_POWER_CARD == V2_USE_TRIAC)
+      vPrintf("PCB_V2_TRIAC");
+#endif
+
+      if (uThisBox_Id == 0)
+      {
+        au8Led[0].mode = E_FLASH_BP_TEST_SORTIES;
+        sAppData.eAppState = APP_STATE_TST_START_LUMIERES;
       }
+      else
+      {
+        vPrintf(" Possibilite d'association activee\n\n");
+        eJenie_SetPermitJoin(TRUE);
+
+        // Reseau actif on peut recevoir des donnees !!
+        au8Led[0].mode = mNetOkTypeFlash;
+
+        // Pas de clavier distant
+        LaBasId = 0;
+
+        /* register services */
+        sAppData.eAppState = APP_STATE_REGISTERING_SERVICE;
+
+      }
+      break;
+
+    case APP_STATE_REGISTERING_SERVICE:
+    {
+      /* services disponible aux autres */
+      vPrintf(" Enregistrement du service:%x, ", SRV_LUMIR | SRV_VOLET);
+      eStatus = eJenie_RegisterServices(SRV_LUMIR | SRV_VOLET);
+      switch (eStatus)
+      {
+        case E_JENIE_SUCCESS:
+          vPrintf("ok\n");
+          break;
+        case E_JENIE_ERR_STACK_BUSY:
+          vPrintf(" Erreur de Pile\n");
+          break;
+        case E_JENIE_ERR_UNKNOWN:
+          vPrintf(" Erreur critique\n");
+          break;
+        default:
+          vPrintf(" Erreur inconue:%d\n", eStatus);
+          break;
+      }
+
+      /* go to the running state */
+      sAppData.eAppState = APP_STATE_RUNNING;
+    }
+    break;
+
+    case APP_STATE_TRAITER_INPUT_MESSAGE:
+    {
+      if (pBuff[1] == PBAR_RBUF_SIZE)
+        pBuff[1] = 0;
+      // 1er octet 0 -> impose
+      // 2em octet id bit sur lesquel agir
+      // 3em octet config des bits
+      mask = bufReception[pBuff[1] + 1];
+      valu = bufReception[pBuff[1] + 2];
+
+      vPrintf(" Ptr Lecture:%d\n", pBuff[1]);
+
+      vPrintf(" Buffer:%x,%x,%x\n", bufReception[pBuff[1]],
+          bufReception[pBuff[1] + 1], bufReception[pBuff[1] + 2]);
+
+      switch (bufReception[pBuff[1]])
+      {
+        case E_MSG_NET_LED_OFF:
+        {
+          vPrintf("Net ask Led Off\n");
+          mNetOkTypeFlash = ~E_FLASH_OFF;
+          au8Led[0].mode = mNetOkTypeFlash;
+        }
+        break;
+
+        case E_MSG_NET_LED_ON:
+        {
+          mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
+          au8Led[0].mode = mNetOkTypeFlash;
+        }
+        break;
+
+        case E_MSG_DATA_ALL:
+        {
+          vPrintf(" Data ALL ios actuel:%x\n", etatSorties);
+
+          keep = (etatSorties & (~mask)) | (mask & valu);
+          vPrintf(" Mask:%x,Value:%x\n", mask, valu);
+          vPrintf(" Nouvelle config ios:%x\n", keep);
+          etatSorties = keep;
+
+          // Configuer les sorties
+          vPRT_DioSetOutput(etatSorties << PBAR_DEBUT_IO,
+              (~etatSorties) << PBAR_DEBUT_IO);
+        }
+        break;
+
+        case E_MSG_DATA_SELECT:
+        {
+          vPrintf(" Data Spe ios actuel:%x\n", etatSorties);
+
+          keep = (etatSorties ^ mask);
+          vPrintf(" Mask:%x,Value:%x\n", mask, valu);
+          vPrintf(" Nouvelle config ios:%x\n\n", keep);
+          etatSorties = keep;
+
+          // Configuer les sorties
+          vPRT_DioSetOutput(etatSorties << PBAR_DEBUT_IO,
+              (~etatSorties) << PBAR_DEBUT_IO);
+        }
+        break;
+
+        case E_MSG_ASK_ID_BOX:
+        {
+          bufEmission[0] = E_MSG_RSP_ID_BOX;
+          bufEmission[1] = bufReception[pBuff[1] + 1];
+          bufEmission[2] = uThisBox_Id;
+
+          // etablissement de lien
+          cbUnClavierActif = TRUE;
+
+          vPrintf("Rsp a demande Box Id:\n D:[%x:%x], Msg:%x, %x, %x\n",
+              (uint32) (bufAddr[pBuff[1]] >> 32),
+              (uint32) (bufAddr[pBuff[1]] & 0xFFFFFFFF), bufEmission[0],
+              bufEmission[1], bufEmission[2]);
+          // renvoyer la reponse
+          eJenie_SendData(bufAddr[pBuff[1]], bufEmission, 3,
+              TXOPTION_SILENT);
+        }
+        break;
+
+        default:
+        {
+          vPrintf("Erreur sur type message recu\n");
+        }
+        break;
+      }
+      pBuff[1] += 3;
+
+      sAppData.eAppState = APP_STATE_RUNNING;
+    }
+    break;
+
+    case APP_STATE_RECHERCHE_CLAVIER:
+    {
+      vPrintf("\nRecherche d'un boitier de commande disponible\n");
+
+      // Recherche de la boite ayant le service:
+      // clavier_conf positionne
+      eJenie_RequestServices(SRV_INTER, TRUE);
+      au8Led[0].mode = E_FLASH_RECHERCHE_BC;
+
+      sAppData.eAppState = APP_STATE_ATTENTE_CLAV_RSP;
+    }
+    break;
+
+    case APP_STATE_ATTENTE_CLAV_RSP:
+    {
+      ;      //Rien
+    }
+    break;
+
+    case APP_STATE_REPONSE_CLAVIER_TROP_LONG:
+    {
+      vPrintf("Attente boitier commande trop longue!!\n");
+      vPrintf("Verifier si en mode programmation\n");
+      vPrintf("Reour BP en mode normal\n");
+      au8Led[0].mode = mNetOkTypeFlash;
+      sAppData.eAppState = APP_STATE_RUNNING;
+    }
+    break;
+
+    case APP_STATE_CLAV_READY:
+    {
+      au8Led[0].mode = E_FLASH_LIAISON_BP_BC_ON;
+      PBAR_LireBtnPgm();
+    }
+    break;
+
+    case APP_STATE_SET_MY_OUTPUT:
+    {
+
+      vPrintf(" Config actuelle:%x\n", config);
+
+      // Mettre les sorties au niveau de config
+      vPRT_DioSetOutput(config << PBAR_DEBUT_IO, (~config) << PBAR_DEBUT_IO);
+      // Nouveau depart
+      sel_led = config;
+
+      vPrintf(" En attente de changement programmation\n");
+      au8Led[0].mode = E_FLASH_BP_EN_CONFIGURATION_SORTIES;
+      ePgmMode = E_CLAV_MODE_1;
+      sAppData.eAppState = APP_STATE_ATTENDRE_FIN_CFG_LOCAL;
+    }
+    break;
+
+    case APP_STATE_ATTENDRE_FIN_CFG_LOCAL:
+    {
+      PBAR_LireBtnPgm();
+    }
+    break;
+
+    case APP_STATE_FIN_CFG_BOX:
+    {
+      vPrintf("Deconnection du boitier de commande\n");
+      vPrintf("Retour de BP en mode usage courant\n");
+
+      // On Montre mode user
+      au8Led[0].mode = mNetOkTypeFlash;
+
+      sAppData.eClavState = E_CLAV_EN_USAGE;
+      ePgmMode = E_CLAV_MODE_NOT_SET;
+
+      bufEmission[0] = E_MSG_CFG_BOX_END;
+      bufEmission[1] = 0;
+      bufEmission[2] = 0;
+
+      eJenie_SendData(LaBasId, bufEmission, 3,
+          TXOPTION_SILENT);
+
+      LaBasId = 0;
+      sAppData.eAppState = APP_STATE_RUNNING;
+
+    }
+    break;
+
+    case APP_STATE_RUNNING:
+    {
+      ; // Rien attendre evenement reseau ou clavier
+      PBAR_LireBtnPgm();
+    }
+    break;
+
+    case APP_STATE_TST_START_LUMIERES:
+    {
+      PBAR_DecodeBtnPgm(&valu);
+    }
+    break;
+
+    case APP_STATE_TST_STOP_LUMIERES:
+    {
+    }
+    break;
+
+    default:
+#if !NO_DEBUG_ON
+      vUtils_DisplayMsg("!!Unknown state!!", sAppData.eAppState);
+      while (1)
+        ;
+#endif
+      break;
   }
 }
+
 /****************************************************************************
  *
  * NAME: vJenie_CbStackMgmtEvent
@@ -241,19 +492,92 @@ PUBLIC void vJenie_CbMain(void)
  ****************************************************************************/
 PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
 {
+  tsChildJoined *psStackMgmtData = (tsChildJoined *) pvEventPrim;
+
   switch (eEventType)
   {
     case E_JENIE_NETWORK_UP:
-      vProcessEvent(E_EVENT_NWK_STARTED, NULL);
+    {
+      bp_CommunStackMgmtEvent(&sAppData.eAppState, eEventType, pvEventPrim);
+    }
+    break;
+
+    case E_JENIE_REG_SVC_RSP:
+    {
+      vPrintf("Enregistrement differre ??\n");
+    }
+    break;
+
+    case E_JENIE_SVC_REQ_RSP:
+      vPrintf(" > Trouve : ");
+      {
+        if (sAppData.eAppState == APP_STATE_ATTENTE_CLAV_RSP)
+        {
+          // Stop Timer
+          cbStartTempoRechercheClavier = FALSE;
+          TimeRechercheClavier = 0;
+
+          vPrintf("Boitier [%x:%x]\n",
+              (uint32) (psStackMgmtData->u64SrcAddress >> 32),
+              (uint32) (psStackMgmtData->u64SrcAddress & 0xFFFFFFFF));
+
+          // Memorisation du @ clavier
+          LaBasId = psStackMgmtData->u64SrcAddress;
+
+          // Indiquer mon numero de boite au clavier
+          vPrintf("    Envoie de mon box id:%d\n\n", uThisBox_Id);
+          vPrintf("En attente d'une touche du Boitier de commande\n");
+          bufEmission[0] = E_MSG_RSP_ID_BOX;
+          bufEmission[1] = uThisBox_Id;
+          eJenie_SendData(LaBasId, bufEmission, 2, TXOPTION_SILENT);
+          /// ZZZZZZZZZZZZZZZZZZZ
+          /// Avec ack ou sans ack ? TXOPTION_ACKREQ);
+          // On montre Led
+          au8Led[0].mode = E_FLASH_RECHERCHE_BC;
+
+          sAppData.eAppState = APP_STATE_CLAV_READY;
+
+        }
+
+      }
+      break;
+
+    case E_JENIE_PACKET_SENT:
+      vPrintf("> Packet sent\n");
+      break;
+
+    case E_JENIE_PACKET_FAILED:
+      vPrintf("Packet failed\n");
       break;
 
     case E_JENIE_CHILD_JOINED:
-      break;
+    {
+      vPrintf("> Arrivage d'un fils ->[%x:%x]\n",
+          (uint32) (psStackMgmtData->u64SrcAddress >> 32),
+          (uint32) (psStackMgmtData->u64SrcAddress & 0xFFFFFFFF));
+    }
+    break;
 
     case E_JENIE_CHILD_LEAVE:
+      vPrintf("Child Leave\n");
+      break;
+
+    case E_JENIE_CHILD_REJECTED:
+      vPrintf("Child Rejected\n");
+      break;
+
+    case E_JENIE_STACK_RESET:
+      vPrintf("Stack Reset\n");
+      sAppData.eAppState = APP_STATE_WAITING_FOR_NETWORK;
       break;
 
     default:
+      /* Unknown data event type */
+#if !NO_DEBUG_ON
+      vUtils_DisplayMsg("!!Unknown Mgmt Event!!", eEventType);
+      while (1)
+        ;
+#endif
       break;
   }
 }
@@ -269,21 +593,166 @@ PUBLIC void vJenie_CbStackMgmtEvent(teEventType eEventType, void *pvEventPrim)
  *                  *psStackDataEvent       R   Pointer to data structure
  * RETURNS:
  * void
- *
+ * Impose
  ****************************************************************************/
 PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
 {
-  switch(eEventType)
+#if !NO_DEBUG_ON
+  tsDataToService *psStackEventData = (tsDataToService *) pvEventPrim;
+#endif
+
+  tsData *psData = (tsData *) pvEventPrim;
+
+  switch (eEventType)
   {
+    case E_JENIE_PACKET_SENT:
+      vPrintf("Mesg envoyee\n");
+      break;
+
+    case E_JENIE_PACKET_FAILED:
+      vPrintf("Mesg echoue\n");
+      break;
+
     case E_JENIE_DATA:
-      /* We have received a data frame, pass to state machine for processing */
-      vProcessEvent(E_EVENT_DATA_RECEIVED, pvEventPrim);
+    {
+      /* Get pointer to correct primitive structure */
+      /* Output to UART */
+      vPrintf("\nMsg du noeud[%x:%x] sur %d octets\n",
+          (uint32) (psData->u64SrcAddress >> 32),
+          (uint32) (psData->u64SrcAddress & 0xFFFFFFFF), psData->u16Length);
+
+      switch (sAppData.eAppState)
+      {
+        case APP_STATE_CLAV_READY:
+        {
+          if (psData->u16Length == 3)
+          {
+            buf2[0] = psData->pau8Data[psData->u16Length - 3];
+            buf2[1] = psData->pau8Data[psData->u16Length - 2];
+            buf2[2] = psData->pau8Data[psData->u16Length - 1];
+
+            vPrintf(" Msg: %x,%x,%x\n", buf2[0], buf2[1], buf2[2]);
+
+            switch (buf2[0])
+            {
+              case E_MSG_ASK_CFG_LIENS:
+              {
+                config = buf2[2];
+                prevConf = config;
+                LabasKbd = buf2[1] & 0x0F;
+                LabasMod = buf2[1] >> 4 & 0xF;
+                vPrintf("  ie: touche '%d', mode '%d'\n", LabasKbd, LabasMod);
+
+                sAppData.eAppState = APP_STATE_SET_MY_OUTPUT;
+              }
+              break;
+
+              default:
+              {
+                vPrintf("Message clavier non compris\n");
+              }
+              break;
+
+            }
+          }
+        }
+        break;
+
+        case APP_STATE_RUNNING:
+        {
+          // Mettre info dans buffer circulaire pour traitement
+          if (pBuff[0] == PBAR_RBUF_SIZE)
+            pBuff[0] = 0;
+
+          // Addresse emetteur
+          bufAddr[pBuff[0]] = psData->u64SrcAddress;
+
+          // Debut format message (sur 3 octets)
+          // octet 0
+          bufReception[pBuff[0]] = psData->pau8Data[psData->u16Length - 3];
+          pBuff[0]++;
+
+          // octel 1
+          bufReception[pBuff[0]] = psData->pau8Data[psData->u16Length - 2];
+          pBuff[0]++;
+
+          // octel 2
+          bufReception[pBuff[0]] = psData->pau8Data[psData->u16Length - 1];
+          pBuff[0]++;
+          // Fin format message
+
+          // Traitement
+          sAppData.eAppState = APP_STATE_TRAITER_INPUT_MESSAGE;
+
+        }
+        break;
+        default:
+        {
+          vPrintf("Reception donnee non prevu !!\n");
+        }
+        break;
+      }
+
+    }
+    break;
+
+    case E_JENIE_DATA_TO_SERVICE:
+      vPrintf("Data to service event\n");
+
+      vPrintf("S:%d -> d:%d\n", psStackEventData->u8SrcService,
+          psStackEventData->u8DestService);
       break;
 
     case E_JENIE_DATA_ACK:
+    {
+      //vPrintf("\n> Data ack");
+      switch (sAppData.eAppState)
+      {
+        case APP_STATE_ATTENDRE_FIN_CFG_LOCAL:
+        {
+          vPrintf("Configuration touche terminee\n");
+          vPrintf("En attente autre touche du boitier de commande\n");
+
+          // On efface la config visible
+          // Mettre les sorties a 0
+          config = 0;
+          // On quitte le mode test: eteindre les lumieres
+          vPrintf("switch off everything after data ack\n");
+          vPRT_DioSetOutput((config) << PBAR_DEBUT_IO,
+              (~config) << PBAR_DEBUT_IO);
+
+          // on reinitialise les registre interne
+          etatSorties = 0;
+
+          // On remet la led en normal
+          au8Led[0].mode = E_FLASH_EN_ATTENTE_TOUCHE_BC;
+
+          ledId = 0;
+          ePgmMode = E_CLAV_MODE_NOT_SET;
+          sAppData.eAppState = APP_STATE_CLAV_READY;
+        }
+        break;
+
+        default:
+        {
+          vPrintf("Ack non prevu\n");
+        }
+        break;
+      }
+    }
+    break;
+
+    case E_JENIE_DATA_TO_SERVICE_ACK:
+      vPrintf("Data to service ack\n");
       break;
 
     default:
+      // Unknown data event type
+#if !NO_DEBUG_ON
+      vUtils_DisplayMsg("!!Unknown Data Event!!", eEventType);
+      while (1)
+        ;
+#endif
       break;
   }
 }
@@ -303,177 +772,49 @@ PUBLIC void vJenie_CbStackDataEvent(teEventType eEventType, void *pvEventPrim)
  * void
  *
  ****************************************************************************/
-PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId,uint32 u32ItemBitmap)
+PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId, uint32 u32ItemBitmap)
 {
-  if (u32DeviceId == E_AHI_DEVICE_TICK_TIMER)
+
+  switch (u32DeviceId)
   {
-    if (++sAppData.u16TickCounts >= 100)
+    case E_JPI_DEVICE_TICK_TIMER:
     {
-      vRTC_Tick(32768);
-      sAppData.u16TickCounts = 0;
+      IHM_ClignoteLed();
+      PBAR_LireBtnPgm();
+
+      /* regular 10ms tick generated here */
+      if (bStartPgmTimer)
+      {
+        TimePgmPressed++;
+      }
+
+      /* regular 10ms tick generated here */
+
+      if (cbStartTempoRechercheClavier)
+      {
+        TimeRechercheClavier++;
+
+        if (TimeRechercheClavier == 400)
+        {
+          // On arrete de chercher
+          cbStartTempoRechercheClavier = FALSE;
+          TimeRechercheClavier = 0;
+          sAppData.eAppState = APP_STATE_REPONSE_CLAVIER_TROP_LONG;
+        }
+      }
     }
+    break;
+
+    default:
+#if !NO_DEBUG_ON
+      vUtils_DisplayMsg("HWint: ", u32DeviceId);
+      while (1)
+        ;
+#endif
+      break;
   }
 }
-/****************************************************************************/
-/***        Local Functions                                               ***/
-/****************************************************************************/
-/****************************************************************************
- *
- * NAME: vProcessEvent
- *
- * DESCRIPTION:
- *
- * PARAMETERS:      Name            RW  Usage
- * None.
- *
- * RETURNS:
- * None.
- *
- * NOTES:
- * None.
- ****************************************************************************/
-PRIVATE void vProcessEvent(teAppEvent eEvent, void *pvParam)
-{
-    switch (sAppData.eAppState)
-    {
-        case E_STATE_IDLE:
-            if (eEvent == E_EVENT_NWK_STARTED)
-            {
-                /* Cleat list of sensors */
-                sSensorList.u8NbrSensors = 0;
-                sAppData.u32LastSensorPollTime = u32Time_TimeNowMs();
 
-                /* Enable route purging */
-                vApi_SetPurgeRoute(TRUE);
-                vApi_SetPurgeInterval((SENSOR_MAX_PING_PERIOD_ms * 2UL) / 100UL);
-
-                vSetState(E_STATE_NWK_STARTED);
-            }
-            break;
-
-        case E_STATE_NWK_STARTED:
-            if (eEvent == E_EVENT_POLL)
-            {
-                uint8 i;
-        /* Allow internet interface to send and receive */
-        vIP_Poll();
-
-                /* Check if it is timer to check the sensors */
-                if (u16Time_ElapsedTimeSinceMs(sAppData.u32LastSensorPollTime) > SENSOR_TIMEOUT_POLL_PERIOD_ms)
-                {
-                    /* Check for sensors that are no longer sending data */
-                    for (i = 0; i < MAX_SENSORS; i++)
-                    {
-                        if (u16Time_ElapsedTimeSinceMs(sSensorList.asSensor[i].u32LastRxTime) > SENSOR_TX_TIMEOUT_ms)
-                        {
-                            sSensorList.asSensor[i].u8Status = STATUS_FAILED;
-                        }
-                    }
-                    sAppData.u32LastSensorPollTime = u32Time_TimeNowMs();
-                }
-            }
-            else if (eEvent == E_EVENT_DATA_RECEIVED)
-            {
-                uint8 i;
-                bool_t bFound = FALSE;
-                tsData *psRxData = (tsData *)pvParam;
-
-                /* Check if we already have an entry in the list for this sensor */
-                for (i = 0; i < MAX_SENSORS; i++)
-                {
-                    if (psRxData->u64SrcAddress == sSensorList.asSensor[i].u64Addr)
-                    {
-                        /* We have this sensor in the list so just update the entry */
-                        memcpy(&sSensorList.asSensor[i], &psRxData->pau8Data[0], sizeof(tsSensorData));
-
-                        /* Fill in time and date fields */
-                        vRTC_GetDate(&sSensorList.asSensor[i].sDate);
-                        vRTC_GetTime(&sSensorList.asSensor[i].sTime);
-
-                        /* Add internal timestamp that will be used to check if
-                           sensor has stopped transmitting */
-                        sSensorList.asSensor[i].u32LastRxTime = u32Time_TimeNowMs();
-
-                        /* Update status */
-                        sSensorList.asSensor[i].u8Status = STATUS_OK;
-
-                        bFound = TRUE;
-                        break;
-                    }
-                }
-
-                if (!bFound)
-                {
-                    /* Could not find this sensor in the list, check if we have space to add it */
-                    if (sSensorList.u8NbrSensors < MAX_SENSORS)
-                    {
-                        /* Space available add to list */
-                        memcpy(&sSensorList.asSensor[sSensorList.u8NbrSensors], &psRxData->pau8Data[0], sizeof(tsSensorData));
-
-                        /* Add internal timestamp that will be used to check if
-                           sensor has stopped transmitting */
-                        sSensorList.asSensor[sSensorList.u8NbrSensors].u32LastRxTime = u32Time_TimeNowMs();
-
-                        /* Fill in time and date fields */
-                        vRTC_GetDate(&sSensorList.asSensor[sSensorList.u8NbrSensors].sDate);
-                        vRTC_GetTime(&sSensorList.asSensor[sSensorList.u8NbrSensors].sTime);
-
-                        /* Update status */
-                        sSensorList.asSensor[sSensorList.u8NbrSensors].u8Status = STATUS_OK;
-                        sSensorList.u8NbrSensors++;
-                    }
-                }
-            }
-            break;
-
-        default:
-            break;
-    }
-}
-
-/****************************************************************************
- *
- * NAME: vSetState
- *
- * DESCRIPTION:
- *
- * PARAMETERS:      Name            RW  Usage
- * None.
- *
- * RETURNS:
- * None.
- *
- * NOTES:
- * None.
- ****************************************************************************/
-PRIVATE void vSetState(teAppState eNewState)
-{
-    sAppData.eAppState = eNewState;
-}
-/****************************************************************************
- *
- * NAME: vUnalignedAccessHandler
- *
- * DESCRIPTION:
- *
- * PARAMETERS:      Name            RW  Usage
- * None.
- *
- * RETURNS:
- * None.
- *
- * NOTES:
- * None.
- ****************************************************************************/
-PUBLIC void vUnalignedAccessHandler (void)
-{
-  volatile uint32 u32BusyWait = 1600000;
-  // Display the exception
-  vUtils_Debug("vUnalignedAccessHandler");
-  // wait for the UART write to complete
-  while(u32BusyWait--){}
-  vAHI_SwReset ();
-}
 /****************************************************************************/
 /***        END OF FILE                                                   ***/
 /****************************************************************************/

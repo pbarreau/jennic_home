@@ -45,7 +45,7 @@ DEVICE_TYPE ?= CR
 #
 #
 # Define which UART to use for debug
-DEBUG_PORT ?= UART1
+DEBUG_PORT ?= UART0
 
 ##############################################################################
 # Define TRACE to use with DBG module
@@ -64,9 +64,6 @@ APP_INC_DIR 	    = $(APP_BASE)/$(TARGET)/inc
 APP_OBJ_DIR 	    = $(APP_BASE)/$(TARGET)/o48
 APP_COMMON_SRC_DIR 	= $(APP_BASE)/module/src
 APP_COMMON_INC_DIR 	= $(APP_BASE)/module/inc
-APP_UIP_DIR			= $(APP_BASE)/uip/src
-APP_UIP_SRC_DIR 	= $(APP_BASE)/uip/src
-APP_UIP_INC_DIR 	= $(APP_BASE)/uip/inc
 
 ##############################################################################
 # Application Source files
@@ -74,7 +71,6 @@ APP_UIP_INC_DIR 	= $(APP_BASE)/uip/inc
 # Note: Path to source file is found using vpath below, so only .c filename is required
 APPSRC += $(wildcard $(APP_SRC_DIR)/*.c)
 APPSRC += $(wildcard $(APP_COMMON_SRC_DIR)/*.c)
-APPSRC += $(wildcard $(APP_UIP_SRC_DIR)/*.c)
 
 ##############################################################################
 # Additional Application Source directories
@@ -89,7 +85,6 @@ ADDITIONAL_SRC_DIR += $(COMPONENTS_BASE_DIR)/../cygwin/jennic/SDK/Chip/Common/So
 
 INCFLAGS += -I$(APP_INC_DIR)
 INCFLAGS += -I$(APP_COMMON_INC_DIR)
-INCFLAGS += -I$(APP_UIP_INC_DIR)
 
 # Application specific include files
 INCFLAGS += -I$(COMPONENTS_BASE_DIR)/JennicLogo/Include
@@ -136,7 +131,7 @@ LDLIBS := $(addsuffix _$(JENNIC_CHIP_FAMILY),$(APPLIBS)) $(LDLIBS)
 
 .PHONY: all clean
 # Path to directories containing application source 
-vpath %.c $(APP_SRC_DIR):$(APP_COMMON_SRC_DIR):$(ADDITIONAL_SRC_DIR):$(APP_UIP_DIR)
+vpath %.c $(APP_SRC_DIR):$(APP_COMMON_SRC_DIR):$(ADDITIONAL_SRC_DIR)
 
 
 
