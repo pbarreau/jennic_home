@@ -19,6 +19,7 @@ extern "C"
 /****************************************************************************/
 #include <Button.h>
 #include <Jenie.h>
+#include "setup.h"
 #include "services.h"
 #include "m_network_msg.h"
 
@@ -30,6 +31,21 @@ extern "C"
 #if NO_DEBUG_ON
 #define vPrintf(...)
 #endif
+
+/* Specify which serial port to use when displaying setup menu (tag only) */
+#define SETUP_PORT                      E_AHI_UART_0
+/* Specify which serial port to use when outputting debug information */
+#define DEBUG_PORT                      E_AHI_UART_1
+
+/* Define the maximum ping period at which a sensor can operate */
+#define SENSOR_MAX_PING_PERIOD_ms       30000UL
+/* Define the maximum ping period at which a sensor can operate */
+#define SENSOR_MIN_PING_PERIOD_ms       100
+/* Define how often we check the sensors to see if they are srill sending data */
+#define SENSOR_TIMEOUT_POLL_PERIOD_ms   10000
+/* Define maximum time between received frame before we mark sensor as failed */
+#define SENSOR_TX_TIMEOUT_ms            61000
+
 
 #define	C_IMPULSION_COURTE	60
 #define	C_IMPULSION_LONGUE	200
@@ -99,13 +115,13 @@ extern "C"
 
 vAHI_DioSetOutput(
     (ON) ? (C_BAR_LED_1) : 0,
-    (ON) ? 0 : (C_BAR_LED_1)\
+        (ON) ? 0 : (C_BAR_LED_1)\
 )
 #endif
 
 #define PBAR_DEBUT_IO	        11
 
-typedef enum {
+    typedef enum {
   E_FLASH_BP_TEST_SORTIES = 0x00,
   E_FLASH_OFF = 0x00,
   E_FLASH_RECHERCHE_RESEAU = 0x01,
@@ -203,10 +219,12 @@ typedef enum {
 } PBAR_KIT_8046;
 
 typedef struct {
-  teAppState eAppState;
-  bpeClav eClavState;
-  uint8 u8BoxId;
-  uint64 u64ServiceAddress;
+  uint16      u16TickCounts;
+  tsSetup     sSetup;
+  teAppState  eAppState;
+  bpeClav     eClavState;
+  uint8       u8BoxId;
+  uint64      u64ServiceAddress;
 } tsAppData;
 
 /****************************************************************************/

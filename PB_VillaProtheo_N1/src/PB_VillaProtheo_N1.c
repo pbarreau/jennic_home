@@ -26,9 +26,14 @@
 #include "led.h"
 #include "i2c_9555.h"
 
+#include "time.h"
+#include "RTC.h"
+
 /****************************************************************************/
 /***        Macro Definitions                                             ***/
 /****************************************************************************/
+/* Address of ROM based un-aligment access exception handler */
+#define UNALIGNED_ACCESS *((volatile uint32 *)(0x4000008))
 
 /****************************************************************************/
 /***        Type Definitions                                              ***/
@@ -38,6 +43,8 @@
 /***        Local Function Prototypes                                     ***/
 /****************************************************************************/
 PRIVATE uint8 showDipSwitch(void);
+PUBLIC void vUnalignedAccessHandler (void);
+
 /****************************************************************************/
 /***        Exported Variables                                            ***/
 /****************************************************************************/
@@ -45,6 +52,10 @@ PUBLIC ebpLedInfo mNetOkTypeFlash = E_FLASH_RESEAU_ACTIF;
 /****************************************************************************/
 /***        Local Variables                                               ***/
 /****************************************************************************/
+/* Version/build information. */
+PRIVATE uint8 au8Version[] __attribute__ ((used))   = "Gateway Monitor (Villa Protheo) - v1.0.0";
+PRIVATE uint8 au8BuildDate[] __attribute__ ((used)) = __DATE__;
+PRIVATE uint8 au8BuildTime[] __attribute__ ((used)) = __TIME__;
 
 /* Routing table storage */
 PRIVATE tsJenieRoutingTable asRoutingTable[100];
@@ -108,6 +119,11 @@ PRIVATE uint8 showDipSwitch(void)
 PUBLIC void vJenie_CbConfigureNetwork(void)
 {
   uThisBox_Id = 1;
+
+  /* Install ROM based unaligned access handler. This is a patch to fix some
+     alignment issues with the uIP stack */
+  UNALIGNED_ACCESS = (uint32) vUnalignedAccessHandler;
+
   gJenie_Channel = PBAR_CHANNEL;
   gJenie_NetworkApplicationID = PBAR_NID;
   gJenie_PanID = PBAR_PAN_ID;
@@ -117,6 +133,17 @@ PUBLIC void vJenie_CbConfigureNetwork(void)
   gJenie_RoutingEnabled = TRUE;
   gJenie_RoutingTableSize = PBAR_RTBL_SIZE;
   gJenie_RoutingTableSpace = (void *) asRoutingTable;
+
+  gJenie_MaxChildren                      = 16;
+  gJenie_MaxSleepingChildren              = 8;
+  gJenie_MaxBcastTTL                      = 5;
+  gJenie_MaxFailedPkts                    = 3;
+
+  gJenie_RouterPingPeriod                 = ((SENSOR_MAX_PING_PERIOD_ms / 2UL) / 100UL); /* Units of 100ms */
+  gJenie_EndDeviceChildActivityTimeout    = ((SENSOR_MAX_PING_PERIOD_ms * 3UL) / 100UL); /* Units of 100ms */
+  gJenie_RecoverFromJpdm                  = FALSE;
+  gJenie_RecoverChildrenFromJpdm          = FALSE;
+
 }
 /****************************************************************************
  *
@@ -153,6 +180,18 @@ PUBLIC void vJenie_CbInit(bool_t bWarmStart)
 
   vPRT_Init_IosOfCard(E_BUS_400_KH);
 
+  /* Initialise generic timer module */
+  vTime_Init(TIME_TIMER_0);
+
+  /* Initialise IP interface */
+  vIP_Init(&sAppData.sSetup.sLocalAddr, &sAppData.sSetup.sGatewayAddr, &sAppData.sSetup.sSubnetMask);
+
+
+  /* Initialise RTC */
+  vRTC_Init(RTC_WAKE_TIMER_NONE, RTC_CLK_SRC_APP);
+  vRTC_SetDate(&sAppData.sSetup.sDate);
+  vRTC_SetTime(&sAppData.sSetup.sTime);
+  sAppData.u16TickCounts = 0;
 
   vPrintf("Mode Installation Coordonateur\n");
   eDevType = E_JENIE_COORDINATOR;
@@ -163,7 +202,7 @@ PUBLIC void vJenie_CbInit(bool_t bWarmStart)
 
   au8Led[C_LID_2].actif = TRUE;
   au8Led[C_LID_2].pio = C_LPID_2;
-  au8Led[C_LID_2].mode = E_FLASH_OFF;
+  au8Led[C_LID_2].mode = E_FLASH_ALWAYS; //E_FLASH_OFF;
 
   au8Led[C_LID_3].actif = TRUE;
   au8Led[C_LID_3].pio = C_LPID_3;
@@ -174,8 +213,8 @@ PUBLIC void vJenie_CbInit(bool_t bWarmStart)
     au8Led[C_LID_1].mode = E_FLASH_ERREUR_DECTECTEE;
 
     vPrintf("!!Jenie err: %d\n", eStatus);
-    while (1)
-      ;
+    /* Try again... */
+    vJPI_SwReset();
   }
   else
   {
@@ -201,6 +240,7 @@ PUBLIC void vJenie_CbMain(void)
   uint8 keep;
   uint8 mask;
   uint8 valu;
+  uint8 u8Status;
 
   /* regular watchdog reset */
 #ifdef WATCHDOG_ENABLED
@@ -449,8 +489,24 @@ PUBLIC void vJenie_CbMain(void)
 
     case APP_STATE_RUNNING:
     {
-      ; // Rien attendre evenement reseau ou clavier
-      PBAR_LireBtnPgm();
+      vIP_Poll();
+      /* Read the UART status */
+      u8Status = u8AHI_UartReadLineStatus(SETUP_PORT);
+      /* If data in Receive FIFO */
+      if (u8Status & E_AHI_UART_LS_DR)
+      {
+        u8Status = u8AHI_UartReadData (SETUP_PORT);
+        /* If character = S or s then*/
+        if ((u8Status == 'S') ||(u8Status == 's'))
+        {
+          /* Display the setup menu, this function does not return. */
+          vSetup_Task(au8Version, au8BuildDate, au8BuildTime);
+          /* Restart the JN5148 */
+          vAHI_SwReset();
+        }
+      }
+
+      //PBAR_LireBtnPgm();
     }
     break;
 
@@ -813,6 +869,30 @@ PUBLIC void vJenie_CbHwEvent(uint32 u32DeviceId, uint32 u32ItemBitmap)
 #endif
       break;
   }
+}
+/****************************************************************************
+ *
+ * NAME: vUnalignedAccessHandler
+ *
+ * DESCRIPTION:
+ *
+ * PARAMETERS:      Name            RW  Usage
+ * None.
+ *
+ * RETURNS:
+ * None.
+ *
+ * NOTES:
+ * None.
+ ****************************************************************************/
+PUBLIC void vUnalignedAccessHandler (void)
+{
+  volatile uint32 u32BusyWait = 1600000;
+  // Display the exception
+  vUtils_Debug("vUnalignedAccessHandler");
+  // wait for the UART write to complete
+  while(u32BusyWait--){}
+  vAHI_SwReset ();
 }
 
 /****************************************************************************/

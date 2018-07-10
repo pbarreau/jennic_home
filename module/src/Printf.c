@@ -227,7 +227,7 @@ PUBLIC void vPrintf(const char *fmt, ...)
 PUBLIC void vUART_printInit(void)
 {
   vInitPrintf((void*) vPutC);
-  vUART_Init(FALSE);
+  vUART_MyOwnInit(FALSE);
 }
 
 /****************************************************************************
@@ -242,7 +242,7 @@ PUBLIC void vUART_printInit(void)
  *
  ****************************************************************************/
 
-PUBLIC void vUART_Init(bool bWaitForKey)
+PUBLIC void vUART_MyOwnInit(bool bWaitForKey)
 {
   uint8 u8RxChar = 0;
 
