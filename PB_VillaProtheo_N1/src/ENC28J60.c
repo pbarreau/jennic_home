@@ -430,10 +430,10 @@ PUBLIC bool_t bENC28J60_Init(uint8 *pu8MAC)
         /* Wait for oscillator ready, but don't hang here! */
         uint8 u8Status = 0x00;
 
-        while ((u8Status & 0x01) != 0)
+        do
         {
             u8Status = u8ENC28J60_ReadRegETH(ESTAT);
-        }
+        }while ((u8Status & 0x01) != 0);
 
         /* Enable MAC to receive frames (MACON1.0) */
         vENC28J60_SetBank(2);
