@@ -47,6 +47,19 @@ extern "C" {
 /****************************************************************************/
 typedef struct
 {
+    uint8  u8WakeTimer;
+    uint32 u32LastCount;
+    uint8  u8Hours;
+    uint8  u8Minutes;
+    uint8  u8Seconds;
+    uint32 u32ClockTicks;
+    uint16 u16Year;
+    uint8  u8Month;
+    uint8  u8Day;
+}tsRTC;
+
+typedef struct
+{
     uint8  u8Hours;
     uint8  u8Minutes;
     uint8  u8Seconds;

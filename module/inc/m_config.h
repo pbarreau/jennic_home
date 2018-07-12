@@ -31,6 +31,7 @@ extern "C"
 #if NO_DEBUG_ON
 #define vPrintf(...)
 #endif
+#define vPrintf(...)
 
 /* Specify which serial port to use when displaying setup menu (tag only) */
 #define SETUP_PORT                      E_AHI_UART_0
@@ -181,7 +182,8 @@ typedef enum {
   // Commun
   APP_STATE_CHANGE_MOD,
   APP_STATE_TRAITER_INPUT_MESSAGE,
-  APP_STATE_RUNNING
+  APP_STATE_RUNNING,
+  APP_STATE_CNF_AP300
 } teAppState;
 
 typedef enum {

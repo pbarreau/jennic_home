@@ -28,6 +28,7 @@
 
 #include "time.h"
 #include "RTC.h"
+#include "dhcpc.h"
 
 /****************************************************************************/
 /***        Macro Definitions                                             ***/
@@ -160,6 +161,8 @@ PUBLIC void vJenie_CbConfigureNetwork(void)
 
 PUBLIC void vJenie_CbInit(bool_t bWarmStart)
 {
+  bool_t useDhcp = TRUE;
+
   teJenieStatusCode eStatus; /* Jenie status code */
   teJenieDeviceType eDevType = E_JENIE_ROUTER;
 
@@ -172,19 +175,22 @@ PUBLIC void vJenie_CbInit(bool_t bWarmStart)
   sAppData.eClavState = E_CLAV_EN_USAGE;
 
   u32AHI_Init();
+  vUtils_Init();
 
 #if !NO_DEBUG_ON
-  vUtils_Init();
   vUART_printInit();
 #endif
 
   vPRT_Init_IosOfCard(E_BUS_400_KH);
 
+  /* Read configration from flash */
+  (void)bSetup_Read(&sAppData.sSetup);
+
   /* Initialise generic timer module */
   vTime_Init(TIME_TIMER_0);
 
   /* Initialise IP interface */
-  vIP_Init(&sAppData.sSetup.sLocalAddr, &sAppData.sSetup.sGatewayAddr, &sAppData.sSetup.sSubnetMask);
+  vIP_Init(useDhcp, &sAppData.sSetup.sLocalAddr, &sAppData.sSetup.sGatewayAddr, &sAppData.sSetup.sSubnetMask);
 
 
   /* Initialise RTC */
@@ -255,6 +261,7 @@ PUBLIC void vJenie_CbMain(void)
       break;
 
     case APP_STATE_NETWORK_UP:
+      vUtils_Debug("Gateway ready !!!");
 #if (PBAR_POWER_CARD == V1_USE_RELAY)
       vPrintf("PCB_V1_RELAY");
 #elif (PBAR_POWER_CARD == V1_USE_TRIAC)
@@ -497,8 +504,9 @@ PUBLIC void vJenie_CbMain(void)
       {
         u8Status = u8AHI_UartReadData (SETUP_PORT);
         /* If character = S or s then*/
-        if ((u8Status == 'S') ||(u8Status == 's'))
+        if ((u8Status == 'S') ||(u8Status == 's')||(u8Status == '\r'))
         {
+          //sAppData.eAppState = APP_STATE_CNF_AP300;
           /* Display the setup menu, this function does not return. */
           vSetup_Task(au8Version, au8BuildDate, au8BuildTime);
           /* Restart the JN5148 */
@@ -507,6 +515,13 @@ PUBLIC void vJenie_CbMain(void)
       }
 
       //PBAR_LireBtnPgm();
+    }
+    break;
+
+    case APP_STATE_CNF_AP300:
+    {
+      au8Led[C_LID_2].mode = E_FLASH_OFF;
+      au8Led[C_LID_3].mode = E_FLASH_ALWAYS;
     }
     break;
 
@@ -895,6 +910,18 @@ PUBLIC void vUnalignedAccessHandler (void)
   vAHI_SwReset ();
 }
 
+PUBLIC void dhcpc_configured(const struct dhcpc_state *s)
+{
+  sAppData.sSetup.sLocalAddr.u16[0]    = s->ipaddr[0];
+  sAppData.sSetup.sLocalAddr.u16[1]    = s->ipaddr[1];
+
+  sAppData.sSetup.sGatewayAddr.u16[0]   = s->default_router[0];
+  sAppData.sSetup.sGatewayAddr.u16[1]   = s->default_router[1];
+
+  sAppData.sSetup.sSubnetMask.u16[0]    = s->netmask[0];
+  sAppData.sSetup.sSubnetMask.u16[1]    = s->netmask[1];
+
+}
 /****************************************************************************/
 /***        END OF FILE                                                   ***/
 /****************************************************************************/

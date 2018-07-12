@@ -69,6 +69,7 @@ APP_UIP_SRC_DIR 	= $(APP_BASE)/uip/src
 APP_UIP_INC_DIR 	= $(APP_BASE)/uip/inc
 APP_UIP_WEBS_SRV 	= $(APP_BASE)/uip/apps/webserver/src
 APP_UIP_WEBS_INC 	= $(APP_BASE)/uip/apps/webserver/inc
+APP_UIP_DHCPC	 	= $(APP_BASE)/uip/apps/dhcpc
 ##############################################################################
 # Application Source files
 
@@ -77,6 +78,7 @@ APPSRC += $(wildcard $(APP_SRC_DIR)/*.c)
 APPSRC += $(wildcard $(APP_COMMON_SRC_DIR)/*.c)
 APPSRC += $(wildcard $(APP_UIP_SRC_DIR)/*.c)
 APPSRC += $(wildcard $(APP_UIP_WEBS_SRV)/*.c)
+APPSRC += $(wildcard $(APP_UIP_DHCPC)/*.c)
 
 ##############################################################################
 # Additional Application Source directories
@@ -93,6 +95,7 @@ INCFLAGS += -I$(APP_INC_DIR)
 INCFLAGS += -I$(APP_COMMON_INC_DIR)
 INCFLAGS += -I$(APP_UIP_INC_DIR)
 INCFLAGS += -I$(APP_UIP_WEBS_INC)
+INCFLAGS += -I$(APP_UIP_DHCPC)
 
 # Application specific include files
 INCFLAGS += -I$(COMPONENTS_BASE_DIR)/JennicLogo/Include
@@ -139,7 +142,8 @@ LDLIBS := $(addsuffix _$(JENNIC_CHIP_FAMILY),$(APPLIBS)) $(LDLIBS)
 
 .PHONY: all clean
 # Path to directories containing application source 
-vpath %.c $(APP_SRC_DIR):$(APP_COMMON_SRC_DIR):$(ADDITIONAL_SRC_DIR):$(APP_UIP_SRC_DIR):$(APP_UIP_WEBS_SRV)
+vpath %.c $(APP_SRC_DIR):$(APP_COMMON_SRC_DIR):$(ADDITIONAL_SRC_DIR):\
+$(APP_UIP_SRC_DIR):$(APP_UIP_WEBS_SRV):$(APP_UIP_DHCPC)
 
 
 

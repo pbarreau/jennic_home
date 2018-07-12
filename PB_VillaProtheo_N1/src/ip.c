@@ -36,13 +36,15 @@
 #include <timer.h>
 
 /* Project includes */
+#include "dhcpc.h"
 #include "ip.h"
 #include "network-device.h"
 #include <m_config.h>
+#include "protheo.h"
 
 #ifdef SERIAL_DEBUG
-    #include <serial.h>
-    #include <xsprintf.h>
+#include <serial.h>
+#include <xsprintf.h>
 #endif
 
 /****************************************************************************/
@@ -80,28 +82,36 @@ PRIVATE struct timer periodic_timer, arp_timer;
  * RETURNS:
  *
  ****************************************************************************/
-PUBLIC void vIP_Init(tsIPAddr *psLocalAddr, tsIPAddr *psGatewayAddr, tsIPAddr *psSubnetMask)
+PUBLIC void vIP_Init(bool_t bDhcp, tsIPAddr *psLocalAddr, tsIPAddr *psGatewayAddr, tsIPAddr *psSubnetMask)
 {
-    clock_init();
-    timer_set(&periodic_timer, CLOCK_SECOND / 2);
-    timer_set(&arp_timer, CLOCK_SECOND * 10);
+  //uint8 my_mac[]={0x00,0x04,0xa3,0x11,0x89,0xcb};
+  int len = sizeof(uip_ethaddr)/sizeof(struct uip_eth_addr);
 
-    network_device_init();
-    uip_init();
 
-    /* set up our own IP address */
-    uip_ipaddr(ipaddr, psLocalAddr->au8[0], psLocalAddr->au8[1], psLocalAddr->au8[2], psLocalAddr->au8[3]);
-    uip_sethostaddr(ipaddr);
+  clock_init();
+  timer_set(&periodic_timer, CLOCK_SECOND / 2);
+  timer_set(&arp_timer, CLOCK_SECOND * 10);
 
-    /* Set subnet mask */
-    uip_ipaddr(ipaddr, psSubnetMask->au8[0], psSubnetMask->au8[1], psSubnetMask->au8[2], psSubnetMask->au8[3]);
-    uip_setnetmask(ipaddr);
+  network_device_init();
+  uip_init();
 
-    /* Set the default gateways address */
-    uip_ipaddr(ipaddr, psGatewayAddr->au8[0], psGatewayAddr->au8[1], psGatewayAddr->au8[2], psGatewayAddr->au8[3]);
-    uip_setdraddr(ipaddr);
+  // use DCHP value or not ?
+  dhcpc_init(&uip_ethaddr,6);
 
-    httpd_init();
+  /* set up our own IP address */
+  uip_ipaddr(ipaddr, psLocalAddr->au8[0], psLocalAddr->au8[1], psLocalAddr->au8[2], psLocalAddr->au8[3]);
+  uip_sethostaddr(ipaddr);
+
+  /* Set subnet mask */
+  uip_ipaddr(ipaddr, psSubnetMask->au8[0], psSubnetMask->au8[1], psSubnetMask->au8[2], psSubnetMask->au8[3]);
+  uip_setnetmask(ipaddr);
+
+  /* Set the default gateways address */
+  uip_ipaddr(ipaddr, psGatewayAddr->au8[0], psGatewayAddr->au8[1], psGatewayAddr->au8[2], psGatewayAddr->au8[3]);
+  uip_setdraddr(ipaddr);
+
+  //httpd_init();
+  protheo_init();
 }
 
 /****************************************************************************
@@ -115,64 +125,64 @@ PUBLIC void vIP_Init(tsIPAddr *psLocalAddr, tsIPAddr *psGatewayAddr, tsIPAddr *p
  ****************************************************************************/
 PUBLIC void vIP_Poll(void)
 {
-    uint8 i;
+  uint8 i;
 
-    uip_len = network_device_read();
+  uip_len = network_device_read();
 
-    if(uip_len > 0)
+  if(uip_len > 0)
+  {
+    if(BUF->type == htons(UIP_ETHTYPE_IP))
     {
-        if(BUF->type == htons(UIP_ETHTYPE_IP))
-        {
-            uip_arp_ipin();
-            uip_input();
+      uip_arp_ipin();
+      uip_input();
 
-            /* If the above function invocation resulted in data that
+      /* If the above function invocation resulted in data that
                should be sent out on the network, the global variable
                uip_len is set to a value > 0. */
-            if(uip_len > 0)
-            {
-                uip_arp_out();
-                network_device_send();
-            }
-        }
-        else if(BUF->type == htons(UIP_ETHTYPE_ARP))
-        {
-            uip_arp_arpin();
-
-            /* If the above function invocation resulted in data that
-               should be sent out on the network, the global variable
-               uip_len is set to a value > 0. */
-            if(uip_len > 0)
-            {
-                network_device_send();
-            }
-        }
+      if(uip_len > 0)
+      {
+        uip_arp_out();
+        network_device_send();
+      }
     }
-    else if(timer_expired(&periodic_timer))
+    else if(BUF->type == htons(UIP_ETHTYPE_ARP))
     {
-        timer_reset(&periodic_timer);
+      uip_arp_arpin();
 
-        for(i = 0; i < UIP_CONNS; i++)
-        {
-            uip_periodic(i);
-
-            /* If the above function invocation resulted in data that
+      /* If the above function invocation resulted in data that
                should be sent out on the network, the global variable
                uip_len is set to a value > 0. */
-            if(uip_len > 0)
-            {
-                uip_arp_out();
-                network_device_send();
-            }
-        }
-
-        /* Call the ARP timer function every 10 seconds. */
-        if(timer_expired(&arp_timer))
-        {
-            timer_reset(&arp_timer);
-            uip_arp_timer();
-        }
+      if(uip_len > 0)
+      {
+        network_device_send();
+      }
     }
+  }
+  else if(timer_expired(&periodic_timer))
+  {
+    timer_reset(&periodic_timer);
+
+    for(i = 0; i < UIP_CONNS; i++)
+    {
+      uip_periodic(i);
+
+      /* If the above function invocation resulted in data that
+               should be sent out on the network, the global variable
+               uip_len is set to a value > 0. */
+      if(uip_len > 0)
+      {
+        uip_arp_out();
+        network_device_send();
+      }
+    }
+
+    /* Call the ARP timer function every 10 seconds. */
+    if(timer_expired(&arp_timer))
+    {
+      timer_reset(&arp_timer);
+      uip_arp_timer();
+    }
+  }
 }
 
 #ifdef SERIAL_DEBUG
@@ -194,7 +204,7 @@ PUBLIC void vIP_Poll(void)
 PUBLIC void uip_log(char *msg)
 {
 
-    vSerial_TxString(DEBUG_PORT, (uint8 *)msg);
+  vSerial_TxString(DEBUG_PORT, (uint8 *)msg);
 }
 #endif
 

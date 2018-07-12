@@ -35,6 +35,8 @@
 
 #include <string.h>
 
+#include "dhcpc.h"
+
 #include "uip-split.h"
 #include "uip.h"
 #include "uip-fw.h"

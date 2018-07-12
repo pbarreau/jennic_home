@@ -41,6 +41,7 @@ extern "C" {
 typedef union
 {
     uint8  au8[4];
+    uint16 u16[2];
     uint32 u32;
 }tsIPAddr;
 
@@ -48,7 +49,7 @@ typedef union
 /***        Exported Functions                                            ***/
 /****************************************************************************/
 PUBLIC void vIP_Poll(void);
-PUBLIC void vIP_Init(tsIPAddr *psLocalAddr, tsIPAddr *psGatewayAddr, tsIPAddr *psSubnetMask);
+PUBLIC void vIP_Init(bool_t bDhcp,tsIPAddr *psLocalAddr, tsIPAddr *psGatewayAddr, tsIPAddr *psSubnetMask);
 
 /****************************************************************************/
 /***        Exported Variables                                            ***/

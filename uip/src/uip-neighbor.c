@@ -39,6 +39,8 @@
  *         Adam Dunkels <adam@sics.se>
  */
 
+#include "dhcpc.h"
+
 #include "uip-neighbor.h"
 
 #include <string.h>

@@ -32,6 +32,7 @@
 #include <AppApi.h>
 #include <AppHardwareApi.h>
 
+#include "dhcpc.h"
 #include <uip.h>
 #include <uip_arp.h>
 

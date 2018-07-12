@@ -31,6 +31,7 @@ extern "C" {
 /***        Include Files                                                 ***/
 /****************************************************************************/
 #include "ip.h"
+//#include "uip-conf.h"
 #include <rtc.h>
 
 /****************************************************************************/
@@ -42,11 +43,13 @@ extern "C" {
 /****************************************************************************/
 typedef struct
 {
-    tsTime   sTime;
-    tsDate   sDate;
-    tsIPAddr sLocalAddr;
-    tsIPAddr sGatewayAddr;
-    tsIPAddr sSubnetMask;
+  //u16_t usePort;
+  uint16 usePort;
+  tsTime   sTime;
+  tsDate   sDate;
+  tsIPAddr sLocalAddr;
+  tsIPAddr sGatewayAddr;
+  tsIPAddr sSubnetMask;
 }tsSetup;
 
 /****************************************************************************/

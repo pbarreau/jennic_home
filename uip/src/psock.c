@@ -36,6 +36,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "dhcpc.h"
+
 #include "uipopt.h"
 #include "psock.h"
 #include "uip.h"

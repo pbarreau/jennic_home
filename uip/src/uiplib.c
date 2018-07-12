@@ -33,6 +33,7 @@
  *
  */
 
+#include "dhcpc.h"
 
 #include "uip.h"
 #include "uiplib.h"

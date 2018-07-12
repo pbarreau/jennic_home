@@ -53,6 +53,8 @@
 #ifndef __UIP_H__
 #define __UIP_H__
 
+#include "udp_appstate.h"
+
 #include "uipopt.h"
 
 /**

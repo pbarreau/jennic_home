@@ -29,6 +29,9 @@
 /***        Include files                                                 ***/
 /****************************************************************************/
 #include <jendefs.h>
+#include <AppHardwareApi.h>
+
+#include "Utils.h"
 
 #include "intr.h"
 #include "uart.h"
@@ -243,6 +246,10 @@ PUBLIC uint32 u32Serial_RxString(uint8 u8Port, uint8 *pu8RxBuffer, uint32 u32Buf
 		if (u32CharCount < u32BuffSize)
 		{
             pu8RxBuffer[u32CharCount++] = (uint8)i16RxChar;
+            // Afficher le charactere
+            vAHI_UartWriteData(UTILS_UART, (uint8)i16RxChar);
+            while ((u8AHI_UartReadLineStatus(UTILS_UART) & 0x20) == 0);
+
 		}
 		else
 		{
